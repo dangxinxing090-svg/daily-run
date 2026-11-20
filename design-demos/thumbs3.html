@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>每日跑步 · 新拟态六方向</title>
+<style>
+:root{
+  --sand-1:#fdfdfc; --sand-2:#f9f9f8; --sand-3:#f1f0ef; --sand-4:#e9e8e6;
+  --sand-5:#e2e1de; --sand-6:#dad9d6; --sand-7:#cfceca; --sand-9:#8d8d86;
+  --sand-11:#63635e; --sand-12:#21201c;
+  --orange-1:#fefcfb; --orange-3:#ffefd6; --orange-9:#f76b15; --orange-11:#cc4e00;
+  --teal-9:#12a594;
+  --slate-1:#fcfcfd; --slate-6:#d9d9e0; --slate-11:#60646c; --slate-12:#1c2024;
+  --raise: -6px -6px 14px var(--sand-1), 6px 6px 14px var(--sand-6);
+  --press: inset 5px 5px 10px var(--sand-6), inset -5px -5px 10px var(--sand-1);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--sand-2);color:var(--sand-12);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif;padding:32px 34px 44px}
+.pagehead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:22px;border-bottom:.5px solid var(--sand-6);padding-bottom:14px}
+h1{font-size:20px;font-weight:600;margin:0}
+.sub{font-size:12px;color:var(--sand-11)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.cell{background:var(--sand-1);border:.5px solid var(--sand-6);border-radius:12px;overflow:hidden}
+.meta{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:.5px solid var(--sand-6)}
+.num{font-size:12px;font-weight:600;color:var(--sand-11);font-variant-numeric:tabular-nums}
+.name{font-size:14px;font-weight:600}
+.src{font-size:12px;color:var(--sand-11);margin-left:auto}
+.tag{font-size:12px;font-weight:600;padding:2px 7px;border-radius:999px;background:var(--orange-3);color:var(--orange-11)}
+.tag.a{background:var(--sand-4);color:var(--sand-11)}
+.stage{height:286px;position:relative;overflow:hidden;background:var(--sand-3);padding:20px 22px}
+.cap{padding:9px 14px 12px;font-size:12px;line-height:1.6;color:var(--sand-11)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+.ico{width:14px;height:14px;display:inline-block;vertical-align:-2px;fill:none;stroke:currentColor;stroke-width:1.5}
+.lbl{font-size:12px;color:var(--sand-11)}
+.val{font-size:20px;font-weight:600;color:var(--orange-11)}
+
+/* 01 凹陷仪表 */
+.s1{display:flex;flex-direction:column;align-items:center;gap:12px}
+.s1 .dial{width:170px;height:170px;border-radius:50%;background:var(--sand-3);box-shadow:var(--press);display:grid;place-content:center;text-align:center;position:relative}
+.s1 .dial:before{content:"";position:absolute;inset:14px;border-radius:50%;border:.5px solid var(--sand-5)}
+.s1 .big{font-size:40px;font-weight:600;letter-spacing:-.04em;color:var(--sand-12);line-height:1}
+.s1 .small{font-size:12px;color:var(--sand-11);margin-top:6px}
+.s1 .led{width:9px;height:9px;border-radius:50%;background:var(--orange-9);box-shadow:0 0 8px var(--orange-9);position:absolute;top:22px;right:22px}
+.s1 .row{display:flex;gap:10px;width:100%;justify-content:center}
+.s1 .slot{flex:1;height:38px;border-radius:12px;background:var(--sand-3);box-shadow:var(--press);display:flex;align-items:center;justify-content:center;gap:7px;font-size:12px;color:var(--sand-11)}
+
+/* 02 软浮雕 */
+.s2{display:flex;flex-direction:column;align-items:center;gap:14px}
+.s2 .orb{width:132px;height:132px;border-radius:50%;background:var(--sand-3);box-shadow:var(--raise);display:grid;place-content:center;text-align:center}
+.s2 .big{font-size:40px;font-weight:600;color:var(--orange-11);line-height:1}
+.s2 .small{font-size:12px;color:var(--sand-11);margin-top:5px}
+.s2 .cards{display:flex;gap:12px}
+.s2 .c{width:110px;height:52px;border-radius:16px;background:var(--sand-3);box-shadow:var(--raise);display:grid;place-content:center;text-align:center}
+.s2 .c b{font-size:14px;font-weight:600;display:block}
+.s2 .c span{font-size:12px;color:var(--sand-11)}
+.s2 .tabs{display:flex;gap:10px;margin-top:2px}
+.s2 .t{width:34px;height:34px;border-radius:50%;background:var(--sand-3);box-shadow:var(--raise);display:grid;place-items:center;color:var(--sand-11)}
+
+/* 03 单一表面 */
+.s3{padding:0;position:relative}
+.s3 .zone{position:absolute;border-radius:20px;background:var(--sand-3);box-shadow:var(--raise)}
+.s3 .z1{left:22px;top:22px;width:230px;height:96px;display:flex;align-items:center;padding:18px}
+.s3 .z2{right:22px;top:22px;width:150px;height:96px;box-shadow:var(--press);display:grid;place-content:center;text-align:center}
+.s3 .z3{left:22px;top:136px;width:150px;height:120px;box-shadow:var(--press);display:grid;place-content:center;text-align:center}
+.s3 .z4{right:22px;top:136px;width:230px;height:120px;display:flex;align-items:center;justify-content:center;gap:16px}
+.s3 .big{font-size:40px;font-weight:600;color:var(--orange-11);line-height:1}
+.s3 .small{font-size:12px;color:var(--sand-11)}
+.s3 .k{font-size:12px;color:var(--sand-11);display:block;margin-bottom:5px}
+.s3 .v{font-size:20px;font-weight:600;color:var(--sand-12)}
+
+/* 04 柔边卡片 零阴影 */
+.s4{padding:0;position:relative}
+.s4 .band{position:absolute;left:0;right:0;top:0;height:78px;background:linear-gradient(120deg,var(--orange-3),var(--orange-1));clip-path:polygon(0 0,100% 0,100% 62%,0 100%)}
+.s4 .week{position:absolute;left:22px;right:22px;top:92px;display:flex;gap:8px}
+.s4 .week i{flex:1;height:34px;border-radius:10px;background:linear-gradient(145deg,var(--sand-2),var(--sand-4));border-top:.5px solid var(--sand-1);border-left:.5px solid var(--sand-1);border-right:.5px solid var(--sand-6);border-bottom:.5px solid var(--sand-6);display:grid;place-items:center;font-style:normal;font-size:12px;color:var(--sand-11)}
+.s4 .week i.on{background:var(--teal-9);color:var(--sand-1)}
+.s4 .card{position:absolute;left:22px;right:22px;top:142px;height:118px;border-radius:18px;background:linear-gradient(145deg,var(--sand-2),var(--sand-4));border-top:.5px solid var(--sand-1);border-left:.5px solid var(--sand-1);border-right:.5px solid var(--sand-6);border-bottom:.5px solid var(--sand-6);padding:16px 18px}
+.s4 .card b{font-size:20px;font-weight:600;color:var(--orange-11);display:block}
+.s4 .card small{font-size:12px;color:var(--sand-11)}
+
+/* 05 软卡瀑布 零阴影 */
+.s5{display:flex;gap:14px;align-items:flex-start;padding-top:6px}
+.s5 .col{display:flex;flex-direction:column;gap:14px;flex:1}
+.s5 .b{border-radius:18px;background:linear-gradient(145deg,var(--sand-2),var(--sand-4));border-top:.5px solid var(--sand-1);border-left:.5px solid var(--sand-1);border-right:.5px solid var(--sand-6);border-bottom:.5px solid var(--sand-6);padding:14px 16px}
+.s5 .h1{height:104px}.s5 .h2{height:66px}.s5 .h3{height:88px}.s5 .h4{height:120px}
+.s5 .b b{font-size:20px;font-weight:600;color:var(--sand-12);display:block}
+.s5 .b small{font-size:12px;color:var(--sand-11)}
+.s5 .b.h4 b{color:var(--orange-11)}
+
+/* 06 节气刻度 零阴影 */
+.s6{display:grid;place-items:center;position:relative}
+.s6 .ring{width:190px;height:190px;border-radius:50%;background:linear-gradient(145deg,var(--sand-2),var(--sand-4));border-top:.5px solid var(--sand-1);border-left:.5px solid var(--sand-1);border-right:.5px solid var(--sand-6);border-bottom:.5px solid var(--sand-6);display:grid;place-content:center;text-align:center;position:relative}
+.s6 .ring:before{content:"";position:absolute;inset:18px;border-radius:50%;border:.5px solid var(--sand-6)}
+.s6 .big{font-size:40px;font-weight:600;color:var(--orange-11);line-height:1}
+.s6 .small{font-size:12px;color:var(--sand-11);margin-top:5px}
+.s6 .corner{position:absolute;font-size:12px;color:var(--sand-11);line-height:1.8}
+.s6 .tl{left:22px;top:22px}.s6 .br{right:22px;bottom:22px;text-align:right}
+.s6 .tick{position:absolute;left:50%;top:8px;transform:translateX(-50%);width:3px;height:12px;background:var(--orange-9);border-radius:2px}
+</style>
+</head>
+<body>
+<div class="pagehead"><h1>每日跑步 · 新拟态六个方向</h1><div class="sub">全部浅色底　13 个统一图标　A 档零阴影与 B 档柔和双阴影并列　2026-11-08</div></div>
+<div class="grid">
+
+  <div class="cell">
+    <div class="meta"><span class="num">01</span><span class="name">凹陷仪表</span><span class="tag">B</span><span class="src">最佳设计师　博朗面板</span></div>
+    <div class="stage s1">
+      <div class="dial"><div class="led"></div><div class="big">28:46</div><div class="small">已用时间</div></div>
+      <div class="row">
+        <div class="slot"><svg class="ico" viewBox="0 0 24 24"><path d="M3.5 12 H20.5 M6.5 9 L3.5 12 L6.5 15 M17.5 9 L20.5 12 L17.5 15"/></svg> 4.82 km</div>
+        <div class="slot"><svg class="ico" viewBox="0 0 24 24"><path d="M4 17 a8.5 8.5 0 1 1 16 0 M12 17 L15.5 10.5"/></svg> 5'48"</div>
+      </div>
+    </div>
+    <div class="cap">信息像刻进同一块面板，只有主按钮凸起。内凹圆盘加刻度，橙色只做指示灯。</div>
+  </div>
+
+  <div class="cell">
+    <div class="meta"><span class="num">02</span><span class="name">软浮雕</span><span class="tag">B</span><span class="src">最佳设计师　无印触感</span></div>
+    <div class="stage s2">
+      <div class="orb"><div class="big">5.21</div><div class="small">km　已完成</div></div>
+      <div class="cards">
+        <div class="c"><b>31:24</b><span>用时</span></div>
+        <div class="c"><b>6'02"</b><span>配速</span></div>
+      </div>
+      <div class="tabs"><div class="t"><svg class="ico" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10 H20.5"/></svg></div><div class="t"><svg class="ico" viewBox="0 0 24 24"><circle cx="5.5" cy="18.5" r="2.2"/><path d="M7.3 17.3 C9 13 12 15 15 12.5"/></svg></div><div class="t"><svg class="ico" viewBox="0 0 24 24"><path d="M8 12.2 L11 15 L16 9"/></svg></div></div>
+    </div>
+    <div class="cap">同一块软材料上按出形状，凸起圆与胶囊卡都能按。底部 tab 也是一排软圆钮。</div>
+  </div>
+
+  <div class="cell">
+    <div class="meta"><span class="num">03</span><span class="name">单一表面</span><span class="tag">B</span><span class="src">现实参照　Tempo</span></div>
+    <div class="stage s3">
+      <div class="zone z1"><div><span class="k">连续天数</span><span class="v">13 天</span></div></div>
+      <div class="zone z2"><span class="big">5.21</span><span class="small">km 本月</span></div>
+      <div class="zone z3"><span class="small">11月6日 周五</span><span class="v">19:30 出发</span></div>
+      <div class="zone z4"><span class="v">42.6 km</span><span class="v">8 次打卡</span></div>
+    </div>
+    <div class="cap">全屏一个表面色，没有一条分隔线，纯靠阴影明暗交界分区。橙色只给头条数字。</div>
+  </div>
+
+  <div class="cell">
+    <div class="meta"><span class="num">04</span><span class="name">柔边卡片</span><span class="tag a">A</span><span class="src">现实参照　健身概念稿</span></div>
+    <div class="stage s4">
+      <div class="band"></div>
+      <div class="week"><i>一</i><i class="on">二</i><i>三</i><i class="on">四</i><i>五</i><i class="on">六</i><i>日</i></div>
+      <div class="card">
+        <b>5.21 km</b>
+        <small>31:24　平均配速 6'02"　已自动打卡</small>
+        <div style="margin-top:12px;display:flex;gap:8px"><svg class="ico" viewBox="0 0 24 24"><path d="M8 12.2 L11 15 L16 9"/></svg><small style="color:var(--teal-9)">连续 13 天</small></div>
+      </div>
+    </div>
+    <div class="cap">零阴影对照，用同色阶明度差加 0.5px 明暗双边做浮雕。保留一道橙色斜切记忆点。</div>
+  </div>
+
+  <div class="cell">
+    <div class="meta"><span class="num">05</span><span class="name">软卡瀑布</span><span class="tag a">A</span><span class="src">秒数轮盘　瀑布流 07</span></div>
+    <div class="stage s5">
+      <div class="col"><div class="b h1"><b>11月</b><small>8 次打卡</small></div><div class="b h3"><b>6.30 km</b><small>11月3日 长距离</small></div></div>
+      <div class="col"><div class="b h4"><b>5.21 km</b><small>31:24　6'02"<br/>轨迹与分段</small></div><div class="b h2"><b>13 天</b><small>连续</small></div></div>
+    </div>
+    <div class="cap">不等高软块错落，月历不是表格。零阴影，靠明暗双边与渐变造厚度。</div>
+  </div>
+
+  <div class="cell">
+    <div class="meta"><span class="num">06</span><span class="name">节气刻度</span><span class="tag a">A</span><span class="src">秒数轮盘　东亚 07</span></div>
+    <div class="stage s6">
+      <div class="corner tl">十一月<br/>八次打卡</div>
+      <div class="ring"><div class="tick"></div><div class="big">13</div><div class="small">连续天数</div></div>
+      <div class="corner br">19:30 出发<br/>20:01 结束</div>
+    </div>
+    <div class="cap">只借低饱和色阶与环刻度的关系，不套古籍版式。零阴影，四角密排小字。</div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,1630 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>每日跑步 方向 02 速度色场</title>
+<script src="refs/vendor/react.js"></script>
+<script src="refs/vendor/react-dom.js"></script>
+<script src="refs/vendor/babel.js"></script>
+<style>
+/* Radix UI Colors 3.0.0 - light + dark, selected scales */
+/* 原本 .dark, .dark-theme { 的一批选择器统一改成 :root {，light 与 dark 变量同时可用 */
+
+:root, .light, .light-theme {
+  --orange-1: #fefcfb;
+  --orange-2: #fff7ed;
+  --orange-3: #ffefd6;
+  --orange-4: #ffdfb5;
+  --orange-5: #ffd19a;
+  --orange-6: #ffc182;
+  --orange-7: #f5ae73;
+  --orange-8: #ec9455;
+  --orange-9: #f76b15;
+  --orange-10: #ef5f00;
+  --orange-11: #cc4e00;
+  --orange-12: #582d1d;
+}
+
+:root {
+  --oranged-1: #17120e;
+  --oranged-2: #1e160f;
+  --oranged-3: #331e0b;
+  --oranged-4: #462100;
+  --oranged-5: #562800;
+  --oranged-6: #66350c;
+  --oranged-7: #7e451d;
+  --oranged-8: #a35829;
+  --oranged-9: #f76b15;
+  --oranged-10: #ff801f;
+  --oranged-11: #ffa057;
+  --oranged-12: #ffe0c2;
+}
+
+:root, .light, .light-theme {
+  --red-1: #fffcfc;
+  --red-2: #fff7f7;
+  --red-3: #feebec;
+  --red-4: #ffdbdc;
+  --red-5: #ffcdce;
+  --red-6: #fdbdbe;
+  --red-7: #f4a9aa;
+  --red-8: #eb8e90;
+  --red-9: #e5484d;
+  --red-10: #dc3e42;
+  --red-11: #ce2c31;
+  --red-12: #641723;
+}
+
+:root {
+  --redd-1: #191111;
+  --redd-2: #201314;
+  --redd-3: #3b1219;
+  --redd-4: #500f1c;
+  --redd-5: #611623;
+  --redd-6: #72232d;
+  --redd-7: #8c333a;
+  --redd-8: #b54548;
+  --redd-9: #e5484d;
+  --redd-10: #ec5d5e;
+  --redd-11: #ff9592;
+  --redd-12: #ffd1d9;
+}
+
+:root, .light, .light-theme {
+  --grass-1: #fbfefb;
+  --grass-2: #f5fbf5;
+  --grass-3: #e9f6e9;
+  --grass-4: #daf1db;
+  --grass-5: #c9e8ca;
+  --grass-6: #b2ddb5;
+  --grass-7: #94ce9a;
+  --grass-8: #65ba74;
+  --grass-9: #46a758;
+  --grass-10: #3e9b4f;
+  --grass-11: #2a7e3b;
+  --grass-12: #203c25;
+}
+
+:root {
+  --grassd-1: #0e1511;
+  --grassd-2: #141a15;
+  --grassd-3: #1b2a1e;
+  --grassd-4: #1d3a24;
+  --grassd-5: #25482d;
+  --grassd-6: #2d5736;
+  --grassd-7: #366740;
+  --grassd-8: #3e7949;
+  --grassd-9: #46a758;
+  --grassd-10: #53b365;
+  --grassd-11: #71d083;
+  --grassd-12: #c2f0c2;
+}
+
+:root, .light, .light-theme {
+  --teal-1: #fafefd;
+  --teal-2: #f3fbf9;
+  --teal-3: #e0f8f3;
+  --teal-4: #ccf3ea;
+  --teal-5: #b8eae0;
+  --teal-6: #a1ded2;
+  --teal-7: #83cdc1;
+  --teal-8: #53b9ab;
+  --teal-9: #12a594;
+  --teal-10: #0d9b8a;
+  --teal-11: #008573;
+  --teal-12: #0d3d38;
+}
+
+:root {
+  --teald-1: #0d1514;
+  --teald-2: #111c1b;
+  --teald-3: #0d2d2a;
+  --teald-4: #023b37;
+  --teald-5: #084843;
+  --teald-6: #145750;
+  --teald-7: #1c6961;
+  --teald-8: #207e73;
+  --teald-9: #12a594;
+  --teald-10: #0eb39e;
+  --teald-11: #0bd8b6;
+  --teald-12: #adf0dd;
+}
+
+:root, .light, .light-theme {
+  --indigo-1: #fdfdfe;
+  --indigo-2: #f7f9ff;
+  --indigo-3: #edf2fe;
+  --indigo-4: #e1e9ff;
+  --indigo-5: #d2deff;
+  --indigo-6: #c1d0ff;
+  --indigo-7: #abbdf9;
+  --indigo-8: #8da4ef;
+  --indigo-9: #3e63dd;
+  --indigo-10: #3358d4;
+  --indigo-11: #3a5bc7;
+  --indigo-12: #1f2d5c;
+}
+
+:root {
+  --indigod-1: #11131f;
+  --indigod-2: #141726;
+  --indigod-3: #182449;
+  --indigod-4: #1d2e62;
+  --indigod-5: #253974;
+  --indigod-6: #304384;
+  --indigod-7: #3a4f97;
+  --indigod-8: #435db1;
+  --indigod-9: #3e63dd;
+  --indigod-10: #5472e4;
+  --indigod-11: #9eb1ff;
+  --indigod-12: #d6e1ff;
+}
+
+:root, .light, .light-theme {
+  --slate-1: #fcfcfd;
+  --slate-2: #f9f9fb;
+  --slate-3: #f0f0f3;
+  --slate-4: #e8e8ec;
+  --slate-5: #e0e1e6;
+  --slate-6: #d9d9e0;
+  --slate-7: #cdced6;
+  --slate-8: #b9bbc6;
+  --slate-9: #8b8d98;
+  --slate-10: #80838d;
+  --slate-11: #60646c;
+  --slate-12: #1c2024;
+}
+
+:root {
+  --slated-1: #111113;
+  --slated-2: #18191b;
+  --slated-3: #212225;
+  --slated-4: #272a2d;
+  --slated-5: #2e3135;
+  --slated-6: #363a3f;
+  --slated-7: #43484e;
+  --slated-8: #5a6169;
+  --slated-9: #696e77;
+  --slated-10: #777b84;
+  --slated-11: #b0b4ba;
+  --slated-12: #edeef0;
+}
+
+:root, .light, .light-theme {
+  --gray-1: #fcfcfc;
+  --gray-2: #f9f9f9;
+  --gray-3: #f0f0f0;
+  --gray-4: #e8e8e8;
+  --gray-5: #e0e0e0;
+  --gray-6: #d9d9d9;
+  --gray-7: #cecece;
+  --gray-8: #bbbbbb;
+  --gray-9: #8d8d8d;
+  --gray-10: #838383;
+  --gray-11: #646464;
+  --gray-12: #202020;
+}
+
+:root {
+  --grayd-1: #111111;
+  --grayd-2: #191919;
+  --grayd-3: #222222;
+  --grayd-4: #2a2a2a;
+  --grayd-5: #313131;
+  --grayd-6: #3a3a3a;
+  --grayd-7: #484848;
+  --grayd-8: #606060;
+  --grayd-9: #6e6e6e;
+  --grayd-10: #7b7b7b;
+  --grayd-11: #b4b4b4;
+  --grayd-12: #eeeeee;
+}
+
+:root, .light, .light-theme {
+  --amber-1: #fefdfb;
+  --amber-2: #fefbe9;
+  --amber-3: #fff7c2;
+  --amber-4: #ffee9c;
+  --amber-5: #fbe577;
+  --amber-6: #f3d673;
+  --amber-7: #e9c162;
+  --amber-8: #e2a336;
+  --amber-9: #ffc53d;
+  --amber-10: #ffba18;
+  --amber-11: #ab6400;
+  --amber-12: #4f3422;
+}
+
+:root {
+  --amberd-1: #16120c;
+  --amberd-2: #1d180f;
+  --amberd-3: #302008;
+  --amberd-4: #3f2700;
+  --amberd-5: #4d3000;
+  --amberd-6: #5c3d05;
+  --amberd-7: #714f19;
+  --amberd-8: #8f6424;
+  --amberd-9: #ffc53d;
+  --amberd-10: #ffd60a;
+  --amberd-11: #ffca16;
+  --amberd-12: #ffe7b3;
+}
+
+/* 展示板全局 */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; width: 100%; height: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", Arial, sans-serif;
+  background: var(--slate-1);
+  color: var(--slate-12);
+}
+#root { width: 1600px; height: 1100px; position: relative; overflow: hidden; }
+button { font-family: inherit; }
+@keyframes veloModal {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+/* ============================================================
+   设备框组件：完整原样移植 ios_frame.jsx / android_frame.jsx
+   ============================================================ */
+
+const iosFrameStyles = {
+  wrapper: {
+    display: 'inline-block',
+    padding: 12,
+    background: '#000',
+    borderRadius: 60,
+    boxShadow: '0 0 0 2px #1f2937, 0 20px 60px rgba(0,0,0,0.3)',
+    position: 'relative',
+  },
+  screen: {
+    position: 'relative',
+    borderRadius: 48,
+    overflow: 'hidden',
+    background: '#fff',
+  },
+  statusBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 54,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0 32px 0 32px',
+    fontSize: 16,
+    fontWeight: 600,
+    fontFamily: '-apple-system, "SF Pro Text", sans-serif',
+    zIndex: 20,
+    pointerEvents: 'none',
+  },
+  dynamicIsland: {
+    position: 'absolute',
+    top: 12,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: 124,
+    height: 36,
+    background: '#000',
+    borderRadius: 999,
+    zIndex: 30,
+  },
+  statusIcons: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+  },
+  signalIcon: {
+    display: 'flex',
+    alignItems: 'flex-end',
+    gap: 2,
+    height: 12,
+  },
+  signalBar: {
+    width: 3,
+    background: 'currentColor',
+    borderRadius: 1,
+  },
+  wifiIcon: {
+    width: 16,
+    height: 12,
+    position: 'relative',
+  },
+  batteryIcon: {
+    width: 26,
+    height: 12,
+    border: '1.5px solid currentColor',
+    borderRadius: 3,
+    padding: 1,
+    position: 'relative',
+    opacity: 0.8,
+  },
+  batteryCap: {
+    position: 'absolute',
+    top: 3,
+    right: -3,
+    width: 2,
+    height: 6,
+    background: 'currentColor',
+    borderRadius: '0 1px 1px 0',
+  },
+  content: {
+    position: 'absolute',
+    top: 54,
+    left: 0,
+    right: 0,
+    bottom: 34,
+    overflow: 'auto',
+  },
+  homeIndicator: {
+    position: 'absolute',
+    bottom: 10,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: 140,
+    height: 5,
+    background: 'rgba(0,0,0,0.3)',
+    borderRadius: 999,
+    zIndex: 10,
+  },
+  homeIndicatorDark: {
+    background: 'rgba(255,255,255,0.5)',
+  },
+};
+
+function IosFrame({
+  children,
+  width = 393,
+  height = 852,
+  time = '9:41',
+  battery = 100,
+  darkMode = false,
+  showStatusBar = true,
+  showDynamicIsland = true,
+  showHomeIndicator = true,
+}) {
+  const textColor = darkMode ? '#fff' : '#000';
+
+  return (
+    <div style={iosFrameStyles.wrapper}>
+      <div style={{
+        ...iosFrameStyles.screen,
+        width,
+        height,
+        background: darkMode ? '#000' : '#fff',
+      }}>
+        {showStatusBar && (
+          <div style={{ ...iosFrameStyles.statusBar, color: textColor }}>
+            <span>{time}</span>
+            <div style={iosFrameStyles.statusIcons}>
+              <div style={iosFrameStyles.signalIcon}>
+                <div style={{ ...iosFrameStyles.signalBar, height: 4 }} />
+                <div style={{ ...iosFrameStyles.signalBar, height: 6 }} />
+                <div style={{ ...iosFrameStyles.signalBar, height: 9 }} />
+                <div style={{ ...iosFrameStyles.signalBar, height: 11 }} />
+              </div>
+              <svg width="16" height="12" viewBox="0 0 16 12" fill="none" style={{ color: textColor }}>
+                <path d="M8 11.5a1 1 0 100-2 1 1 0 000 2z" fill="currentColor" />
+                <path d="M3 7.5a7 7 0 0110 0" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+                <path d="M1 4.5a11 11 0 0114 0" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" opacity="0.7" />
+              </svg>
+              <div style={iosFrameStyles.batteryIcon}>
+                <div style={{
+                  width: `${battery}%`,
+                  height: '100%',
+                  background: 'currentColor',
+                  borderRadius: 1,
+                  opacity: 0.9,
+                }} />
+                <div style={iosFrameStyles.batteryCap} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showDynamicIsland && <div style={iosFrameStyles.dynamicIsland} />}
+
+        <div style={iosFrameStyles.content}>
+          {children}
+        </div>
+
+        {showHomeIndicator && (
+          <div style={{
+            ...iosFrameStyles.homeIndicator,
+            ...(darkMode ? iosFrameStyles.homeIndicatorDark : {}),
+          }} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+if (typeof window !== 'undefined') {
+  window.IosFrame = IosFrame;
+}
+
+const androidFrameStyles = {
+  wrapper: {
+    display: 'inline-block',
+    padding: 10,
+    background: '#1a1a1a',
+    borderRadius: 44,
+    boxShadow: '0 0 0 2px #2a2a2a, 0 20px 60px rgba(0,0,0,0.3)',
+    position: 'relative',
+  },
+  screen: {
+    position: 'relative',
+    borderRadius: 36,
+    overflow: 'hidden',
+    background: '#fff',
+  },
+  statusBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 32,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0 24px',
+    fontSize: 14,
+    fontWeight: 500,
+    fontFamily: 'Roboto, -apple-system, sans-serif',
+    zIndex: 20,
+    pointerEvents: 'none',
+  },
+  punchHole: {
+    position: 'absolute',
+    top: 10,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: 14,
+    height: 14,
+    background: '#000',
+    borderRadius: '50%',
+    zIndex: 30,
+  },
+  statusIcons: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+  },
+  batteryText: {
+    fontSize: 11,
+    fontWeight: 600,
+    marginLeft: 2,
+  },
+  content: {
+    position: 'absolute',
+    top: 32,
+    left: 0,
+    right: 0,
+    bottom: 24,
+    overflow: 'auto',
+  },
+  navBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 24,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 60,
+    zIndex: 10,
+  },
+  navButton: {
+    width: 36,
+    height: 4,
+    background: 'rgba(0,0,0,0.3)',
+    borderRadius: 999,
+  },
+};
+
+function AndroidFrame({
+  children,
+  width = 412,
+  height = 892,
+  time = '9:41',
+  battery = 100,
+  darkMode = false,
+  navStyle = 'gesture',
+}) {
+  const textColor = darkMode ? '#fff' : '#1a1a1a';
+
+  return (
+    <div style={androidFrameStyles.wrapper}>
+      <div style={{
+        ...androidFrameStyles.screen,
+        width,
+        height,
+        background: darkMode ? '#000' : '#fff',
+      }}>
+        <div style={{ ...androidFrameStyles.statusBar, color: textColor }}>
+          <span>{time}</span>
+          <div style={androidFrameStyles.statusIcons}>
+            <svg width="14" height="10" viewBox="0 0 14 10" fill="currentColor">
+              <rect x="0" y="6" width="2" height="4" rx="0.5" />
+              <rect x="4" y="4" width="2" height="6" rx="0.5" />
+              <rect x="8" y="2" width="2" height="8" rx="0.5" />
+              <rect x="12" y="0" width="2" height="10" rx="0.5" />
+            </svg>
+            <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
+              <path d="M7 9a1 1 0 100-2 1 1 0 000 2z" fill="currentColor" />
+              <path d="M3 6a5 5 0 018 0" stroke="currentColor" strokeWidth="1.2" />
+              <path d="M0.5 3.5a11 11 0 0113 0" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
+            </svg>
+            <div style={{
+              width: 22,
+              height: 10,
+              border: '1.5px solid currentColor',
+              borderRadius: 2,
+              padding: 1,
+              position: 'relative',
+            }}>
+              <div style={{
+                width: `${battery}%`,
+                height: '100%',
+                background: 'currentColor',
+                borderRadius: 1,
+              }} />
+            </div>
+            <span style={androidFrameStyles.batteryText}>{battery}%</span>
+          </div>
+        </div>
+
+        <div style={androidFrameStyles.punchHole} />
+
+        <div style={androidFrameStyles.content}>
+          {children}
+        </div>
+
+        {navStyle === 'gesture' && (
+          <div style={androidFrameStyles.navBar}>
+            <div style={{
+              ...androidFrameStyles.navButton,
+              width: 100,
+              height: 4,
+              background: darkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+            }} />
+          </div>
+        )}
+
+        {navStyle === 'buttons' && (
+          <div style={androidFrameStyles.navBar}>
+            <span style={{ color: textColor, fontSize: 20 }}>◁</span>
+            <span style={{ color: textColor, fontSize: 16 }}>○</span>
+            <span style={{ color: textColor, fontSize: 16 }}>□</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+if (typeof window !== 'undefined') {
+  window.AndroidFrame = AndroidFrame;
+}
+
+/* ============================================================
+   统一内联 SVG 图标：1.5px 线性描边，currentColor，16 / 20 两档
+   ============================================================ */
+
+const ICON_PATHS = {
+  calendar: (
+    <g>
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+      <path d="M3.5 10 H20.5" />
+      <path d="M8 3 V6.5 M16 3 V6.5" />
+    </g>
+  ),
+  calendarPen: (
+    <g>
+      <rect x="3.5" y="4.5" width="17" height="12" rx="2.5" />
+      <path d="M3.5 9 H20.5" />
+      <path d="M8 2.5 V6" />
+      <path d="M12.5 21 l0.9 -3 5.1 -5.1 2.1 2.1 -5.1 5.1 z" />
+      <path d="M17.8 13.2 l2.1 2.1" />
+    </g>
+  ),
+  clock: (
+    <g>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7 V12 L15.5 14" />
+    </g>
+  ),
+  route: (
+    <g>
+      <circle cx="5.5" cy="18.5" r="2.2" />
+      <path d="M18.5 2.5 a4 4 0 0 1 4 4 c0 3.5 -4 8 -4 8 s-4 -4.5 -4 -8 a4 4 0 0 1 4 -4 z" />
+      <circle cx="18.5" cy="6.5" r="1.2" />
+      <path d="M7.3 17.3 C9 13 12 15 15 12.5" />
+    </g>
+  ),
+  distance: (
+    <g>
+      <path d="M3.5 12 H20.5" />
+      <path d="M6.5 9 L3.5 12 L6.5 15" />
+      <path d="M17.5 9 L20.5 12 L17.5 15" />
+    </g>
+  ),
+  pace: (
+    <g>
+      <path d="M4 17 a8.5 8.5 0 1 1 16 0" />
+      <path d="M12 17 L15.5 10.5" />
+      <circle cx="12" cy="17" r="1.2" />
+      <path d="M3.5 17 H6 M18 17 H20.5" />
+    </g>
+  ),
+  heart: (
+    <g>
+      <path d="M3.5 9.2 A4.2 4.2 0 0 1 12 7.3 A4.2 4.2 0 0 1 20.5 9.2 C20.5 15 12 20.5 12 20.5 C12 20.5 3.5 15 3.5 9.2 Z" />
+      <path d="M6.5 12 h3 l1.3 -2 2 4 1.4 -2 h3" />
+    </g>
+  ),
+  check: (
+    <g>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M8 12.2 L11 15 L16 9" />
+    </g>
+  ),
+  bell: (
+    <g>
+      <path d="M5.5 17 h13 l-1.8 -2.5 V10 a4.7 4.7 0 0 0 -9.4 0 v4.5 z" />
+      <path d="M10 19.5 a2 2 0 0 0 4 0" />
+    </g>
+  ),
+  share: (
+    <g>
+      <path d="M12 3 V15" />
+      <path d="M8.5 6.5 L12 3 L15.5 6.5" />
+      <path d="M6 11 H5 a1.5 1.5 0 0 0 -1.5 1.5 V19 A1.5 1.5 0 0 0 5 20.5 H19 A1.5 1.5 0 0 0 20.5 19 V12.5 A1.5 1.5 0 0 0 19 11 H18" />
+    </g>
+  ),
+  pause: (
+    <g>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M10 9 V15 M14 9 V15" />
+    </g>
+  ),
+  finish: (
+    <g>
+      <path d="M6 21 V3" />
+      <path d="M6 4 H18 L15.5 8 L18 12 H6" />
+    </g>
+  ),
+  list: (
+    <g>
+      <path d="M8.5 6.5 H20 M8.5 12 H20 M8.5 17.5 H20" />
+      <path d="M3.5 6.5 H5.5 M3.5 12 H5.5 M3.5 17.5 H5.5" />
+    </g>
+  ),
+};
+
+function Icon({ name, size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+      style={{ display: 'block', flex: '0 0 auto' }} aria-hidden="true">
+      {ICON_PATHS[name]}
+    </svg>
+  );
+}
+
+function IconLabel({ name, children, size = 16 }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <Icon name={name} size={size} />
+      <span>{children}</span>
+    </span>
+  );
+}
+
+/* ============================================================
+   统一内容数据 / 常量
+   ============================================================ */
+
+const RUN = {
+  date: '11月6日 周五',
+  planTime: '19:30',
+  planType: '轻松跑',
+  target: '5.00 km',
+  remind: '19:15',
+  elapsed: '28:46',
+  dist: '4.82 km',
+  pace: `5'48"`,
+  avgPace: `5'52"`,
+  hr: '142',
+  finishDist: '5.21 km',
+  finishTime: '31:24',
+  finishPace: `6'02"`,
+  kcal: '342 kcal',
+  streak: '13 天',
+  monthKm: '42.6 km',
+  monthCount: '8 次',
+  rec1: { date: '11月3日', dist: '6.30 km', time: '37:12', pace: `5'54"` },
+  rec2: { date: '10月31日', dist: '5.02 km', time: '30:08', pace: `6'00"` },
+};
+
+const TABS = [
+  { key: 'today', label: '今日', icon: 'calendar' },
+  { key: 'plan', label: '计划', icon: 'calendarPen' },
+  { key: 'running', label: '跑中', icon: 'route' },
+  { key: 'finish', label: '完成', icon: 'check' },
+  { key: 'history', label: '记录', icon: 'list' },
+];
+
+const SCREEN_LABELS = [
+  { num: '01', label: '今日', main: false },
+  { num: '02', label: '计划', main: false },
+  { num: '03', label: '跑中', main: true },
+  { num: '04', label: '完成', main: false },
+  { num: '05', label: '记录', main: false },
+];
+
+/* 12–15° 斜切分区 */
+const CUT = {
+  trap:  'polygon(8% 0, 100% 0, 92% 100%, 0 100%)',
+  trap2: 'polygon(0 0, 92% 0, 100% 100%, 8% 100%)',
+  band:  'polygon(0 0, 100% 0, 100% 56%, 0 100%)',
+  band2: 'polygon(0 0, 100% 0, 100% 100%, 0 56%)',
+  topCut:'polygon(0 22%, 100% 0, 100% 100%, 0 100%)',
+  chip:  'polygon(9% 0, 100% 0, 91% 100%, 0 100%)',
+};
+
+/* ============================================================
+   velocityStyles：唯一命名的样式对象
+   ============================================================ */
+
+const velocityStyles = {
+  board: {
+    width: 1600, height: 1100, position: 'relative', overflow: 'hidden',
+    background: 'var(--orange-1)',
+  },
+  head: { position: 'absolute', left: 56, top: 30, zIndex: 5 },
+  title: { fontSize: 24, fontWeight: 600, color: 'var(--slate-12)', letterSpacing: '-0.02em', margin: 0 },
+  tagline: { fontSize: 14, fontWeight: 400, color: 'var(--slate-11)', marginTop: 6 },
+  chips: { display: 'flex', gap: 10, marginTop: 18, alignItems: 'center' },
+  chip: {
+    fontSize: 12, fontWeight: 600, color: 'var(--orange-11)',
+    background: 'var(--orange-3)', border: '0.5px solid var(--orange-6)',
+    padding: '7px 16px', clipPath: CUT.chip, fontVariantNumeric: 'tabular-nums',
+  },
+  chipMain: { background: 'var(--orange-9)', color: 'var(--orange-1)', borderColor: 'var(--orange-9)' },
+  meta: { position: 'absolute', right: 56, top: 32, zIndex: 5, textAlign: 'right' },
+  metaA: { fontSize: 12, fontWeight: 600, color: 'var(--slate-12)' },
+  metaB: { fontSize: 12, fontWeight: 400, color: 'var(--slate-11)', marginTop: 5 },
+  screenRoot: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    overflow: 'hidden', color: 'var(--slate-12)',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "PingFang SC", Arial, sans-serif',
+  },
+  lightPage: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    background: 'var(--orange-1)', padding: '16px 16px 62px',
+    display: 'flex', flexDirection: 'column', gap: 12, overflow: 'hidden',
+  },
+  hdr: { display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' },
+  hdrBig: { fontSize: 24, fontWeight: 600, color: 'var(--slate-12)', letterSpacing: '-0.02em' },
+  hdrSmall: { fontSize: 12, fontWeight: 500, color: 'var(--slate-11)' },
+  kicker: { fontSize: 12, fontWeight: 600, color: 'var(--orange-11)' },
+  num24: { fontSize: 24, fontWeight: 600, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' },
+  num14: { fontSize: 14, fontWeight: 600, fontVariantNumeric: 'tabular-nums' },
+  txt14: { fontSize: 14, fontWeight: 400, color: 'var(--slate-12)' },
+  txt12: { fontSize: 12, fontWeight: 400, color: 'var(--slate-11)' },
+  cutBlock: { position: 'relative', padding: '14px 20px', background: 'var(--orange-3)' },
+  heroBand: {
+    position: 'relative', padding: '16px 24px 20px',
+    background: 'var(--orange-9)', color: 'var(--orange-1)', clipPath: CUT.trap2,
+  },
+  heroBandAlt: {
+    position: 'relative', padding: '16px 24px 20px',
+    background: 'var(--orange-10)', color: 'var(--orange-1)', clipPath: CUT.trap,
+  },
+  calWrap: { padding: '12px 20px 16px', background: 'var(--orange-3)', clipPath: CUT.trap },
+  calGrid: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginTop: 8 },
+  calHead: { fontSize: 12, fontWeight: 500, color: 'var(--slate-11)', textAlign: 'center' },
+  calCell: {
+    aspectRatio: '1 / 1', borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: 12, fontWeight: 500, fontVariantNumeric: 'tabular-nums',
+    background: 'var(--orange-2)', color: 'var(--slate-11)', border: '0.5px solid var(--slate-6)',
+  },
+  calDone: { background: 'var(--teal-9)', color: 'var(--orange-1)', borderColor: 'var(--teal-9)' },
+  calToday: { background: 'var(--orange-1)', color: 'var(--orange-11)', borderColor: 'var(--orange-9)', fontWeight: 600 },
+  rowLine: {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '10px 2px', borderBottom: '0.5px solid var(--slate-6)',
+  },
+  pillBtn: {
+    fontSize: 14, fontWeight: 600, color: 'var(--orange-1)', background: 'var(--orange-9)',
+    border: '0.5px solid var(--orange-9)', borderRadius: 999, padding: '10px 16px',
+    cursor: 'pointer', textAlign: 'center', width: '100%',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+  },
+  ghostBtn: {
+    fontSize: 12, fontWeight: 600, color: 'var(--orange-11)', background: 'var(--orange-3)',
+    border: '0.5px solid var(--orange-6)', borderRadius: 999, padding: '6px 14px', cursor: 'pointer',
+  },
+  tabbar: {
+    position: 'absolute', left: 0, right: 0, bottom: 0, height: 52, zIndex: 8,
+    display: 'flex', alignItems: 'stretch', background: 'var(--orange-1)',
+    borderTop: '0.5px solid var(--slate-6)',
+  },
+  tabbarRunning: {
+    background: 'var(--orange-1)', borderTop: '0.5px solid var(--slate-6)',
+    clipPath: CUT.topCut,
+  },
+  tabItem: {
+    flex: 1, border: 'none', background: 'transparent', cursor: 'pointer',
+    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
+    fontSize: 12, fontFamily: 'inherit',
+  },
+  boardLabel: { position: 'absolute', display: 'flex', alignItems: 'center', gap: 9 },
+  boardNum: { fontSize: 12, fontWeight: 600, color: 'var(--orange-11)', fontVariantNumeric: 'tabular-nums' },
+  boardTxt: { fontSize: 14, fontWeight: 600, color: 'var(--slate-12)' },
+  doneTag: {
+    display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600,
+    background: 'var(--teal-9)', color: 'var(--orange-1)', borderRadius: 999, padding: '4px 12px',
+  },
+};
+
+/* ============================================================
+   程序化图形：抽象街区线框 + 粗轨迹带 + 配速条
+   ============================================================ */
+
+function TrackBand({ color = 'var(--orange-9)', height = 110, width = 7, opacity = 1, dot = true, bottom = 0 }) {
+  return (
+    <svg viewBox="0 0 480 110" preserveAspectRatio="none" style={{
+      position: 'absolute', left: -10, bottom, width: 'calc(100% + 20px)',
+      height, color, opacity, pointerEvents: 'none',
+    }}>
+      <path d="M-10 80 C50 72 88 54 140 58 S208 88 266 70 S338 46 400 56 S452 78 490 64"
+        style={{
+          fill: 'none', stroke: 'currentColor', strokeWidth: width,
+          strokeLinecap: 'round', strokeLinejoin: 'round',
+          vectorEffect: 'non-scaling-stroke',
+        }} />
+      {dot && <circle cx="400" cy="56" r={width} style={{ fill: 'currentColor' }} />}
+    </svg>
+  );
+}
+
+function StreetMap({ w = '100%', h = 150, grid = 'var(--slate-6)', track = 'var(--orange-9)', lw = 5 }) {
+  return (
+    <svg viewBox="0 0 240 160" preserveAspectRatio="none" style={{ width: w, height: h, display: 'block' }}>
+      <g style={{ stroke: grid, strokeWidth: 0.5, fill: 'none', opacity: 0.65 }}>
+        <path d="M0 34 H240 M0 86 H240 M0 132 H240 M46 0 V160 M112 0 V160 M180 0 V160" />
+        <path d="M0 0 L240 160 M240 0 L0 160" style={{ opacity: 0.4 }} />
+      </g>
+      <path d="M22 132 C60 120 74 56 120 62 S172 128 208 92"
+        style={{ fill: 'none', stroke: track, strokeWidth: lw, strokeLinecap: 'round' }} />
+      <circle cx="22" cy="132" r={lw} style={{ fill: track }} />
+      <circle cx="208" cy="92" r={lw + 1} style={{ fill: track }} />
+    </svg>
+  );
+}
+
+function PaceBars({ color = 'var(--orange-9)', h = 36, dark = false }) {
+  const vals = [0.52, 0.68, 0.6, 0.86, 0.72, 0.9, 0.66];
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 5, height: h }}>
+      {vals.map((v, i) => (
+        <div key={i} style={{
+          flex: 1, height: Math.round(v * h), borderRadius: 4,
+          background: color, opacity: dark ? 0.92 : 1,
+        }} />
+      ))}
+    </div>
+  );
+}
+
+/* ============================================================
+   通用组件：TabBar / Modal / 开关
+   ============================================================ */
+
+function TabBar({ current, onTab, running }) {
+  return (
+    <div data-act="tabbar" style={{
+      ...velocityStyles.tabbar,
+      ...(running ? velocityStyles.tabbarRunning : {}),
+    }}>
+      {TABS.map(t => {
+        const on = current === t.key;
+        return (
+          <button key={t.key} data-tab={t.key} onClick={() => onTab(t.key)}
+            style={{
+              ...velocityStyles.tabItem,
+              fontWeight: on ? 600 : 400,
+              color: on ? 'var(--orange-11)' : 'var(--slate-11)',
+            }}>
+            <Icon name={t.icon} size={20} />
+            {t.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function VeloModal({ title, onClose, children, dark }) {
+  return (
+    <div data-act="modal-overlay" onClick={onClose}
+      style={{ position: 'absolute', inset: 0, zIndex: 40 }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'var(--slate-12)', opacity: 0.3 }} />
+      <div style={{
+        position: 'relative', height: '100%', display: 'flex', alignItems: 'center',
+        justifyContent: 'center', padding: 16, pointerEvents: 'none',
+      }}>
+        <div data-act="modal" onClick={e => e.stopPropagation()} style={{
+          width: '86%', maxHeight: '88%', overflow: 'auto', pointerEvents: 'auto',
+          background: dark ? 'var(--orange-2)' : 'var(--orange-1)',
+          borderRadius: 12, padding: 14,
+          border: '0.5px solid var(--slate-6)',
+          boxShadow: '0 18px 48px color-mix(in srgb, var(--slate-12) 20%, transparent)',
+          animation: 'veloModal 250ms ease-out',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--slate-12)' }}>{title}</span>
+            <button onClick={onClose} style={{
+              fontSize: 12, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+              color: 'var(--slate-11)',
+              background: 'transparent', border: 'none',
+            }}>关闭</button>
+          </div>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Toggle({ on, onToggle }) {
+  return (
+    <button data-act="reminder" onClick={onToggle} aria-label="提醒开关" style={{
+      width: 46, height: 24, borderRadius: 999, border: '0.5px solid var(--slate-6)',
+      background: on ? 'var(--orange-9)' : 'var(--slate-6)',
+      cursor: 'pointer', padding: 2, display: 'flex', alignItems: 'center',
+      justifyContent: on ? 'flex-end' : 'flex-start',
+    }}>
+      <span style={{
+        width: 18, height: 18, borderRadius: 999, background: 'var(--orange-1)',
+      }} />
+    </button>
+  );
+}
+
+/* ============================================================
+   5 个屏幕
+   ============================================================ */
+
+function TodayScreen({ open }) {
+  const calHead = ['一', '二', '三', '四', '五', '六', '日'];
+  const days = [
+    { d: '26', s: '' }, { d: '27', s: '' }, { d: '28', s: '' }, { d: '29', s: '' },
+    { d: '30', s: 'done' }, { d: '31', s: '' }, { d: '1', s: 'done' },
+    { d: '2', s: '' }, { d: '3', s: 'done' }, { d: '4', s: '' }, { d: '5', s: 'done' },
+    { d: '6', s: 'today' }, { d: '7', s: '' },
+  ];
+  return (
+    <div style={velocityStyles.lightPage}>
+
+      <div style={velocityStyles.hdr}>
+        <span style={velocityStyles.hdrBig}>今日</span>
+        <span style={velocityStyles.hdrSmall}>{RUN.date}</span>
+      </div>
+
+      <div style={velocityStyles.heroBand}>
+        <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--orange-1)', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="check" size={16} />连续打卡
+        </div>
+        <div style={{ fontSize: 24, fontWeight: 600, color: 'var(--orange-1)', fontVariantNumeric: 'tabular-nums', marginTop: 4 }}>
+          {RUN.streak}
+        </div>
+        <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--orange-1)', marginTop: 6 }}>
+          11月6日 已完成，自动写入
+        </div>
+      </div>
+
+      <div style={velocityStyles.calWrap}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--slate-12)', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="calendar" size={16} />十一月 打卡
+          </span>
+          <span style={velocityStyles.txt12}>周一起</span>
+        </div>
+        <div style={velocityStyles.calGrid}>
+          {calHead.map(h => <div key={h} style={velocityStyles.calHead}>{h}</div>)}
+          {days.map((c, i) => (
+            <div key={i} style={{
+              ...velocityStyles.calCell,
+              ...(c.s === 'done' ? velocityStyles.calDone : {}),
+              ...(c.s === 'today' ? velocityStyles.calToday : {}),
+            }}>{c.d}</div>
+          ))}
+        </div>
+      </div>
+
+      <div data-act="plan-card" onClick={() => open('planDetail')}
+        style={{
+          ...velocityStyles.cutBlock, clipPath: CUT.trap2, cursor: 'pointer',
+          background: 'var(--orange-3)', border: '0.5px solid var(--orange-6)',
+        }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ ...velocityStyles.kicker, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="calendar" size={16} />今日计划
+          </span>
+          <span style={velocityStyles.txt12}>查看</span>
+        </div>
+        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--slate-12)', marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="clock" size={16} />{RUN.planTime} {RUN.planType}
+        </div>
+        <div style={{ ...velocityStyles.txt12, marginTop: 5, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="bell" size={16} />目标 {RUN.target}，提醒 {RUN.remind}
+        </div>
+      </div>
+
+      <div style={{ ...velocityStyles.rowLine, borderBottom: 'none', marginTop: 'auto' }}>
+        <span style={{ ...velocityStyles.txt12, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="distance" size={16} />11月累计
+        </span>
+        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--slate-12)', fontVariantNumeric: 'tabular-nums' }}>
+          {RUN.monthKm}，{RUN.monthCount}打卡
+        </span>
+      </div>
+
+    </div>
+  );
+}
+
+function PlanScreen({ open, reminder, toggleReminder }) {
+  const rows = [
+    { k: '日期', v: RUN.date, act: 'field', icon: 'calendar' },
+    { k: '时间', v: RUN.planTime, act: 'field', icon: 'clock' },
+    { k: '类型', v: RUN.planType, act: 'field', icon: 'route' },
+    { k: '目标', v: RUN.target, act: 'field', icon: 'distance' },
+  ];
+  return (
+    <div style={velocityStyles.lightPage}>
+
+      <div style={velocityStyles.hdr}>
+        <span style={velocityStyles.hdrBig}>新建计划</span>
+        <span style={velocityStyles.hdrSmall}>写进日历</span>
+      </div>
+
+      <div style={{ ...velocityStyles.heroBandAlt, paddingBottom: 26 }}>
+        <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--orange-1)' }}>11月6日 周五</div>
+        <div style={{ fontSize: 24, fontWeight: 600, color: 'var(--orange-1)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Icon name="clock" size={20} />{RUN.planTime} 出发
+        </div>
+      </div>
+
+      <div style={{ ...velocityStyles.cutBlock, clipPath: CUT.trap, background: 'var(--orange-3)', padding: '6px 20px' }}>
+        {rows.map(r => (
+          <div key={r.k} data-act={r.act} onClick={() => open('field')} style={{ ...velocityStyles.rowLine, cursor: 'pointer' }}>
+            <span style={{ ...velocityStyles.txt12, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Icon name={r.icon} size={16} />{r.k}
+            </span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--slate-12)' }}>{r.v}</span>
+          </div>
+        ))}
+        <div style={{ ...velocityStyles.rowLine, borderBottom: 'none' }}>
+          <span style={{ ...velocityStyles.txt12, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="bell" size={16} />提醒 {RUN.remind}
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 12, fontWeight: 500, color: reminder ? 'var(--orange-11)' : 'var(--slate-11)' }}>
+              {reminder ? '开' : '关'}
+            </span>
+            <Toggle on={reminder} onToggle={toggleReminder} />
+          </div>
+        </div>
+      </div>
+
+      <div style={{ ...velocityStyles.txt12, lineHeight: 1.7, marginTop: 2 }}>
+        计划进日历，跑完自动打卡
+      </div>
+
+      <button data-act="save" onClick={() => open('saved')} style={{ ...velocityStyles.pillBtn, marginTop: 'auto' }}>
+        <Icon name="check" size={16} />保存计划
+      </button>
+    </div>
+  );
+}
+
+function RunningScreen({ go, paused, setPaused }) {
+  return (
+    <div style={{ ...velocityStyles.screenRoot, background: 'var(--orange-1)' }}>
+
+      {/* 约 25% 面积的橙色斜切色带，避开左侧巨字 */}
+      <div style={{
+        position: 'absolute', right: -30, top: -30, width: 150, height: 720,
+        background: 'var(--orange-9)',
+        clipPath: 'polygon(38% 0, 100% 0, 100% 100%, 0 100%)',
+      }} />
+      {/* 低不透明度斜切带，保留色场层次 */}
+      <div style={{
+        position: 'absolute', left: -40, top: 250, width: '140%', height: 200,
+        background: 'var(--orange-9)', opacity: 0.1,
+        clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 34%)',
+      }} />
+
+      {/* 抽象街区线框 */}
+      <div style={{ position: 'absolute', left: 0, right: 0, top: 110, height: 260, opacity: 0.4 }}>
+        <StreetMap w="100%" h={260} grid="var(--slate-6)" track="var(--orange-9)" lw={0.5} />
+      </div>
+
+      {/* 横贯屏底的粗轨迹带 */}
+      <TrackBand color="var(--orange-9)" height={110} width={7} bottom={46} />
+
+      <div style={{ position: 'absolute', top: 14, left: 18, right: 18, display: 'flex', justifyContent: 'space-between', zIndex: 3 }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--slate-12)' }}>运动中</span>
+        <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--slate-12)' }}>{RUN.planTime} {RUN.planType}</span>
+      </div>
+
+      {/* 倾斜巨字实时时间 */}
+      <div style={{ position: 'absolute', top: 52, left: 16, zIndex: 3 }}>
+        <div style={{
+          fontSize: 72, fontWeight: 600, color: 'var(--orange-11)', lineHeight: 0.98,
+          letterSpacing: '-0.055em', fontVariantNumeric: 'tabular-nums',
+          transform: 'skewX(-11deg)', transformOrigin: 'left bottom', whiteSpace: 'nowrap',
+        }}>{RUN.elapsed}</div>
+        <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--slate-11)', marginTop: 8, marginLeft: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="clock" size={16} />已用时间
+        </div>
+      </div>
+
+      <div style={{ position: 'absolute', top: 176, left: 18, zIndex: 3 }}>
+        <div style={{ fontSize: 24, fontWeight: 600, color: 'var(--slate-12)', fontVariantNumeric: 'tabular-nums' }}>{RUN.dist}</div>
+        <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--slate-11)', marginTop: 3, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="distance" size={16} />已跑距离
+        </div>
+      </div>
+
+      {/* 跑出画面边缘的斜切大字：当前配速 */}
+      <div style={{
+        position: 'absolute', top: 300, right: -54, zIndex: 2,
+        fontSize: 72, fontWeight: 600, color: 'var(--orange-1)', opacity: 0.32,
+        transform: 'skewX(-11deg)', letterSpacing: '-0.05em',
+        fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', pointerEvents: 'none',
+      }}>{RUN.pace}</div>
+
+      <div style={{
+        position: 'absolute', top: 232, left: 18, right: 18, zIndex: 3,
+        display: 'flex', justifyContent: 'space-between',
+      }}>
+        {[
+          { v: RUN.avgPace, k: '平均配速', icon: 'pace' },
+          { v: RUN.hr, k: '心率', icon: 'heart' },
+        ].map(x => (
+          <div key={x.k}>
+            <div style={{ fontSize: 24, fontWeight: 600, color: 'var(--slate-12)', fontVariantNumeric: 'tabular-nums' }}>{x.v}</div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--slate-11)', marginTop: 3, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Icon name={x.icon} size={16} />{x.k}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 暂停 / 结束 */}
+      <div style={{
+        position: 'absolute', bottom: 128, left: 18, right: 18, zIndex: 5,
+        display: 'flex', gap: 10,
+      }}>
+        <button data-act="pause" onClick={() => setPaused(!paused)} style={{
+          flex: 1, fontSize: 14, fontWeight: 600, color: 'var(--slate-12)',
+          background: 'var(--orange-1)', border: '0.5px solid var(--slate-6)',
+          borderRadius: 999, padding: '11px 0', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        }}><Icon name="pause" size={16} />{paused ? '继续' : '暂停'}</button>
+        <button data-act="end" onClick={() => go('finish')} style={{
+          flex: 1, fontSize: 14, fontWeight: 600, color: 'var(--orange-1)',
+          background: 'var(--orange-11)', border: '0.5px solid var(--orange-11)',
+          borderRadius: 999, padding: '11px 0', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        }}><Icon name="finish" size={16} />结束</button>
+      </div>
+
+      <TabBar current="running" onTab={go} running={true} />
+    </div>
+  );
+}
+
+function FinishScreen({ open }) {
+  return (
+    <div style={velocityStyles.lightPage}>
+
+      <div style={velocityStyles.hdr}>
+        <span style={velocityStyles.hdrBig}>完成</span>
+        <span style={velocityStyles.doneTag}><Icon name="check" size={16} />已自动打卡</span>
+      </div>
+
+      <div style={{ ...velocityStyles.heroBandAlt, paddingBottom: 34 }}>
+        <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--orange-1)' }}>11月6日 轻松跑</div>
+        <div style={{ display: 'flex', gap: 18, marginTop: 10, alignItems: 'baseline', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 24, fontWeight: 600, color: 'var(--orange-1)', fontVariantNumeric: 'tabular-nums', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="distance" size={16} />{RUN.finishDist}
+          </span>
+          <span style={{ fontSize: 24, fontWeight: 600, color: 'var(--orange-1)', fontVariantNumeric: 'tabular-nums', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="clock" size={16} />{RUN.finishTime}
+          </span>
+        </div>
+        <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--orange-1)', marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="pace" size={16} />平均配速 {RUN.finishPace}，{RUN.kcal}
+        </div>
+      </div>
+
+      <div style={{ ...velocityStyles.cutBlock, clipPath: CUT.trap, background: 'var(--orange-3)' }}>
+        <div style={{ ...velocityStyles.kicker, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="check" size={16} />自动写入日历
+        </div>
+        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--slate-12)', marginTop: 8 }}>
+          11月6日 已完成，连续 {RUN.streak}
+        </div>
+        <div style={{ ...velocityStyles.txt12, marginTop: 6 }}>不用再点一次打卡</div>
+      </div>
+
+      <div style={{
+        ...velocityStyles.cutBlock, clipPath: CUT.trap2, background: 'var(--orange-3)',
+        padding: '12px 20px',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ ...velocityStyles.txt12, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="pace" size={16} />分段配速
+          </span>
+          <span style={velocityStyles.txt12}>每公里</span>
+        </div>
+        <div style={{ marginTop: 10 }}><PaceBars h={40} /></div>
+      </div>
+
+      <button data-act="share" onClick={() => open('shareCard')} style={{ ...velocityStyles.pillBtn, marginTop: 'auto' }}>
+        <Icon name="share" size={16} />生成记录图
+      </button>
+    </div>
+  );
+}
+
+function HistoryScreen({ open }) {
+  const calHead = ['一', '二', '三', '四', '五', '六', '日'];
+  const days = [
+    { d: '26', s: '' }, { d: '27', s: '' }, { d: '28', s: 'done' }, { d: '29', s: '' },
+    { d: '30', s: '' }, { d: '31', s: 'done' }, { d: '1', s: 'done' },
+    { d: '2', s: '' }, { d: '3', s: 'done' }, { d: '4', s: '' }, { d: '5', s: 'done' },
+    { d: '6', s: 'today' }, { d: '7', s: '' }, { d: '8', s: '' },
+  ];
+  const trend = [0.42, 0.6, 0.5, 0.78, 0.66, 0.9, 0.72, 0.84];
+  return (
+    <div style={velocityStyles.lightPage}>
+
+      <div style={velocityStyles.hdr}>
+        <span style={velocityStyles.hdrBig}>记录</span>
+        <span style={velocityStyles.hdrSmall}>十一月</span>
+      </div>
+
+      <div style={{ ...velocityStyles.calWrap, clipPath: CUT.trap2, padding: '10px 20px 14px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--slate-12)', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="calendar" size={16} />月历
+          </span>
+          <span style={velocityStyles.txt12}>{RUN.monthKm}，{RUN.monthCount}打卡</span>
+        </div>
+        <div style={{ ...velocityStyles.calGrid, marginTop: 6 }}>
+          {calHead.map(h => <div key={h} style={velocityStyles.calHead}>{h}</div>)}
+          {days.map((c, i) => (
+            <div key={i} style={{
+              ...velocityStyles.calCell,
+              ...(c.s === 'done' ? velocityStyles.calDone : {}),
+              ...(c.s === 'today' ? velocityStyles.calToday : {}),
+            }}>{c.d}</div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{
+        ...velocityStyles.cutBlock, clipPath: CUT.trap, background: 'var(--orange-3)',
+        padding: '12px 20px 14px',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--slate-12)', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="distance" size={16} />里程趋势
+          </span>
+          <span style={velocityStyles.txt12}>本月 {RUN.monthKm}</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 58, marginTop: 12, borderBottom: '0.5px solid var(--slate-6)' }}>
+          {trend.map((v, i) => (
+            <div key={i} style={{ flex: 1, height: Math.round(v * 52), background: 'var(--orange-9)', borderRadius: 4 }} />
+          ))}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+          <span style={velocityStyles.txt12}>10月31日</span>
+          <span style={velocityStyles.txt12}>11月6日</span>
+        </div>
+      </div>
+
+      {[RUN.rec1, RUN.rec2].map((r, i) => (
+        <div key={i} data-act={'rec' + i} onClick={() => open('rec' + i)}
+          style={{
+            ...velocityStyles.cutBlock, clipPath: i % 2 === 0 ? CUT.trap2 : CUT.trap,
+            background: 'var(--orange-3)', border: '0.5px solid var(--orange-6)',
+            padding: '11px 20px', cursor: 'pointer',
+          }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--slate-12)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Icon name="calendar" size={16} />{r.date}
+            </span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--orange-11)', fontVariantNumeric: 'tabular-nums' }}>{r.dist}</span>
+          </div>
+          <div style={{ ...velocityStyles.txt12, marginTop: 5, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="pace" size={16} />{r.time}，平均配速 {r.pace}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ============================================================
+   3:4 记录图分享卡
+   ============================================================ */
+
+function ShareCard() {
+  return (
+    <div style={{
+      width: '100%', aspectRatio: '3 / 4', background: 'var(--orange-1)',
+      borderRadius: 10, padding: 16, color: 'var(--slate-12)',
+      border: '0.5px solid var(--slate-6)', clipPath: 'polygon(0 0, 100% 0, 100% 95%, 0 100%)',
+      display: 'flex', flexDirection: 'column',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <span style={{ fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="share" size={16} />每日跑步
+        </span>
+        <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--slate-11)' }}>{RUN.date}</span>
+      </div>
+
+      <div style={{ flex: 1, margin: '14px 0', overflow: 'hidden', borderRadius: 8 }}>
+        <StreetMap w="100%" h="100%" grid="var(--slate-6)" track="var(--orange-9)" lw={5} />
+      </div>
+
+      <div style={{ fontSize: 24, fontWeight: 600, fontVariantNumeric: 'tabular-nums', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Icon name="distance" size={20} />{RUN.finishDist}
+      </div>
+      <div style={{ display: 'flex', gap: 16, marginTop: 6, alignItems: 'baseline' }}>
+        <span style={{ fontSize: 14, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{RUN.finishTime}</span>
+        <span style={{ fontSize: 14, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{RUN.finishPace}</span>
+        <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--slate-11)' }}>{RUN.kcal}</span>
+      </div>
+      <div style={{
+        fontSize: 12, fontWeight: 500, color: 'var(--orange-1)', background: 'var(--teal-9)',
+        marginTop: 12, borderRadius: 999, padding: '8px 12px',
+        display: 'flex', alignItems: 'center', gap: 6,
+      }}>
+        <Icon name="check" size={16} />自动打卡成功，连续 {RUN.streak}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   Modal 内容分发
+   ============================================================ */
+
+function ModalBody({ kind, onClose, reminder }) {
+  if (kind === 'shareCard') {
+    return (
+      <VeloModal title="记录图 3:4" onClose={onClose} dark>
+        <ShareCard />
+        <div style={{ fontSize: 12, fontWeight: 400, color: 'var(--slate-11)', marginTop: 10, textAlign: 'center' }}>
+          含轨迹，距离，时间，配速
+        </div>
+      </VeloModal>
+    );
+  }
+  if (kind === 'planDetail') {
+    return (
+      <VeloModal title="今日计划" onClose={onClose}>
+        <div style={{ ...velocityStyles.heroBand, clipPath: CUT.trap, borderRadius: 8, paddingBottom: 26 }}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--orange-1)', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="calendar" size={16} />{RUN.date}
+          </div>
+          <div style={{ fontSize: 24, fontWeight: 600, color: 'var(--orange-1)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Icon name="clock" size={20} />{RUN.planTime} {RUN.planType}
+          </div>
+        </div>
+        {[
+          { k: '类型', v: RUN.planType, icon: 'route' },
+          { k: '目标', v: RUN.target, icon: 'distance' },
+          { k: '提醒', v: RUN.remind, icon: 'bell' },
+          { k: '状态', v: '已写进日历', icon: 'check' },
+        ].map(r => (
+          <div key={r.k} style={velocityStyles.rowLine}>
+            <span style={{ ...velocityStyles.txt12, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Icon name={r.icon} size={16} />{r.k}
+            </span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--slate-12)' }}>{r.v}</span>
+          </div>
+        ))}
+        <div style={{ ...velocityStyles.txt12, marginTop: 12, lineHeight: 1.7 }}>跑完自动写入当天完成</div>
+      </VeloModal>
+    );
+  }
+  if (kind === 'saved') {
+    return (
+      <VeloModal title="已写入日历" onClose={onClose}>
+        <div style={{ fontSize: 24, fontWeight: 600, color: 'var(--slate-12)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Icon name="check" size={20} />{RUN.planTime} {RUN.planType}
+        </div>
+        <div style={{ ...velocityStyles.txt12, marginTop: 10, lineHeight: 1.7 }}>
+          {RUN.date}，目标 {RUN.target}，提醒 {RUN.remind} {reminder ? '已开启' : '已关闭'}
+        </div>
+        <div style={{ marginTop: 14, ...velocityStyles.cutBlock, clipPath: CUT.trap, background: 'var(--orange-3)', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="calendar" size={16} /><span style={velocityStyles.txt12}>日历上已可见这次安排</span>
+        </div>
+      </VeloModal>
+    );
+  }
+  if (kind === 'field') {
+    return (
+      <VeloModal title="计划事项" onClose={onClose}>
+        {[
+          { k: '日期', v: RUN.date, icon: 'calendar' },
+          { k: '时间', v: RUN.planTime, icon: 'clock' },
+          { k: '类型', v: RUN.planType, icon: 'route' },
+          { k: '目标', v: RUN.target, icon: 'distance' },
+        ].map(r => (
+          <div key={r.k} style={velocityStyles.rowLine}>
+            <span style={{ ...velocityStyles.txt12, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Icon name={r.icon} size={16} />{r.k}
+            </span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--slate-12)' }}>{r.v}</span>
+          </div>
+        ))}
+      </VeloModal>
+    );
+  }
+  if (kind === 'rec0' || kind === 'rec1') {
+    const r = kind === 'rec0' ? RUN.rec1 : RUN.rec2;
+    return (
+      <VeloModal title="单次记录" onClose={onClose}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--slate-12)', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="calendar" size={16} />{r.date}
+        </div>
+        <div style={{ fontSize: 24, fontWeight: 600, color: 'var(--orange-11)', fontVariantNumeric: 'tabular-nums', marginTop: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Icon name="distance" size={20} />{r.dist}
+        </div>
+        <div style={{ borderRadius: 8, overflow: 'hidden', marginTop: 12, background: 'var(--orange-3)' }}>
+          <StreetMap w="100%" h={120} grid="var(--slate-6)" track="var(--orange-9)" lw={4} />
+        </div>
+        <div style={{ display: 'flex', gap: 18, marginTop: 12 }}>
+          <span style={{ fontSize: 14, fontWeight: 600, fontVariantNumeric: 'tabular-nums', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="clock" size={16} />{r.time}
+          </span>
+          <span style={{ fontSize: 14, fontWeight: 600, fontVariantNumeric: 'tabular-nums', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="pace" size={16} />{r.pace}
+          </span>
+        </div>
+        <div style={{ ...velocityStyles.txt12, marginTop: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="pace" size={16} />分段配速
+        </div>
+        <div style={{ marginTop: 8 }}><PaceBars h={34} /></div>
+      </VeloModal>
+    );
+  }
+  return null;
+}
+
+/* ============================================================
+   AppPhone：每台独立状态机
+   ============================================================ */
+
+function AppPhone({ initial, Frame, scale, left, top, z, num, label, labelTop }) {
+  const [screen, setScreen] = React.useState(initial);
+  const [modal, setModal] = React.useState(null);
+  const [reminder, setReminder] = React.useState(true);
+  const [paused, setPaused] = React.useState(false);
+
+  const go = (s) => { setScreen(s); setModal(null); };
+  const open = (m) => setModal(m);
+
+  const screenEl = (() => {
+    switch (screen) {
+      case 'today':   return <TodayScreen open={open} />;
+      case 'plan':    return <PlanScreen open={open} reminder={reminder} toggleReminder={() => setReminder(!reminder)} />;
+      case 'running': return <RunningScreen go={go} paused={paused} setPaused={setPaused} />;
+      case 'finish':  return <FinishScreen open={open} />;
+      case 'history': return <HistoryScreen open={open} />;
+      default:        return null;
+    }
+  })();
+
+  const FrameCmp = Frame === 'android' ? AndroidFrame : IosFrame;
+
+  return (
+    <React.Fragment>
+      <div data-phone={num} style={{
+        position: 'absolute', left, top, zIndex: z,
+        transform: 'scale(' + scale + ')', transformOrigin: 'top left',
+      }}>
+        <FrameCmp width={320} height={660} time="19:30" battery={82} darkMode={false}>
+          <div style={velocityStyles.screenRoot}>
+            {screenEl}
+            {screen !== 'running' && <TabBar current={screen} onTab={go} running={false} />}
+            {modal && <ModalBody kind={modal} onClose={() => setModal(null)} reminder={reminder} />}
+          </div>
+        </FrameCmp>
+      </div>
+      <div style={{ ...velocityStyles.boardLabel, left, top: labelTop, zIndex: z }}>
+        <span style={velocityStyles.boardNum}>{num}</span>
+        <span style={velocityStyles.boardTxt}>{label}</span>
+      </div>
+    </React.Fragment>
+  );
+}
+
+/* ============================================================
+   展示板：主次放大构图
+   ============================================================ */
+
+function Board() {
+  return (
+    <div style={velocityStyles.board}>
+
+      {/* 12° 橙色斜切色带语境底，降不透明度 */}
+      <div style={{
+        position: 'absolute', left: -120, top: 372, width: 1840, height: 132,
+        background: 'var(--orange-3)', transform: 'rotate(-12deg)', zIndex: 0, opacity: 0.55,
+      }} />
+      <div style={{
+        position: 'absolute', left: -120, top: 360, width: 1840, height: 10,
+        background: 'var(--orange-9)', transform: 'rotate(-12deg)', zIndex: 0, opacity: 0.35,
+      }} />
+      <div style={{
+        position: 'absolute', left: -120, top: 520, width: 1840, height: 46,
+        background: 'var(--orange-5)', transform: 'rotate(-12deg)', zIndex: 0, opacity: 0.3,
+      }} />
+      <div style={{
+        position: 'absolute', right: -140, top: 250, width: 440, height: 200,
+        background: 'var(--orange-3)', clipPath: CUT.trap2, zIndex: 0, opacity: 0.4,
+      }} />
+
+      {/* 标题区 */}
+      <div style={velocityStyles.head}>
+        <h1 style={velocityStyles.title}>每日跑步</h1>
+        <div style={velocityStyles.tagline}>计划到打卡，一次跑完自动留痕</div>
+        <div style={velocityStyles.chips}>
+          {SCREEN_LABELS.map(s => (
+            <div key={s.num} style={{
+              ...velocityStyles.chip,
+              ...(s.main ? velocityStyles.chipMain : {}),
+            }}>{s.num} {s.label}</div>
+          ))}
+        </div>
+      </div>
+
+      <div style={velocityStyles.meta}>
+        <div style={velocityStyles.metaA}>方向 02 速度色场</div>
+        <div style={velocityStyles.metaB}>2026-11-06 iOS + Android</div>
+      </div>
+
+      {/* 5 台手机：主次放大，高低错落，互不重叠 */}
+      <AppPhone initial="today"   Frame="ios"     scale={0.8}  left={12}   top={150} z={4}  num="01" label="今日" labelTop={707} />
+      <AppPhone initial="plan"    Frame="android" scale={0.8}  left={290}  top={440} z={3}  num="02" label="计划" labelTop={997} />
+      <AppPhone initial="running" Frame="ios"     scale={1.35} left={572}  top={100} z={10} num="03" label="跑中" labelTop={1032} />
+      <AppPhone initial="finish"  Frame="ios"     scale={0.8}  left={1042} top={150} z={4}  num="04" label="完成" labelTop={707} />
+      <AppPhone initial="history" Frame="android" scale={0.8}  left={1322} top={440} z={3}  num="05" label="记录" labelTop={997} />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Board />);
+</script>
+</body>
+</html>

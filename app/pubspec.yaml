@@ -1,0 +1,21 @@
+name: daily_run
+description: 每日跑步 M1 业务内核，零外部依赖，可用 dart run 直接验证
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  geolocator: ^14.1.2
+  geolocator_android: ^5.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

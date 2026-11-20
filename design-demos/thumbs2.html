@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>每日跑步 · 第二轮六方向缩略图</title>
+<style>
+:root{
+  --orange-1:#fefcfb; --orange-3:#ffefd6; --orange-5:#ffd19a; --orange-9:#f76b15; --orange-11:#cc4e00; --orange-12:#582d1d;
+  --red-3:#feebec; --red-9:#e5484d; --red-12:#641723;
+  --grass-2:#f5fbf5; --grass-3:#e9f6e9; --grass-5:#c9e8ca; --grass-9:#46a758; --grass-12:#203c25;
+  --teal-2:#f3fbf9; --teal-3:#e0f8f3; --teal-5:#b8eae0; --teal-9:#12a594; --teal-12:#0d3d38;
+  --indigo-1:#fdfdfe; --indigo-2:#f7f9ff; --indigo-4:#e1e9ff; --indigo-8:#8da4ef; --indigo-9:#3e63dd; --indigo-12:#1f2d5c;
+  --slate-1:#fcfcfd; --slate-2:#f9f9fb; --slate-3:#f0f0f3; --slate-6:#d9d9e0; --slate-11:#60646c; --slate-12:#1c2024;
+  --amber-2:#fefbe9; --amber-3:#fff7c2; --amber-5:#fbe577; --amber-9:#ffc53d; --amber-11:#ab6400; --amber-12:#4f3422;
+  --gray-1:#fcfcfc; --gray-6:#d9d9d9; --gray-12:#202020;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--slate-2);color:var(--slate-12);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif;padding:32px 34px 44px}
+.pagehead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:22px;border-bottom:.5px solid var(--slate-6);padding-bottom:14px}
+h1{font-size:20px;font-weight:600;margin:0}
+.sub{font-size:12px;color:var(--slate-11)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.cell{background:var(--slate-1);border:.5px solid var(--slate-6);border-radius:10px;overflow:hidden}
+.meta{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:.5px solid var(--slate-6)}
+.num{font-size:12px;font-weight:600;color:var(--slate-11);font-variant-numeric:tabular-nums}
+.name{font-size:14px;font-weight:600}
+.src{font-size:12px;color:var(--slate-11);margin-left:auto}
+.stage{height:286px;position:relative;overflow:hidden}
+.cap{padding:9px 14px 12px;font-size:12px;line-height:1.6;color:var(--slate-11)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+.ico{width:14px;height:14px;display:inline-block;vertical-align:-2px;fill:currentColor}
+.lbl{font-size:12px}
+.b{font-weight:600}
+
+/* 01 巨字海报 */
+.s1{background:var(--indigo-2);color:var(--indigo-12)}
+.s1 .glyph{position:absolute;left:50%;top:50%;transform:translate(-50%,-52%);font-size:210px;font-weight:600;letter-spacing:-.08em;color:var(--indigo-9);line-height:1;pointer-events:none}
+.s1 .tl{position:absolute;left:16px;top:16px;font-size:12px;font-weight:600}
+.s1 .tr{position:absolute;right:16px;top:16px;font-size:12px;text-align:right;line-height:1.8}
+.s1 .bl{position:absolute;left:16px;bottom:14px;font-size:12px;line-height:1.9}
+.s1 .br{position:absolute;right:16px;bottom:14px;font-size:20px;font-weight:600}
+.s1 .bar{position:absolute;left:16px;right:16px;bottom:80px;height:5px;background:var(--indigo-4);border-radius:999px}
+.s1 .bar i{display:block;width:72%;height:5px;background:var(--indigo-9);border-radius:999px}
+
+/* 02 加州新浪潮 */
+.s2{background:var(--amber-2);color:var(--amber-12)}
+.s2 .circ{position:absolute;width:150px;height:150px;border-radius:50%;background:var(--teal-9);opacity:.9;left:-30px;top:60px}
+.s2 .tri{position:absolute;left:140px;top:-20px;width:0;height:0;border-left:90px solid transparent;border-right:90px solid transparent;border-bottom:150px solid var(--amber-9);transform:rotate(18deg)}
+.s2 .band{position:absolute;left:-20px;right:-20px;top:170px;height:34px;background:var(--red-9);transform:rotate(-11deg)}
+.s2 .dotgrid{position:absolute;right:18px;bottom:18px;width:110px;height:70px;background-image:radial-gradient(var(--amber-11) 1.5px,transparent 1.5px);background-size:12px 12px;opacity:.55}
+.s2 .t1{position:absolute;left:22px;top:18px;font-size:20px;font-weight:600;transform:rotate(-4deg)}
+.s2 .t2{position:absolute;left:24px;top:48px;font-size:12px;transform:rotate(-4deg)}
+.s2 .big{position:absolute;right:18px;top:74px;font-size:40px;font-weight:600;color:var(--gray-12);background:var(--amber-2);padding:0 9px;border-radius:6px;z-index:5;transform:rotate(-6deg)}
+.s2 .row{position:absolute;left:22px;bottom:20px;z-index:4;font-size:12px;color:var(--gray-1);background:var(--amber-12);padding:5px 10px;border-radius:4px}
+
+/* 03 成绩卡流 */
+.s3{background:var(--slate-2);padding:18px 20px;overflow:hidden}
+.s3 .peek{height:26px;background:var(--amber-3);border-radius:12px 12px 0 0;margin:0 12px}
+.s3 .card{background:var(--grass-9);border-radius:12px;color:var(--gray-1);padding:18px 20px;height:190px;position:relative;z-index:2}
+.s3 .k{font-size:12px;font-weight:600;opacity:.9}
+.s3 .n{font-size:40px;font-weight:600;letter-spacing:-.04em;margin-top:6px;line-height:1}
+.s3 .d{font-size:12px;margin-top:5px;opacity:.95}
+.s3 .chips{display:flex;gap:8px;margin-top:16px}
+.s3 .chips span{background:rgba(255,255,255,.22);border-radius:999px;padding:4px 10px;font-size:12px}
+.s3 .next{height:22px;background:var(--slate-3);border-radius:0 0 12px 12px;margin:0 12px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--slate-11)}
+
+/* 04 奇妙房间 */
+.s4{background:var(--teal-2);color:var(--teal-12)}
+.s4 .hd{position:absolute;left:18px;top:16px;font-size:14px;font-weight:600}
+.s4 .scn{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);width:260px;height:180px}
+.s4 .sq{position:absolute;border-radius:10px}
+.s4 .a{width:88px;height:88px;background:var(--teal-9);left:0;top:10px;transform:rotate(-8deg)}
+.s4 .b{width:64px;height:64px;background:var(--amber-9);left:96px;top:0;border-radius:50%}
+.s4 .c{width:76px;height:76px;background:var(--teal-5);left:160px;top:44px;transform:rotate(12deg)}
+.s4 .d{width:52px;height:52px;background:var(--red-9);left:42px;top:108px;border-radius:50%}
+.s4 .e{width:96px;height:40px;background:var(--gray-12);left:120px;top:124px;border-radius:999px}
+.s4 .ft{position:absolute;left:18px;bottom:14px;font-size:12px}
+.s4 .fr{position:absolute;right:18px;bottom:14px;font-size:12px}
+
+/* 05 糖果仪表 */
+.s5{background:var(--orange-1);color:var(--orange-12)}
+.s5 .hd{position:absolute;left:18px;top:14px;font-size:12px;font-weight:600}
+.s5 .knob{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:188px;height:188px;border-radius:50%;background:radial-gradient(circle at 34% 28%,var(--amber-3),var(--orange-5) 42%,var(--orange-9) 88%);border:8px solid var(--orange-1)}
+.s5 .knob .val{position:absolute;inset:0;display:grid;place-content:center;text-align:center;font-size:40px;font-weight:600;color:var(--orange-12);font-variant-numeric:tabular-nums}
+.s5 .knob .val small{display:block;font-size:12px;font-weight:500;margin-top:2px}
+.s5 .cap1{position:absolute;left:18px;bottom:16px;background:var(--gray-1);border-radius:999px;padding:7px 14px;font-size:12px;font-weight:600}
+.s5 .cap2{position:absolute;right:18px;bottom:16px;background:var(--gray-12);color:var(--gray-1);border-radius:999px;padding:7px 14px;font-size:12px;font-weight:600}
+.s5 .tick{position:absolute;left:50%;top:8px;transform:translateX(-50%);width:3px;height:14px;background:var(--orange-12);border-radius:2px}
+
+/* 06 民国书衣 */
+.s6{background:#f7f1de;color:var(--gray-12)}
+.s6 .frame{position:absolute;inset:14px;border:.5px solid var(--gray-12);outline:.5px solid var(--gray-12);outline-offset:3px}
+.s6 .v{position:absolute;left:34px;top:34px;writing-mode:vertical-rl;font-size:20px;font-weight:600;letter-spacing:.18em}
+.s6 .vs{position:absolute;left:66px;top:38px;writing-mode:vertical-rl;font-size:12px;letter-spacing:.1em}
+.s6 .red{position:absolute;right:46px;top:56px;width:42px;height:42px;border-radius:50%;background:var(--red-9)}
+.s6 .mt{position:absolute;left:0;right:0;bottom:42px;height:76px}
+.s6 .foot{position:absolute;left:34px;bottom:16px;font-size:12px;background:#f7f1de;padding:3px 7px}
+.s6 .fr{position:absolute;right:34px;bottom:16px;font-size:12px;background:#f7f1de;padding:3px 7px}
+.s6 .seal{position:absolute;right:34px;top:132px;width:26px;height:26px;border:.5px solid var(--red-9);color:var(--red-9);font-size:12px;display:grid;place-items:center}
+</style>
+</head>
+<body>
+<div class="pagehead"><h1>每日跑步 · 第二轮六个方向</h1><div class="sub">全部浅色底　全部有图标　更大胆　2026-11-06</div></div>
+<div class="grid">
+
+  <div class="cell">
+    <div class="meta"><span class="num">01</span><span class="name">巨字海报</span><span class="src">最佳设计师　巨字排版</span></div>
+    <div class="stage s1">
+      <div class="tl"><svg class="ico" viewBox="0 0 16 16"><path d="M3 2h10v12H3z M3 5h10"/></svg> 11月6日 周五</div>
+      <div class="tr">连续 13 天<br>本月 42.6 km<br><svg class="ico" viewBox="0 0 16 16"><path d="M8 1a5 5 0 0 0-5 5c0 4 5 9 5 9s5-5 5-9a5 5 0 0 0-5-5z"/></svg> 已打卡</div>
+      <div class="glyph">跑</div>
+      <div class="bar"><i></i></div>
+      <div class="bl"><svg class="ico" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l3 2" stroke="var(--indigo-2)" stroke-width="1.5" fill="none"/></svg> 19:30 轻松跑<br>目标 5.00 km　提醒 19:15</div>
+      <div class="br">5.21 km</div>
+    </div>
+    <div class="cap">一个巨字撑满整屏，其余信息压进字缝与页边，没有卡片。靛蓝单色，浅底。</div>
+  </div>
+
+  <div class="cell">
+    <div class="meta"><span class="num">02</span><span class="name">加州新浪潮</span><span class="src">最佳设计师　几何叠印</span></div>
+    <div class="stage s2">
+      <div class="circ"></div><div class="tri"></div><div class="band"></div><div class="dotgrid"></div>
+      <div class="t1">跑过 13 天</div>
+      <div class="t2">11月6日　连续打卡</div>
+      <div class="big">5.21</div>
+      <div class="row"><svg class="ico" viewBox="0 0 16 16"><path d="M2 12l4-5 3 3 5-6"/></svg> 31:24　6'02"　已自动打卡</div>
+    </div>
+    <div class="cap">圆、三角、条带叠印错位，日历做成漂浮的圆形色块矩阵。琥珀加青绿朱红。</div>
+  </div>
+
+  <div class="cell">
+    <div class="meta"><span class="num">03</span><span class="name">成绩卡流</span><span class="src">现实参照　年度成绩卡</span></div>
+    <div class="stage s3">
+      <div class="peek"></div>
+      <div class="card">
+        <div class="k"><svg class="ico" viewBox="0 0 16 16"><path d="M3 2h10v12H3z M3 5h10"/></svg> 今日完成</div>
+        <div class="n">5.21 km</div>
+        <div class="d">31:24　平均配速 6'02"　342 kcal</div>
+        <div class="chips"><span>连续 13 天</span><span>第 8 次打卡</span><span>3:4 记录图</span></div>
+      </div>
+      <div class="next">下一张　11月3日 6.30 km</div>
+    </div>
+    <div class="cap">一屏一张卡、一个头条数字，完成页本身就是能直接发出去的海报。亮绿满版卡。</div>
+  </div>
+
+  <div class="cell">
+    <div class="meta"><span class="num">04</span><span class="name">奇妙房间</span><span class="src">现实参照　视觉图像获奖 App</span></div>
+    <div class="stage s4">
+      <div class="hd">今天的房间</div>
+      <div class="scn"><div class="sq a"></div><div class="sq b"></div><div class="sq c"></div><div class="sq d"></div><div class="sq e"></div></div>
+      <div class="ft"><svg class="ico" viewBox="0 0 16 16"><path d="M2 8l4 4 8-9"/></svg> 5.21 km 已打卡</div>
+      <div class="fr">连续 13 天</div>
+    </div>
+    <div class="cap">打卡格变成散落的几何小物件，中心一个场景，控件不按列表排。柔和青绿加琥珀。</div>
+  </div>
+
+  <div class="cell">
+    <div class="meta"><span class="num">05</span><span class="name">糖果仪表</span><span class="src">秒数轮盘　playful-3d 03</span></div>
+    <div class="stage s5">
+      <div class="hd">运动中　19:30 轻松跑</div>
+      <div class="tick"></div>
+      <div class="knob"><div class="val">28:46<small>已用时间</small></div></div>
+      <div class="cap1"><svg class="ico" viewBox="0 0 16 16"><path d="M2 12l4-5 3 3 5-6"/></svg> 4.82 km　5'48"</div>
+      <div class="cap2">暂停　结束</div>
+    </div>
+    <div class="cap">整屏是一个大圆形进度盘，糖果亮色加白色胶囊卡，不用深色底。立体感用渐变降级。</div>
+  </div>
+
+  <div class="cell">
+    <div class="meta"><span class="num">06</span><span class="name">民国书衣</span><span class="src">秒数轮盘　东亚 03</span></div>
+    <div class="stage s6">
+      <div class="frame"></div>
+      <div class="v">跑历</div><div class="vs">十一月六日</div>
+      <div class="red"></div>
+      <svg class="mt" viewBox="0 0 480 76" preserveAspectRatio="none"><path d="M0 76 L70 20 L120 62 L190 8 L250 60 L320 24 L390 66 L480 18 L480 76Z" fill="var(--gray-12)"/><path d="M0 68 H480 M0 72 H480" stroke="var(--gray-12)" stroke-width=".5"/></svg>
+      <div class="seal">印</div>
+      <div class="foot">5.21 km　31:24　6'02"</div>
+      <div class="fr">连续 13 天</div>
+    </div>
+    <div class="cap">暖米纸双细框，竖排标题，几何山形轨迹，一个红圆点。安静，留作备选。</div>
+  </div>
+
+</div>
+</body>
+</html>

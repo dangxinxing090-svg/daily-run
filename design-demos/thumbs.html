@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>每日跑步 · 六方向缩略图</title>
+<style>
+/* Radix UI Colors 3.0.0 light + dark（截取所需族，值来自官方 @radix-ui/colors） */
+:root{
+  --orange-2:#fff7ed; --orange-3:#ffefd6; --orange-5:#ffd19a; --orange-9:#f76b15; --orange-10:#ef5f00; --orange-12:#582d1d;
+  --red-9:#e5484d;
+  --grass-2:#f5fbf5; --grass-3:#e9f6e9; --grass-5:#c9e8ca; --grass-8:#65ba74; --grass-9:#46a758; --grass-11:#2a7e3b; --grass-12:#203c25;
+  --teal-9:#12a594;
+  --indigo-9:#3e63dd;
+  --slate-1:#fcfcfd; --slate-2:#f9f9fb; --slate-3:#f0f0f3; --slate-6:#d9d9e0; --slate-8:#b9bbc6; --slate-9:#8b8d98; --slate-11:#60646c; --slate-12:#1c2024;
+  --slated-1:#111113; --slated-2:#18191b; --slated-3:#212225; --slated-6:#363a3f; --slated-11:#b0b4ba; --slated-12:#edeef0;
+  --indigod-1:#11131f; --indigod-2:#141726; --indigod-3:#182449; --indigod-9:#3e63dd; --indigod-11:#9eb1ff; --indigod-12:#d6e1ff;
+  --amber-9:#ffc53d; --amber-11:#ab6400;
+  --gray-1:#fcfcfc; --gray-3:#f0f0f0; --gray-6:#d9d9d9; --gray-11:#646464; --gray-12:#202020;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--slate-2);color:var(--slate-12);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif;padding:32px 34px 44px}
+.pagehead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:22px;border-bottom:.5px solid var(--slate-6);padding-bottom:14px}
+h1{font-size:20px;font-weight:600;margin:0}
+.sub{font-size:12px;color:var(--slate-11)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.cell{background:var(--slate-1);border:.5px solid var(--slate-6);border-radius:10px;overflow:hidden}
+.meta{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:.5px solid var(--slate-6)}
+.num{font-size:12px;font-weight:600;color:var(--slate-11);font-variant-numeric:tabular-nums}
+.name{font-size:14px;font-weight:600}
+.src{font-size:12px;color:var(--slate-11);margin-left:auto}
+.stage{height:286px;position:relative;overflow:hidden}
+.cap{padding:9px 14px 12px;font-size:12px;line-height:1.6;color:var(--slate-11)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+.tiny{font-size:12px}
+
+/* 1 瑞士网格 */
+.s1{background:var(--gray-1);padding:20px 22px;color:var(--gray-12);display:grid;grid-template-columns:1.05fr 1fr;gap:16px}
+.s1 .lbl{font-size:12px;letter-spacing:.12em;color:var(--gray-11)}
+.s1 .big{font-size:44px;line-height:1.05;font-weight:600;letter-spacing:-.04em;margin:14px 0 2px}
+.s1 .big em{color:var(--orange-9);font-style:normal}
+.s1 .rule{height:.5px;background:var(--gray-6);margin:10px 0}
+.s1 .kv{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:.5px solid var(--gray-6)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-top:6px}
+.cal span{aspect-ratio:1;display:grid;place-items:center;font-size:12px;border:.5px solid var(--gray-6);color:var(--gray-11)}
+.cal span.done{background:var(--gray-12);color:var(--gray-1);border-color:var(--gray-12)}
+.cal span.today{border-color:var(--orange-9);color:var(--orange-9)}
+
+/* 2 动态识别 */
+.s2{background:var(--orange-9);color:#fff;position:relative;overflow:hidden}
+.s2:before{content:"";position:absolute;inset:-40px -60px;background:linear-gradient(160deg,transparent 42%,var(--orange-10) 42%,var(--orange-10) 60%,transparent 60%);opacity:.55}
+.s2 .top{position:relative;padding:16px 18px;font-size:12px;font-weight:600;letter-spacing:.08em}
+.s2 .mega{position:relative;font-size:78px;font-weight:600;letter-spacing:-.06em;line-height:.9;transform:skewX(-11deg);margin:14px 0 0 16px;white-space:nowrap}
+.s2 .pace{position:relative;font-size:20px;font-weight:600;transform:skewX(-11deg);margin:6px 0 0 20px}
+.s2 .track{position:absolute;left:-10px;right:-10px;bottom:-26px;height:110px}
+.s2 .foot{position:absolute;bottom:12px;right:16px;font-size:12px;font-weight:600}
+
+/* 3 温和鼓励 */
+.s3{background:var(--grass-2);padding:16px 18px;color:var(--grass-12)}
+.s3 .hello{font-size:14px;font-weight:600}
+.s3 .week{display:flex;gap:7px;margin:12px 0 14px}
+.s3 .week i{flex:1;height:38px;border-radius:9px;background:var(--grass-3);display:grid;place-items:center;font-style:normal;font-size:12px;color:var(--grass-11)}
+.s3 .week i.on{background:var(--grass-9);color:#fff}
+.s3 .card{background:#fff;border:.5px solid var(--grass-5);border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:14px}
+.s3 .ring{width:64px;height:64px;flex:0 0 64px}
+.s3 .card b{display:block;font-size:20px;font-weight:600;letter-spacing:-.02em}
+.s3 .card small{display:block;font-size:12px;color:var(--grass-11);margin-top:3px}
+.s3 .note{margin-top:12px;font-size:12px;color:var(--grass-11)}
+
+/* 4 运动中数据抽屉 */
+.s4{background:var(--slated-1);color:var(--slated-12);display:flex;flex-direction:column}
+.s4 .map{height:132px;position:relative;background:var(--slated-2)}
+.s4 .drawer{flex:1;padding:14px 18px}
+.s4 .big{font-size:40px;font-weight:600;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+.s4 .sub2{font-size:12px;color:var(--slated-11);margin-top:5px}
+.s4 .row{display:flex;gap:22px;margin-top:14px;padding-top:11px;border-top:.5px solid var(--slated-6)}
+.s4 .row div b{display:block;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.s4 .row div span{display:block;font-size:12px;color:var(--slated-11);margin-top:2px}
+.s4 .btn{position:absolute;right:14px;bottom:14px;background:var(--grass-9);color:#fff;border-radius:999px;padding:7px 16px;font-size:12px;font-weight:600}
+
+/* 5 命令面板 */
+.s5{background:var(--slated-1);color:var(--slated-12);padding:16px 18px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.s5 .hd{font-size:12px;color:var(--slated-11);border-bottom:.5px solid var(--slated-6);padding-bottom:9px}
+.s5 .ln{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:.5px solid var(--slated-3);font-size:12px}
+.s5 .ln .dot{width:7px;height:7px;border-radius:50%;background:var(--grass-9);flex:0 0 7px}
+.s5 .ln .dot.off{background:var(--slated-6)}
+.s5 .ln .k{color:var(--slated-11)}
+.s5 .ln .v{margin-left:auto;font-variant-numeric:tabular-nums}
+.s5 .ln .tag{background:var(--slated-3);color:var(--slated-11);padding:1px 6px;border-radius:4px;font-size:12px}
+.s5 .cur{color:var(--amber-9)}
+
+/* 6 信息曼陀罗 */
+.s6{background:var(--indigod-1);color:var(--indigod-12);position:relative;overflow:hidden}
+.s6 svg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:250px;height:250px}
+.s6 .vtitle{position:absolute;left:14px;top:16px;font-size:20px;font-weight:600;writing-mode:vertical-rl;letter-spacing:.1em;color:var(--amber-9)}
+.s6 .side{position:absolute;right:14px;top:18px;text-align:right;font-size:12px;line-height:1.9;color:var(--indigod-11)}
+.s6 .foot2{position:absolute;left:14px;bottom:12px;font-size:12px;color:var(--indigod-11)}
+.s6 .call{position:absolute;right:14px;bottom:14px;font-size:12px;color:var(--amber-9)}
+</style>
+</head>
+<body>
+<div class="pagehead"><h1>每日跑步 · 六个方向候选</h1><div class="sub">同一套内容数据，只换骨架与气质　2026-11-06</div></div>
+<div class="grid">
+
+  <div class="cell">
+    <div class="meta"><span class="num">01</span><span class="name">网格成绩单</span><span class="src">最佳设计师　瑞士网格</span></div>
+    <div class="stage s1">
+      <div>
+        <div class="lbl">11 / 06　周五</div>
+        <div class="big">5<em>.</em>21<br>km</div>
+        <div class="rule"></div>
+        <div class="kv"><span>用时</span><span class="mono">31:24</span></div>
+        <div class="kv"><span>平均配速</span><span class="mono">6'02"</span></div>
+        <div class="kv"><span>连续打卡</span><span class="mono">13 天</span></div>
+      </div>
+      <div>
+        <div class="lbl">十一月</div>
+        <div class="cal"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span><span class="done">1</span><span>2</span><span class="done">3</span><span>4</span><span class="done">5</span><span class="today">6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span></div>
+        <div class="rule"></div>
+        <div class="kv"><span>本月累计</span><span class="mono">42.6 km</span></div>
+        <div class="kv"><span>打卡次数</span><span class="mono">8 次</span></div>
+      </div>
+    </div>
+    <div class="cap">严格 7 列网格，巨字距离做唯一锚点，其余全是灰阶细线。日历就是骨架本身。</div>
+  </div>
+
+  <div class="cell">
+    <div class="meta"><span class="num">02</span><span class="name">速度色场</span><span class="src">最佳设计师　动态识别</span></div>
+    <div class="stage s2">
+      <div class="top">运动中　19:30 轻松跑</div>
+      <div class="mega">28:46</div>
+      <div class="pace">4.82 km　5'48"/km</div>
+      <svg class="track" viewBox="0 0 480 110" preserveAspectRatio="none"><path d="M-5 92 C60 82 82 30 140 34 S210 96 268 76 S340 12 400 26 S455 66 485 44" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".92"/><circle cx="400" cy="26" r="7" fill="#fff"/></svg>
+      <div class="foot">暂停　结束</div>
+    </div>
+    <div class="cap">斜切色块与倾斜巨字制造位移感，轨迹是一条粗色带。运动中整屏只服务一个数字。</div>
+  </div>
+
+  <div class="cell">
+    <div class="meta"><span class="num">03</span><span class="name">温柔打卡</span><span class="src">现实参照　Gentler Streak</span></div>
+    <div class="stage s3">
+      <div class="hello">今天也跑完了</div>
+      <div class="week"><i>一</i><i class="on">二</i><i>三</i><i class="on">四</i><i>五</i><i class="on">六</i><i>日</i></div>
+      <div class="card">
+        <svg class="ring" viewBox="0 0 64 64"><circle cx="32" cy="32" r="25" fill="none" stroke="var(--grass-3)" stroke-width="8"/><circle cx="32" cy="32" r="25" fill="none" stroke="var(--grass-9)" stroke-width="8" stroke-linecap="round" stroke-dasharray="157" stroke-dashoffset="38" transform="rotate(-90 32 32)"/><circle cx="32" cy="32" r="16" fill="none" stroke="var(--teal-9)" stroke-width="5" stroke-linecap="round" stroke-dasharray="100" stroke-dashoffset="46" transform="rotate(-90 32 32)"/></svg>
+        <div><b>5.21 km</b><small>31:24　平均配速 6'02"</small><small>已自动打卡，连续 13 天</small></div>
+      </div>
+      <div class="note">11月6日 19:30 轻松跑　目标 5.00 km　已达成</div>
+    </div>
+    <div class="cap">周历条加圆润主卡，色彩编码的活动环，鼓励性短句。没有失败态，休息日也算完成。</div>
+  </div>
+
+  <div class="cell">
+    <div class="meta"><span class="num">04</span><span class="name">地图优先</span><span class="src">现实参照　训练中界面</span></div>
+    <div class="stage s4">
+      <div class="map">
+        <svg viewBox="0 0 480 132" style="width:100%;height:100%"><g stroke="var(--slated-6)" stroke-width=".5" fill="none" opacity=".5"><path d="M0 28 H480 M0 74 H480 M0 116 H480 M62 0 V132 M168 0 V132 M286 0 V132 M392 0 V132"/></g><path d="M42 106 C90 96 104 40 162 44 S226 104 288 82 S358 26 420 40" fill="none" stroke="var(--grass-9)" stroke-width="5" stroke-linecap="round"/><circle cx="42" cy="106" r="6" fill="var(--slated-12)"/><circle cx="420" cy="40" r="8" fill="var(--grass-9)" stroke="var(--slated-1)" stroke-width="3"/></svg>
+      </div>
+      <div class="drawer">
+        <div class="big">28:46</div><div class="sub2">已用时间　轻松跑</div>
+        <div class="row"><div><b>4.82 km</b><span>距离</span></div><div><b>5'48"</b><span>当前配速</span></div><div><b>142</b><span>心率</span></div></div>
+      </div>
+      <div class="btn">结束</div>
+    </div>
+    <div class="cap">上 55% 轨迹，下 45% 数据抽屉，固定操作条。深色高对比，跑动中只看一个数字。</div>
+  </div>
+
+  <div class="cell">
+    <div class="meta"><span class="num">05</span><span class="name">记录日志</span><span class="src">秒数轮盘　命令面板 08</span></div>
+    <div class="stage s5">
+      <div class="hd">每日跑步　/　记录　<span class="cur">▌</span></div>
+      <div class="ln"><span class="dot"></span><span class="k">11-06</span><span>轻松跑</span><span class="v">5.21 km</span><span class="tag">已打卡</span></div>
+      <div class="ln"><span class="dot"></span><span class="k">11-03</span><span>长距离</span><span class="v">6.30 km</span><span class="tag">已打卡</span></div>
+      <div class="ln"><span class="dot off"></span><span class="k">11-02</span><span>休息</span><span class="v">—</span><span class="tag">计划</span></div>
+      <div class="ln"><span class="dot"></span><span class="k">10-31</span><span>轻松跑</span><span class="v">5.02 km</span><span class="tag">已打卡</span></div>
+      <div class="ln"><span class="dot off"></span><span class="k">11-08</span><span>间歇跑</span><span class="v">4.00 km</span><span class="tag">待跑</span></div>
+      <div class="ln"><span class="dot"></span><span class="k">19:15</span><span>提醒</span><span class="v">19:30 出发</span><span class="tag">开</span></div>
+      <div class="ln"><span class="dot"></span><span class="k">streak</span><span>连续</span><span class="v">13 天</span><span class="tag">最好 21</span></div>
+    </div>
+    <div class="cap">深底等宽单列，行内状态标签，打卡是一行可核对的日志。信息密度是主角。</div>
+  </div>
+
+  <div class="cell">
+    <div class="meta"><span class="num">06</span><span class="name">今日观测图</span><span class="src">秒数轮盘　信息曼陀罗 08</span></div>
+    <div class="stage s6">
+      <div class="vtitle">跑历</div>
+      <svg viewBox="0 0 250 250">
+        <g fill="none" stroke="var(--indigod-11)" stroke-width=".5" opacity=".8"><circle cx="125" cy="125" r="112"/><circle cx="125" cy="125" r="92"/><circle cx="125" cy="125" r="70"/><circle cx="125" cy="125" r="46"/></g>
+        <g stroke="var(--indigod-11)" stroke-width=".5" opacity=".45"><path d="M125 3 V247 M3 125 H247 M39 39 L211 211 M39 211 L211 39"/></g>
+        <circle cx="125" cy="125" r="100" fill="none" stroke="var(--indigod-3)" stroke-width="17"/>
+        <path d="M125 25 A100 100 0 1 1 45 190" fill="none" stroke="var(--indigo-9)" stroke-width="17" stroke-linecap="butt"/>
+        <path d="M125 25 A100 100 0 0 1 224 138" fill="none" stroke="var(--amber-9)" stroke-width="17"/>
+        <circle cx="125" cy="125" r="46" fill="var(--indigod-2)" stroke="var(--amber-9)" stroke-width="1"/>
+        <text x="125" y="119" text-anchor="middle" fill="var(--indigod-12)" font-size="22" font-weight="600" font-family="Arial">5.21</text>
+        <text x="125" y="137" text-anchor="middle" fill="var(--indigod-11)" font-size="10" font-family="Arial">KM　31:24</text>
+        <g stroke="var(--amber-9)" stroke-width=".5"><path d="M212 62 L242 48"/><path d="M211 190 L242 204"/></g>
+      </svg>
+      <div class="side">外环　时间刻度<br>中环　分段配速<br>内环　当日完成<br><br>19:30 出发<br>20:01 结束</div>
+      <div class="foot2">十一月六日　周五　连续 13 天</div>
+      <div class="call">记录图　3:4</div>
+    </div>
+    <div class="cap">同心环把一次跑步绕成一圈，放射引线接数据，四周密排小字。分享图就是一张观测图。</div>
+  </div>
+
+</div>
+</body>
+</html>

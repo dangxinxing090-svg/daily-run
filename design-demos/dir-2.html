@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>每日跑步   温柔打卡</title>
+<script src="refs/vendor/react.js"></script>
+<script src="refs/vendor/react-dom.js"></script>
+<script src="refs/vendor/babel.js"></script>
+<style>
+/* ===== Radix UI Colors 3.0.0   light + dark   dark 选择器统一改为 :root ===== */
+:root, .light, .light-theme {
+  --orange-1: #fefcfb;
+  --orange-2: #fff7ed;
+  --orange-3: #ffefd6;
+  --orange-4: #ffdfb5;
+  --orange-5: #ffd19a;
+  --orange-6: #ffc182;
+  --orange-7: #f5ae73;
+  --orange-8: #ec9455;
+  --orange-9: #f76b15;
+  --orange-10: #ef5f00;
+  --orange-11: #cc4e00;
+  --orange-12: #582d1d;
+}
+
+:root {
+  --oranged-1: #17120e;
+  --oranged-2: #1e160f;
+  --oranged-3: #331e0b;
+  --oranged-4: #462100;
+  --oranged-5: #562800;
+  --oranged-6: #66350c;
+  --oranged-7: #7e451d;
+  --oranged-8: #a35829;
+  --oranged-9: #f76b15;
+  --oranged-10: #ff801f;
+  --oranged-11: #ffa057;
+  --oranged-12: #ffe0c2;
+}
+
+:root, .light, .light-theme {
+  --red-1: #fffcfc;
+  --red-2: #fff7f7;
+  --red-3: #feebec;
+  --red-4: #ffdbdc;
+  --red-5: #ffcdce;
+  --red-6: #fdbdbe;
+  --red-7: #f4a9aa;
+  --red-8: #eb8e90;
+  --red-9: #e5484d;
+  --red-10: #dc3e42;
+  --red-11: #ce2c31;
+  --red-12: #641723;
+}
+
+:root {
+  --redd-1: #191111;
+  --redd-2: #201314;
+  --redd-3: #3b1219;
+  --redd-4: #500f1c;
+  --redd-5: #611623;
+  --redd-6: #72232d;
+  --redd-7: #8c333a;
+  --redd-8: #b54548;
+  --redd-9: #e5484d;
+  --redd-10: #ec5d5e;
+  --redd-11: #ff9592;
+  --redd-12: #ffd1d9;
+}
+
+:root, .light, .light-theme {
+  --grass-1: #fbfefb;
+  --grass-2: #f5fbf5;
+  --grass-3: #e9f6e9;
+  --grass-4: #daf1db;
+  --grass-5: #c9e8ca;
+  --grass-6: #b2ddb5;
+  --grass-7: #94ce9a;
+  --grass-8: #65ba74;
+  --grass-9: #46a758;
+  --grass-10: #3e9b4f;
+  --grass-11: #2a7e3b;
+  --grass-12: #203c25;
+}
+
+:root {
+  --grassd-1: #0e1511;
+  --grassd-2: #141a15;
+  --grassd-3: #1b2a1e;
+  --grassd-4: #1d3a24;
+  --grassd-5: #25482d;
+  --grassd-6: #2d5736;
+  --grassd-7: #366740;
+  --grassd-8: #3e7949;
+  --grassd-9: #46a758;
+  --grassd-10: #53b365;
+  --grassd-11: #71d083;
+  --grassd-12: #c2f0c2;
+}
+
+:root, .light, .light-theme {
+  --teal-1: #fafefd;
+  --teal-2: #f3fbf9;
+  --teal-3: #e0f8f3;
+  --teal-4: #ccf3ea;
+  --teal-5: #b8eae0;
+  --teal-6: #a1ded2;
+  --teal-7: #83cdc1;
+  --teal-8: #53b9ab;
+  --teal-9: #12a594;
+  --teal-10: #0d9b8a;
+  --teal-11: #008573;
+  --teal-12: #0d3d38;
+}
+
+:root {
+  --teald-1: #0d1514;
+  --teald-2: #111c1b;
+  --teald-3: #0d2d2a;
+  --teald-4: #023b37;
+  --teald-5: #084843;
+  --teald-6: #145750;
+  --teald-7: #1c6961;
+  --teald-8: #207e73;
+  --teald-9: #12a594;
+  --teald-10: #0eb39e;
+  --teald-11: #0bd8b6;
+  --teald-12: #adf0dd;
+}
+
+:root, .light, .light-theme {
+  --indigo-1: #fdfdfe;
+  --indigo-2: #f7f9ff;
+  --indigo-3: #edf2fe;
+  --indigo-4: #e1e9ff;
+  --indigo-5: #d2deff;
+  --indigo-6: #c1d0ff;
+  --indigo-7: #abbdf9;
+  --indigo-8: #8da4ef;
+  --indigo-9: #3e63dd;
+  --indigo-10: #3358d4;
+  --indigo-11: #3a5bc7;
+  --indigo-12: #1f2d5c;
+}
+
+:root {
+  --indigod-1: #11131f;
+  --indigod-2: #141726;
+  --indigod-3: #182449;
+  --indigod-4: #1d2e62;
+  --indigod-5: #253974;
+  --indigod-6: #304384;
+  --indigod-7: #3a4f97;
+  --indigod-8: #435db1;
+  --indigod-9: #3e63dd;
+  --indigod-10: #5472e4;
+  --indigod-11: #9eb1ff;
+  --indigod-12: #d6e1ff;
+}
+
+:root, .light, .light-theme {
+  --slate-1: #fcfcfd;
+  --slate-2: #f9f9fb;
+  --slate-3: #f0f0f3;
+  --slate-4: #e8e8ec;
+  --slate-5: #e0e1e6;
+  --slate-6: #d9d9e0;
+  --slate-7: #cdced6;
+  --slate-8: #b9bbc6;
+  --slate-9: #8b8d98;
+  --slate-10: #80838d;
+  --slate-11: #60646c;
+  --slate-12: #1c2024;
+}
+
+:root {
+  --slated-1: #111113;
+  --slated-2: #18191b;
+  --slated-3: #212225;
+  --slated-4: #272a2d;
+  --slated-5: #2e3135;
+  --slated-6: #363a3f;
+  --slated-7: #43484e;
+  --slated-8: #5a6169;
+  --slated-9: #696e77;
+  --slated-10: #777b84;
+  --slated-11: #b0b4ba;
+  --slated-12: #edeef0;
+}
+
+:root, .light, .light-theme {
+  --gray-1: #fcfcfc;
+  --gray-2: #f9f9f9;
+  --gray-3: #f0f0f0;
+  --gray-4: #e8e8e8;
+  --gray-5: #e0e0e0;
+  --gray-6: #d9d9d9;
+  --gray-7: #cecece;
+  --gray-8: #bbbbbb;
+  --gray-9: #8d8d8d;
+  --gray-10: #838383;
+  --gray-11: #646464;
+  --gray-12: #202020;
+}
+
+:root {
+  --grayd-1: #111111;
+  --grayd-2: #191919;
+  --grayd-3: #222222;
+  --grayd-4: #2a2a2a;
+  --grayd-5: #313131;
+  --grayd-6: #3a3a3a;
+  --grayd-7: #484848;
+  --grayd-8: #606060;
+  --grayd-9: #6e6e6e;
+  --grayd-10: #7b7b7b;
+  --grayd-11: #b4b4b4;
+  --grayd-12: #eeeeee;
+}
+
+:root, .light, .light-theme {
+  --amber-1: #fefdfb;
+  --amber-2: #fefbe9;
+  --amber-3: #fff7c2;
+  --amber-4: #ffee9c;
+  --amber-5: #fbe577;
+  --amber-6: #f3d673;
+  --amber-7: #e9c162;
+  --amber-8: #e2a336;
+  --amber-9: #ffc53d;
+  --amber-10: #ffba18;
+  --amber-11: #ab6400;
+  --amber-12: #4f3422;
+}
+
+:root {
+  --amberd-1: #16120c;
+  --amberd-2: #1d180f;
+  --amberd-3: #302008;
+  --amberd-4: #3f2700;
+  --amberd-5: #4d3000;
+  --amberd-6: #5c3d05;
+  --amberd-7: #714f19;
+  --amberd-8: #8f6424;
+  --amberd-9: #ffc53d;
+  --amberd-10: #ffd60a;
+  --amberd-11: #ffca16;
+  --amberd-12: #ffe7b3;
+}
+
+/* ===== 板级 ===== */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif;background:var(--grass-2);color:var(--grass-12);-webkit-font-smoothing:antialiased}
+#root{width:1600px;height:1100px;position:relative;overflow:hidden}
+.g-num{font-variant-numeric:tabular-nums}
+@keyframes gentleIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.g-in{animation:gentleIn 250ms ease-out}
+
+/* SVG 程序化图形着色（全部走 Radix 变量） */
+.g-ring-base{stroke:var(--grass-3);fill:none}
+.g-ring-outer{stroke:var(--grass-9);fill:none}
+.g-ring-inner{stroke:var(--teal-9);fill:none}
+.g-street{stroke:var(--grass-5);fill:none}
+.g-block{fill:var(--grass-3)}
+.g-track{stroke:var(--grass-9);fill:none}
+.g-track-soft{stroke:var(--grass-8);fill:none}
+.g-dot-start{fill:var(--teal-9)}
+.g-dot-end{fill:var(--grass-9);stroke:var(--slate-1)}
+.g-line{stroke:var(--grass-9);fill:none}
+.g-label-bg{fill:var(--slate-1);stroke:var(--grass-5)}
+.g-label-tx{fill:var(--grass-11)}
+.g-bar{fill:var(--grass-5)}
+.g-bar-hi{fill:var(--grass-9)}
+.g-arrow{fill:var(--grass-9)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+/* =========================================================
+   设备框   原样移植 ios_frame.jsx / android_frame.jsx
+   ========================================================= */
+const iosFrameStyles = {
+  wrapper: {
+    display: 'inline-block',
+    padding: 12,
+    background: '#000',
+    borderRadius: 60,
+    boxShadow: '0 0 0 2px #1f2937, 0 20px 60px rgba(0,0,0,0.3)',
+    position: 'relative',
+  },
+  screen: {
+    position: 'relative',
+    borderRadius: 48,
+    overflow: 'hidden',
+    background: '#fff',
+  },
+  statusBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 54,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0 32px 0 32px',
+    fontSize: 16,
+    fontWeight: 600,
+    fontFamily: '-apple-system, "SF Pro Text", sans-serif',
+    zIndex: 20,
+    pointerEvents: 'none',
+  },
+  dynamicIsland: {
+    position: 'absolute',
+    top: 12,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: 124,
+    height: 36,
+    background: '#000',
+    borderRadius: 999,
+    zIndex: 30,
+  },
+  statusIcons: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+  },
+  signalIcon: {
+    display: 'flex',
+    alignItems: 'flex-end',
+    gap: 2,
+    height: 12,
+  },
+  signalBar: {
+    width: 3,
+    background: 'currentColor',
+    borderRadius: 1,
+  },
+  wifiIcon: {
+    width: 16,
+    height: 12,
+    position: 'relative',
+  },
+  batteryIcon: {
+    width: 26,
+    height: 12,
+    border: '1.5px solid currentColor',
+    borderRadius: 3,
+    padding: 1,
+    position: 'relative',
+    opacity: 0.8,
+  },
+  batteryCap: {
+    position: 'absolute',
+    top: 3,
+    right: -3,
+    width: 2,
+    height: 6,
+    background: 'currentColor',
+    borderRadius: '0 1px 1px 0',
+  },
+  content: {
+    position: 'absolute',
+    top: 54,
+    left: 0,
+    right: 0,
+    bottom: 34,
+    overflow: 'auto',
+  },
+  homeIndicator: {
+    position: 'absolute',
+    bottom: 10,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: 140,
+    height: 5,
+    background: 'rgba(0,0,0,0.3)',
+    borderRadius: 999,
+    zIndex: 10,
+  },
+  homeIndicatorDark: {
+    background: 'rgba(255,255,255,0.5)',
+  },
+};
+
+function IosFrame({
+  children,
+  width = 393,
+  height = 852,
+  time = '9:41',
+  battery = 100,
+  darkMode = false,
+  showStatusBar = true,
+  showDynamicIsland = true,
+  showHomeIndicator = true,
+}) {
+  const textColor = darkMode ? '#fff' : '#000';
+
+  return (
+    <div style={iosFrameStyles.wrapper}>
+      <div style={{
+        ...iosFrameStyles.screen,
+        width,
+        height,
+        background: darkMode ? '#000' : '#fff',
+      }}>
+        {showStatusBar && (
+          <div style={{ ...iosFrameStyles.statusBar, color: textColor }}>
+            <span>{time}</span>
+            <div style={iosFrameStyles.statusIcons}>
+              <div style={iosFrameStyles.signalIcon}>
+                <div style={{ ...iosFrameStyles.signalBar, height: 4 }} />
+                <div style={{ ...iosFrameStyles.signalBar, height: 6 }} />
+                <div style={{ ...iosFrameStyles.signalBar, height: 9 }} />
+                <div style={{ ...iosFrameStyles.signalBar, height: 11 }} />
+              </div>
+              <svg width="16" height="12" viewBox="0 0 16 12" fill="none" style={{ color: textColor }}>
+                <path d="M8 11.5a1 1 0 100-2 1 1 0 000 2z" fill="currentColor" />
+                <path d="M3 7.5a7 7 0 0110 0" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+                <path d="M1 4.5a11 11 0 0114 0" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" opacity="0.7" />
+              </svg>
+              <div style={iosFrameStyles.batteryIcon}>
+                <div style={{
+                  width: `${battery}%`,
+                  height: '100%',
+                  background: 'currentColor',
+                  borderRadius: 1,
+                  opacity: 0.9,
+                }} />
+                <div style={iosFrameStyles.batteryCap} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showDynamicIsland && <div style={iosFrameStyles.dynamicIsland} />}
+
+        <div style={iosFrameStyles.content}>
+          {children}
+        </div>
+
+        {showHomeIndicator && (
+          <div style={{
+            ...iosFrameStyles.homeIndicator,
+            ...(darkMode ? iosFrameStyles.homeIndicatorDark : {}),
+          }} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+if (typeof window !== 'undefined') {
+  window.IosFrame = IosFrame;
+}
+
+const androidFrameStyles = {
+  wrapper: {
+    display: 'inline-block',
+    padding: 10,
+    background: '#1a1a1a',
+    borderRadius: 44,
+    boxShadow: '0 0 0 2px #2a2a2a, 0 20px 60px rgba(0,0,0,0.3)',
+    position: 'relative',
+  },
+  screen: {
+    position: 'relative',
+    borderRadius: 36,
+    overflow: 'hidden',
+    background: '#fff',
+  },
+  statusBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 32,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0 24px',
+    fontSize: 14,
+    fontWeight: 500,
+    fontFamily: 'Roboto, -apple-system, sans-serif',
+    zIndex: 20,
+    pointerEvents: 'none',
+  },
+  punchHole: {
+    position: 'absolute',
+    top: 10,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: 14,
+    height: 14,
+    background: '#000',
+    borderRadius: '50%',
+    zIndex: 30,
+  },
+  statusIcons: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+  },
+  batteryText: {
+    fontSize: 11,
+    fontWeight: 600,
+    marginLeft: 2,
+  },
+  content: {
+    position: 'absolute',
+    top: 32,
+    left: 0,
+    right: 0,
+    bottom: 24,
+    overflow: 'auto',
+  },
+  navBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 24,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 60,
+    zIndex: 10,
+  },
+  navButton: {
+    width: 36,
+    height: 4,
+    background: 'rgba(0,0,0,0.3)',
+    borderRadius: 999,
+  },
+};
+
+function AndroidFrame({
+  children,
+  width = 412,
+  height = 892,
+  time = '9:41',
+  battery = 100,
+  darkMode = false,
+  navStyle = 'gesture',
+}) {
+  const textColor = darkMode ? '#fff' : '#1a1a1a';
+
+  return (
+    <div style={androidFrameStyles.wrapper}>
+      <div style={{
+        ...androidFrameStyles.screen,
+        width,
+        height,
+        background: darkMode ? '#000' : '#fff',
+      }}>
+        <div style={{ ...androidFrameStyles.statusBar, color: textColor }}>
+          <span>{time}</span>
+          <div style={androidFrameStyles.statusIcons}>
+            <svg width="14" height="10" viewBox="0 0 14 10" fill="currentColor">
+              <rect x="0" y="6" width="2" height="4" rx="0.5" />
+              <rect x="4" y="4" width="2" height="6" rx="0.5" />
+              <rect x="8" y="2" width="2" height="8" rx="0.5" />
+              <rect x="12" y="0" width="2" height="10" rx="0.5" />
+            </svg>
+            <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
+              <path d="M7 9a1 1 0 100-2 1 1 0 000 2z" fill="currentColor" />
+              <path d="M3 6a5 5 0 018 0" stroke="currentColor" strokeWidth="1.2" />
+              <path d="M0.5 3.5a11 11 0 0113 0" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
+            </svg>
+            <div style={{
+              width: 22,
+              height: 10,
+              border: '1.5px solid currentColor',
+              borderRadius: 2,
+              padding: 1,
+              position: 'relative',
+            }}>
+              <div style={{
+                width: `${battery}%`,
+                height: '100%',
+                background: 'currentColor',
+                borderRadius: 1,
+              }} />
+            </div>
+            <span style={androidFrameStyles.batteryText}>{battery}%</span>
+          </div>
+        </div>
+
+        <div style={androidFrameStyles.punchHole} />
+
+        <div style={androidFrameStyles.content}>
+          {children}
+        </div>
+
+        {navStyle === 'gesture' && (
+          <div style={androidFrameStyles.navBar}>
+            <div style={{
+              ...androidFrameStyles.navButton,
+              width: 100,
+              height: 4,
+              background: darkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+            }} />
+          </div>
+        )}
+
+        {navStyle === 'buttons' && (
+          <div style={androidFrameStyles.navBar}>
+            <span style={{ color: textColor, fontSize: 20 }}>◁</span>
+            <span style={{ color: textColor, fontSize: 16 }}>○</span>
+            <span style={{ color: textColor, fontSize: 16 }}>□</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+if (typeof window !== 'undefined') {
+  window.AndroidFrame = AndroidFrame;
+}
+
+/* =========================================================
+   统一内容数据（spec.md   2026-11-06 周五）
+   ========================================================= */
+const gentleData = {
+  dateShort: '11月6日 周五',
+  plan: { date: '11月6日 周五', time: '19:30', type: '轻松跑', target: '5.00 km', remind: '19:15' },
+  running: { elapsed: '28:46', dist: '4.82 km', pace: `5'48"`, avgPace: `5'52"`, hr: '142' },
+  finish: { dist: '5.21 km', time: '31:24', pace: `6'02"`, kcal: '342 kcal' },
+  streak: '13 天',
+  month: { dist: '42.6 km', count: '8 次' },
+  history: [
+    { date: '11月3日', dist: '6.30 km', time: '37:12', pace: `5'54"` },
+    { date: '10月31日', dist: '5.02 km', time: '30:08', pace: `6'00"` },
+  ],
+};
+
+/* =========================================================
+   唯一命名样式对象
+   ========================================================= */
+const gentleStyles = {
+  screen: {
+    height: '100%', display: 'flex', flexDirection: 'column',
+    background: 'var(--grass-2)', color: 'var(--grass-12)',
+  },
+  head: { padding: '20px 18px 0' },
+  headDate: { fontSize: 12, fontWeight: 500, color: 'var(--grass-11)' },
+  headTitle: { fontSize: 16, fontWeight: 600, color: 'var(--grass-12)', marginTop: 6, letterSpacing: '-0.01em' },
+  weekWrap: { padding: '0 18px', marginTop: 16 },
+  weekRow: { display: 'flex', gap: 6 },
+  weekCell: {
+    flex: 1, height: 52, borderRadius: 9, display: 'flex',
+    flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+    border: '0.5px solid transparent',
+  },
+  weekNum: { fontSize: 14, fontWeight: 600, lineHeight: '18px' },
+  weekDay: { fontSize: 12, fontWeight: 400, lineHeight: '16px' },
+  cardWrap: { padding: '0 18px', marginTop: 14 },
+  card: {
+    background: 'var(--slate-1)', border: '0.5px solid var(--grass-5)',
+    borderRadius: 14, padding: 14,
+  },
+  row: { display: 'flex', alignItems: 'center', gap: 14 },
+  big: { fontSize: 20, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--grass-12)', lineHeight: '26px' },
+  small: { fontSize: 12, fontWeight: 400, color: 'var(--grass-11)', marginTop: 4, lineHeight: '17px' },
+  note: { padding: '0 18px', marginTop: 12, fontSize: 12, fontWeight: 400, color: 'var(--grass-11)', lineHeight: '17px' },
+  divider: { height: 0.5, background: 'var(--grass-5)', margin: '12px 0' },
+  sectionLabel: { fontSize: 12, fontWeight: 600, color: 'var(--grass-11)', marginBottom: 8 },
+  softTag: {
+    display: 'inline-flex', alignItems: 'center', marginTop: 12,
+    fontSize: 12, fontWeight: 500, color: 'var(--grass-11)',
+    background: 'var(--grass-3)', borderRadius: 999, padding: '4px 10px',
+  },
+  formRow: {
+    display: 'flex', alignItems: 'center', minHeight: 40,
+    borderBottom: '0.5px solid var(--grass-4)',
+  },
+  formLabel: { fontSize: 12, fontWeight: 400, color: 'var(--grass-11)', width: 52, flex: '0 0 52px' },
+  formValue: { fontSize: 14, fontWeight: 500, color: 'var(--grass-12)', flex: 1 },
+  formArrow: { fontSize: 12, fontWeight: 400, color: 'var(--grass-8)' },
+  primaryBtn: {
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    background: 'var(--grass-9)', color: 'var(--slate-1)',
+    borderRadius: 999, padding: '9px 18px', fontSize: 14, fontWeight: 600,
+    cursor: 'pointer',
+  },
+  secondaryBtn: {
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    background: 'var(--grass-3)', color: 'var(--grass-11)',
+    border: '0.5px solid var(--grass-5)',
+    borderRadius: 999, padding: '9px 18px', fontSize: 14, fontWeight: 600,
+    cursor: 'pointer',
+  },
+  tabbar: {
+    display: 'flex', borderTop: '0.5px solid var(--grass-5)',
+    background: 'var(--slate-1)', padding: '9px 0 11px',
+  },
+  tabItem: { flex: 1, textAlign: 'center', cursor: 'pointer' },
+  tabDot: { width: 4, height: 4, borderRadius: 999, margin: '0 auto 6px' },
+  modalCard: {
+    position: 'relative', background: 'var(--slate-1)',
+    border: '0.5px solid var(--grass-5)', borderRadius: 14, padding: 16,
+    boxShadow: '0 12px 36px rgba(28,32,36,0.18)',
+  },
+  modalTitle: { fontSize: 16, fontWeight: 600, color: 'var(--grass-12)' },
+  modalClose: { fontSize: 12, fontWeight: 500, color: 'var(--grass-11)', cursor: 'pointer' },
+};
+
+/* =========================================================
+   程序化图形：双环 / 轨迹 / 月历 / 趋势 / 记录图
+   ========================================================= */
+function DoubleRing({ outer = 1, inner = 1, size = 76 }) {
+  const R1 = 30, R2 = 19;
+  const c1 = 2 * Math.PI * R1, c2 = 2 * Math.PI * R2;
+  return (
+    <svg width={size} height={size} viewBox="0 0 76 76" style={{ flex: '0 0 auto', display: 'block' }}>
+      <circle cx="38" cy="38" r={R1} className="g-ring-base" strokeWidth="8" />
+      <circle cx="38" cy="38" r={R1} className="g-ring-outer" strokeWidth="8" strokeLinecap="round"
+        strokeDasharray={c1} strokeDashoffset={c1 * (1 - Math.min(outer, 1))} transform="rotate(-90 38 38)" />
+      <circle cx="38" cy="38" r={R2} className="g-ring-base" strokeWidth="5" />
+      <circle cx="38" cy="38" r={R2} className="g-ring-inner" strokeWidth="5" strokeLinecap="round"
+        strokeDasharray={c2} strokeDashoffset={c2 * (1 - Math.min(inner, 1))} transform="rotate(-90 38 38)" />
+    </svg>
+  );
+}
+
+function TrackSvg({ height = 150, soft = false, compact = false }) {
+  const track = soft ? 'g-track-soft' : 'g-track';
+  const sw = soft ? 2 : (compact ? 2 : 3);
+  return (
+    <svg viewBox="0 0 340 150" preserveAspectRatio="none"
+      style={{ width: '100%', height, display: 'block', borderRadius: 8 }}>
+      <rect x="0" y="0" width="340" height="150" className="g-block" opacity="0.45" />
+      <g className="g-street" strokeWidth="0.5" opacity="0.8">
+        <path d="M0 34 H340 M0 82 H340 M0 126 H340 M52 0 V150 M128 0 V150 M210 0 V150 M286 0 V150" />
+        <path d="M52 34 L128 82 M210 34 L286 126 M128 82 L210 34" opacity="0.4" />
+      </g>
+      <g className="g-block">
+        <rect x="60" y="41" width="58" height="33" rx="5" />
+        <rect x="138" y="90" width="62" height="28" rx="5" />
+        <rect x="218" y="41" width="58" height="33" rx="5" />
+        <rect x="294" y="90" width="38" height="28" rx="5" />
+      </g>
+      <path d="M28 122 C70 112 88 58 138 62 S204 120 250 96 S306 40 322 56"
+        className={track} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="28" cy="122" r={compact ? 3 : 4} className="g-dot-start" />
+      <circle cx="322" cy="56" r={compact ? 3.5 : 5} className="g-dot-end" strokeWidth="2" />
+    </svg>
+  );
+}
+
+/* 3:4 记录图（分享卡） */
+function ShareCard({ width = 252, onClick }) {
+  const h = width * 4 / 3;
+  return (
+    <div onClick={onClick} className="g-num"
+      style={{
+        width, height: h, background: 'var(--slate-1)',
+        border: '0.5px solid var(--grass-5)', borderRadius: 10,
+        padding: 12, display: 'flex', flexDirection: 'column',
+        cursor: onClick ? 'pointer' : 'default', overflow: 'hidden',
+      }}>
+      <div style={{ height: h * 0.44, borderRadius: 6, overflow: 'hidden' }}>
+        <TrackSvg height={h * 0.44} soft compact />
+      </div>
+      <div style={{ marginTop: 'auto' }}>
+        <div style={{ fontSize: 20, fontWeight: 600, color: 'var(--grass-12)', letterSpacing: '-0.02em' }}>5.21 km</div>
+        <div style={{ fontSize: 12, fontWeight: 400, color: 'var(--grass-11)', marginTop: 4 }}>
+          31:24　平均配速 {gentleData.finish.pace}
+        </div>
+        <div style={{ ...gentleStyles.divider, margin: '10px 0 8px' }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--grass-11)' }}>{gentleData.dateShort}</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--grass-9)' }}>今天也跑完了</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MiniShare({ onClick }) {
+  return (
+    <div onClick={onClick} className="g-num"
+      style={{
+        width: 78, height: 104, borderRadius: 10, flex: '0 0 78px',
+        background: 'var(--slate-1)', border: '0.5px solid var(--grass-5)',
+        padding: 7, display: 'flex', flexDirection: 'column', cursor: 'pointer', overflow: 'hidden',
+      }}>
+      <div style={{ height: 46, borderRadius: 5, overflow: 'hidden' }}>
+        <TrackSvg height={46} soft compact />
+      </div>
+      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--grass-12)', marginTop: 'auto' }}>5.21</div>
+      <div style={{ fontSize: 12, fontWeight: 400, color: 'var(--grass-11)' }}>km　11月6日</div>
+    </div>
+  );
+}
+
+/* 周历条：柔和色编码，休息日也是一种完成 */
+function WeekStrip() {
+  const days = [
+    { d: '2', w: '一', s: 'rest' },
+    { d: '3', w: '二', s: 'done' },
+    { d: '4', w: '三', s: 'rest' },
+    { d: '5', w: '四', s: 'light' },
+    { d: '6', w: '五', s: 'today' },
+    { d: '7', w: '六', s: 'rest' },
+    { d: '8', w: '日', s: 'rest' },
+  ];
+  const bg = { rest: 'var(--grass-3)', light: 'var(--grass-5)', done: 'var(--grass-9)', today: 'var(--grass-9)' };
+  const fg = { rest: 'var(--grass-11)', light: 'var(--grass-12)', done: 'var(--slate-1)', today: 'var(--slate-1)' };
+  return (
+    <div style={gentleStyles.weekRow}>
+      {days.map((x) => (
+        <div key={x.d} className="g-num" style={{
+          ...gentleStyles.weekCell,
+          background: bg[x.s],
+          border: x.s === 'today' ? '0.5px solid var(--grass-12)' : '0.5px solid transparent',
+        }}>
+          <span style={{ ...gentleStyles.weekNum, color: fg[x.s] }}>{x.d}</span>
+          <span style={{ ...gentleStyles.weekDay, color: fg[x.s], opacity: 0.9 }}>{x.w}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* 月历 */
+function MonthGrid() {
+  const cells = [];
+  for (let i = 0; i < 6; i++) cells.push(null); // 第一周周日之前留空
+  for (let d = 1; d <= 30; d++) cells.push(d);
+  while (cells.length < 42) cells.push(null);
+  const done = { 1: 1, 3: 1, 5: 1, 6: 1 };
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 2 }}>
+      {cells.map((d, i) => {
+        if (d === null) return <div key={i} style={{ height: 18 }} />;
+        const isToday = d === 6, isDone = !!done[d];
+        return (
+          <div key={i} className="g-num" style={{
+            height: 18, display: 'grid', placeItems: 'center',
+            borderRadius: 4,
+            background: isToday ? 'var(--grass-9)' : (isDone ? 'var(--grass-5)' : 'var(--grass-3)'),
+            fontSize: 12, fontWeight: isToday || isDone ? 600 : 400,
+            color: isToday ? 'var(--slate-1)' : 'var(--grass-11)',
+          }}>{d}</div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* 里程趋势：8 次打卡 */
+function TrendBars() {
+  const vals = [4.2, 5.0, 6.3, 4.8, 5.2, 5.0, 6.0, 5.21];
+  const max = 6.5;
+  return (
+    <svg viewBox="0 0 300 58" preserveAspectRatio="none" style={{ width: '100%', height: 58, display: 'block' }}>
+      {vals.map((v, i) => {
+        const h = (v / max) * 52;
+        return <rect key={i} x={8 + i * 36} y={56 - h} width="22" height={h} rx="3"
+          className={i === 2 ? 'g-bar-hi' : 'g-bar'} />;
+      })}
+    </svg>
+  );
+}
+
+/* =========================================================
+   公共外壳：标题 / 周历 / 单张主卡 / 说明 / tab bar
+   ========================================================= */
+const gentleTabs = [
+  { key: 'today', label: '今日' },
+  { key: 'plan', label: '计划' },
+  { key: 'running', label: '跑中' },
+  { key: 'finish', label: '完成' },
+  { key: 'history', label: '记录' },
+];
+
+function TabBar({ screen, onTab }) {
+  return (
+    <div style={gentleStyles.tabbar}>
+      {gentleTabs.map((t) => {
+        const on = screen === t.key;
+        return (
+          <div key={t.key} style={gentleStyles.tabItem} onClick={() => onTab(t.key)}>
+            <div style={{ ...gentleStyles.tabDot, background: on ? 'var(--grass-9)' : 'transparent' }} />
+            <span style={{ fontSize: 12, fontWeight: on ? 600 : 400, color: on ? 'var(--grass-11)' : 'var(--slate-11)' }}>{t.label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function Card({ children }) {
+  return <div style={gentleStyles.card}>{children}</div>;
+}
+
+function ScreenShell({ date, title, note, children, screen, onTab }) {
+  return (
+    <div style={gentleStyles.screen}>
+      <div style={gentleStyles.head}>
+        <div style={gentleStyles.headDate}>{date}</div>
+        <div style={gentleStyles.headTitle}>{title}</div>
+      </div>
+      <div style={gentleStyles.weekWrap}><WeekStrip /></div>
+      <div style={gentleStyles.cardWrap}>{children}</div>
+      <div style={gentleStyles.note}>{note}</div>
+      <div style={{ marginTop: 'auto' }}><TabBar screen={screen} onTab={onTab} /></div>
+    </div>
+  );
+}
+
+function FormRow({ label, value, onClick, right }) {
+  return (
+    <div style={{ ...gentleStyles.formRow, cursor: onClick ? 'pointer' : 'default' }} onClick={onClick}>
+      <span style={gentleStyles.formLabel}>{label}</span>
+      <span style={gentleStyles.formValue} className="g-num">{value}</span>
+      {right ? right : (onClick ? <span style={gentleStyles.formArrow}>›</span> : null)}
+    </div>
+  );
+}
+
+function Switch({ on, onToggle }) {
+  return (
+    <div onClick={onToggle} style={{
+      width: 36, height: 20, borderRadius: 999, cursor: 'pointer',
+      background: on ? 'var(--grass-9)' : 'var(--slate-5)',
+      display: 'flex', alignItems: 'center',
+      justifyContent: on ? 'flex-end' : 'flex-start', padding: 2,
+    }}>
+      <div style={{ width: 16, height: 16, borderRadius: 999, background: 'var(--slate-1)' }} />
+    </div>
+  );
+}
+
+function DataCell({ label, value }) {
+  return (
+    <div style={{ flex: 1 }}>
+      <div className="g-num" style={{ fontSize: 14, fontWeight: 600, color: 'var(--grass-12)' }}>{value}</div>
+      <div style={{ fontSize: 12, fontWeight: 400, color: 'var(--grass-11)', marginTop: 3 }}>{label}</div>
+    </div>
+  );
+}
+
+/* =========================================================
+   5 屏
+   ========================================================= */
+function TodayScreen({ screen, onTab, openModal }) {
+  return (
+    <ScreenShell date={gentleData.dateShort} title="今天也跑完了"
+      note="11月累计 42.6 km，8 次打卡，按自己的节奏" screen={screen} onTab={onTab}>
+      <Card>
+        <div style={gentleStyles.row}>
+          <DoubleRing outer={1} inner={0.9} size={88} />
+          <div>
+            <div className="g-num" style={gentleStyles.big}>5.21 km</div>
+            <div className="g-num" style={gentleStyles.small}>31:24　平均配速 {gentleData.finish.pace}</div>
+            <div style={gentleStyles.small}>已自动打卡，连续 {gentleData.streak}</div>
+          </div>
+        </div>
+        <div style={gentleStyles.divider} />
+        <div onClick={() => openModal('planDetail')} style={{ cursor: 'pointer' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--grass-12)' }}>19:30 轻松跑</span>
+            <span style={gentleStyles.formArrow}>详情 ›</span>
+          </div>
+          <div className="g-num" style={{ fontSize: 12, fontWeight: 400, color: 'var(--grass-11)', marginTop: 5 }}>
+            目标 5.00 km　提醒 19:15
+          </div>
+        </div>
+      </Card>
+    </ScreenShell>
+  );
+}
+
+function PlanScreen({ screen, onTab, openModal, ctx }) {
+  return (
+    <ScreenShell date="十一月" title="安排这周"
+      note="11月6日 19:30 轻松跑，提醒 19:15" screen={screen} onTab={onTab}>
+      <Card>
+        <div style={gentleStyles.row}>
+          <DoubleRing outer={0.8} inner={0.7} size={72} />
+          <div>
+            <div className="g-num" style={gentleStyles.big}>8 次</div>
+            <div style={gentleStyles.small}>11月已打卡，42.6 km</div>
+            <div style={gentleStyles.small}>连续 {gentleData.streak}</div>
+          </div>
+        </div>
+        <div style={gentleStyles.divider} />
+        <div style={{ ...gentleStyles.sectionLabel, marginBottom: 2 }}>新建计划</div>
+        <FormRow label="日期" value={gentleData.plan.date} onClick={() => openModal('planDetail')} />
+        <FormRow label="时间" value={gentleData.plan.time} />
+        <FormRow label="类型" value={ctx.planType} onClick={() => openModal('type')} />
+        <FormRow label="目标" value={gentleData.plan.target} />
+        <FormRow label="提醒" value={ctx.remind ? gentleData.plan.remind : '已关闭'}
+          right={<Switch on={ctx.remind} onToggle={() => ctx.setRemind(!ctx.remind)} />} />
+        <div style={{ marginTop: 14, display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={gentleStyles.primaryBtn} onClick={() => openModal('saved')}>保存计划</div>
+        </div>
+      </Card>
+    </ScreenShell>
+  );
+}
+
+function RunningScreen({ screen, onTab, openModal, ctx }) {
+  return (
+    <ScreenShell date="11月6日 19:30 轻松跑" title={ctx.paused ? '先歇一下' : '正在跑，慢慢来'}
+      note={`当前配速 ${gentleData.running.pace}，平均 ${gentleData.running.avgPace}，心率 ${gentleData.running.hr}`}
+      screen={screen} onTab={onTab}>
+      <Card>
+        <div style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', cursor: 'pointer' }}
+          onClick={() => openModal('track')}>
+          <TrackSvg height={148} />
+          <div style={{ position: 'absolute', right: 8, top: 8 }}>
+            <DoubleRing outer={0.96} inner={0.82} size={48} />
+          </div>
+        </div>
+        <div style={gentleStyles.divider} />
+        <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--grass-11)' }}>已用时间</div>
+        <div className="g-num" style={{ fontSize: 20, fontWeight: 600, color: 'var(--grass-12)', lineHeight: '28px', letterSpacing: '-0.02em' }}>
+          {gentleData.running.elapsed}
+        </div>
+        <div style={{ display: 'flex', marginTop: 12 }}>
+          <DataCell label="距离" value={gentleData.running.dist} />
+          <DataCell label="当前配速" value={gentleData.running.pace} />
+          <DataCell label="平均配速" value={gentleData.running.avgPace} />
+        </div>
+        <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+          <div style={{ ...gentleStyles.secondaryBtn, flex: 1 }} onClick={() => ctx.setPaused(!ctx.paused)}>
+            {ctx.paused ? '继续' : '暂停'}
+          </div>
+          <div style={{ ...gentleStyles.primaryBtn, flex: 1 }} onClick={ctx.goFinish}>结束</div>
+        </div>
+      </Card>
+    </ScreenShell>
+  );
+}
+
+function FinishScreen({ screen, onTab, openModal }) {
+  return (
+    <ScreenShell date="11月6日 20:01" title="跑完了，已自动打卡"
+      note="不用手动补打卡，今天已经记下了" screen={screen} onTab={onTab}>
+      <Card>
+        <div style={gentleStyles.row}>
+          <DoubleRing outer={1} inner={0.9} size={88} />
+          <div>
+            <div className="g-num" style={gentleStyles.big}>5.21 km</div>
+            <div className="g-num" style={gentleStyles.small}>31:24　平均配速 {gentleData.finish.pace}</div>
+            <div className="g-num" style={gentleStyles.small}>342 kcal　连续 {gentleData.streak}</div>
+          </div>
+        </div>
+        <div style={gentleStyles.softTag}>已自动打卡</div>
+        <div style={gentleStyles.divider} />
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+          <MiniShare onClick={() => openModal('share')} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--grass-12)' }}>生成记录图</div>
+            <div style={{ fontSize: 12, fontWeight: 400, color: 'var(--grass-11)', marginTop: 4 }}>3:4，留给今天</div>
+            <div onClick={() => openModal('share')}
+              style={{ ...gentleStyles.primaryBtn, padding: '7px 14px', fontSize: 12, marginTop: 10, display: 'inline-flex' }}>
+              预览记录图
+            </div>
+          </div>
+        </div>
+      </Card>
+    </ScreenShell>
+  );
+}
+
+function HistoryScreen({ screen, onTab, openModal }) {
+  return (
+    <ScreenShell date="十一月" title="这个月，稳稳的"
+      note="只和自己的上个月比" screen={screen} onTab={onTab}>
+      <Card>
+        <div style={gentleStyles.row}>
+          <DoubleRing outer={0.8} inner={0.7} size={72} />
+          <div>
+            <div className="g-num" style={gentleStyles.big}>42.6 km</div>
+            <div className="g-num" style={gentleStyles.small}>11月累计，8 次打卡</div>
+            <div style={gentleStyles.small}>连续 {gentleData.streak}</div>
+          </div>
+        </div>
+        <div style={gentleStyles.divider} />
+        <div style={gentleStyles.sectionLabel}>十一月</div>
+        <MonthGrid />
+        <div style={{ ...gentleStyles.sectionLabel, marginTop: 12 }}>里程趋势</div>
+        <TrendBars />
+        <div style={gentleStyles.divider} />
+        <div style={gentleStyles.sectionLabel}>单次记录</div>
+        {gentleData.history.map((r, i) => (
+          <div key={i} onClick={() => openModal('record', i)}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0',
+              borderBottom: i === 0 ? '0.5px solid var(--grass-4)' : 'none', cursor: 'pointer' }}>
+            <span className="g-num" style={{ fontSize: 12, fontWeight: 500, color: 'var(--grass-11)', width: 58, flex: '0 0 58px' }}>{r.date}</span>
+            <span className="g-num" style={{ fontSize: 14, fontWeight: 600, color: 'var(--grass-12)', flex: 1 }}>{r.dist}</span>
+            <span className="g-num" style={{ fontSize: 12, fontWeight: 400, color: 'var(--grass-11)' }}>{r.time}</span>
+            <span className="g-num" style={{ fontSize: 12, fontWeight: 400, color: 'var(--grass-11)' }}>{r.pace}</span>
+          </div>
+        ))}
+      </Card>
+    </ScreenShell>
+  );
+}
+
+/* =========================================================
+   弹层
+   ========================================================= */
+function Modal({ title, onClose, children, width = 280 }) {
+  return (
+    <div style={{ position: 'absolute', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'var(--slate-12)', opacity: 0.32 }} />
+      <div className="g-in" style={{ ...gentleStyles.modalCard, width }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
+          <span style={gentleStyles.modalTitle}>{title}</span>
+          <span style={gentleStyles.modalClose} onClick={onClose}>关闭</span>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function ModalBody({ type, payload, close, ctx }) {
+  if (type === 'planDetail') {
+    const p = gentleData.plan;
+    return (
+      <div>
+        <FormRow label="日期" value={p.date} />
+        <FormRow label="时间" value={p.time} />
+        <FormRow label="类型" value={p.type} />
+        <FormRow label="目标" value={p.target} />
+        <FormRow label="提醒" value={ctx.remind ? p.remind : '已关闭'} />
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 14 }}>
+          <div style={gentleStyles.primaryBtn} onClick={close}>好</div>
+        </div>
+      </div>
+    );
+  }
+  if (type === 'type') {
+    return (
+      <div>
+        {['轻松跑', '长距离', '间歇跑'].map((t) => (
+          <div key={t} onClick={() => { ctx.setPlanType(t); close(); }}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '11px 2px', borderBottom: '0.5px solid var(--grass-4)', cursor: 'pointer',
+              fontSize: 14, fontWeight: ctx.planType === t ? 600 : 400,
+              color: ctx.planType === t ? 'var(--grass-11)' : 'var(--grass-12)' }}>
+            <span>{t}</span>
+            {ctx.planType === t && <span style={{ fontSize: 12, color: 'var(--grass-9)' }}>已选</span>}
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (type === 'saved') {
+    return (
+      <div>
+        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--grass-12)' }}>已写进日历</div>
+        <div className="g-num" style={{ fontSize: 12, fontWeight: 400, color: 'var(--grass-11)', marginTop: 6 }}>
+          {gentleData.plan.date} {gentleData.plan.time} {ctx.planType}，提醒 {ctx.remind ? gentleData.plan.remind : '已关闭'}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+          <div style={gentleStyles.primaryBtn} onClick={close}>好</div>
+        </div>
+      </div>
+    );
+  }
+  if (type === 'track') {
+    return (
+      <div>
+        <div style={{ borderRadius: 8, overflow: 'hidden' }}><TrackSvg height={130} /></div>
+        <div style={{ display: 'flex', marginTop: 12 }}>
+          <DataCell label="已用时间" value={gentleData.running.elapsed} />
+          <DataCell label="距离" value={gentleData.running.dist} />
+          <DataCell label="当前配速" value={gentleData.running.pace} />
+        </div>
+        <div className="g-num" style={{ fontSize: 12, fontWeight: 400, color: 'var(--grass-11)', marginTop: 10 }}>
+          平均配速 {gentleData.running.avgPace}　心率 {gentleData.running.hr}
+        </div>
+      </div>
+    );
+  }
+  if (type === 'share') {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <ShareCard width={228} />
+      </div>
+    );
+  }
+  if (type === 'record') {
+    const r = gentleData.history[payload || 0];
+    return (
+      <div>
+        <div style={{ borderRadius: 8, overflow: 'hidden' }}><TrackSvg height={120} soft /></div>
+        <div className="g-num" style={{ fontSize: 20, fontWeight: 600, color: 'var(--grass-12)', marginTop: 12 }}>{r.dist}</div>
+        <div className="g-num" style={{ fontSize: 12, fontWeight: 400, color: 'var(--grass-11)', marginTop: 5 }}>
+          {r.date}　{r.time}　平均配速 {r.pace}
+        </div>
+      </div>
+    );
+  }
+  return null;
+}
+
+/* =========================================================
+   AppPhone   每台独立状态机
+   ========================================================= */
+function AppPhone({ initial }) {
+  const [screen, setScreen] = useState(initial);
+  const [modal, setModal] = useState(null);
+  const [remind, setRemind] = useState(true);
+  const [paused, setPaused] = useState(false);
+  const [planType, setPlanType] = useState('轻松跑');
+  const close = () => setModal(null);
+  const openModal = (type, payload) => setModal({ type, payload });
+  const ctx = { remind, setRemind, paused, setPaused, planType, setPlanType, goFinish: () => setScreen('finish') };
+
+  return (
+    <div style={{ position: 'relative', height: '100%' }}>
+      {screen === 'today' && <TodayScreen screen={screen} onTab={setScreen} openModal={openModal} />}
+      {screen === 'plan' && <PlanScreen screen={screen} onTab={setScreen} openModal={openModal} ctx={ctx} />}
+      {screen === 'running' && <RunningScreen screen={screen} onTab={setScreen} openModal={openModal} ctx={ctx} />}
+      {screen === 'finish' && <FinishScreen screen={screen} onTab={setScreen} openModal={openModal} />}
+      {screen === 'history' && <HistoryScreen screen={screen} onTab={setScreen} openModal={openModal} />}
+      {modal && (
+        <Modal title={{
+          planDetail: '计划详情', type: '选择类型', saved: '已写进日历',
+          track: '跑中轨迹', share: '记录图 3:4', record: '单次记录',
+        }[modal.type]} onClose={close} width={modal.type === 'share' ? 260 : 280}>
+          <ModalBody type={modal.type} payload={modal.payload} close={close} ctx={ctx} />
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================
+   展示板   流程串联（计划 → 提醒 → 跑中 → 自动打卡 → 回顾）
+   ========================================================= */
+const SCALE = 0.68;
+const FRAME = { ios: { w: 417, h: 876 }, android: { w: 432, h: 912 } };
+const gentlePhones = [
+  { no: '01', label: '计划', frame: 'ios', left: 12, top: 138, initial: 'plan' },
+  { no: '02', label: '今日', frame: 'ios', left: 328, top: 206, initial: 'today' },
+  { no: '03', label: '跑中', frame: 'android', left: 644, top: 274, initial: 'running' },
+  { no: '04', label: '完成', frame: 'ios', left: 960, top: 342, initial: 'finish' },
+  { no: '05', label: '记录', frame: 'android', left: 1276, top: 410, initial: 'history' },
+].map((p) => ({ ...p, vw: FRAME[p.frame].w * SCALE, vh: FRAME[p.frame].h * SCALE }));
+
+const gentleLinks = [
+  { text: '设提醒' },
+  { text: '开跑' },
+  { text: '自动打卡' },
+  { text: '看记录' },
+];
+
+function FlowLines() {
+  return (
+    <svg width="1600" height="1100" viewBox="0 0 1600 1100"
+      style={{ position: 'absolute', left: 0, top: 0, zIndex: 1, pointerEvents: 'none' }}>
+      {gentleLinks.map((ln, i) => {
+        const A = gentlePhones[i], B = gentlePhones[i + 1];
+        const x1 = A.left + A.vw, y1 = A.top + A.vh / 2;   // 上一屏右缘：从这里点出去
+        const x2 = B.left;                                  // 下一屏左缘
+        const yTop = B.top - 34;                            // 两台之间的凹口水平线
+        const p1x = x1 + 14, p2x = x2 + 72;
+        const lw = 12 * ln.text.length + 22;
+        const lx = (p1x + p2x) / 2 - lw / 2, ly = yTop - 28;
+        return (
+          <g key={i}>
+            {/* 0.5px 细线：从上一屏右缘斜上，横穿凹口，再折下接入下一屏 */}
+            <path d={`M${x1} ${y1} L${p1x} ${yTop} L${p2x} ${yTop} L${p2x} ${B.top + 8}`}
+              className="g-line" strokeWidth="0.5" />
+            <circle cx={x1} cy={y1} r="2.5" className="g-arrow" />
+            <path d={`M${p2x - 11} ${yTop - 3} L${p2x - 5} ${yTop} L${p2x - 11} ${yTop + 3} Z`}
+              className="g-arrow" />
+            {/* 12px 标注胶囊，紧贴水平线上方，落在凹口空白 */}
+            <rect x={lx} y={ly} width={lw} height="22" rx="11" className="g-label-bg" strokeWidth="0.5" />
+            <text x={lx + lw / 2} y={ly + 15} textAnchor="middle"
+              className="g-label-tx" style={{ fontSize: 12, fontWeight: 600 }}>{ln.text}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+function PhoneNode({ p }) {
+  const F = FRAME[p.frame];
+  const Frame = p.frame === 'ios' ? IosFrame : AndroidFrame;
+  return (
+    <div data-phone={p.no} style={{ position: 'absolute', left: p.left, top: p.top, width: p.vw, height: p.vh, zIndex: 2 }}>
+      <div style={{ position: 'absolute', left: 0, top: -26, display: 'flex', alignItems: 'baseline', gap: 8 }}>
+        <span className="g-num" style={{ fontSize: 12, fontWeight: 600, color: 'var(--grass-9)' }}>{p.no}</span>
+        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--grass-12)' }}>{p.label}</span>
+      </div>
+      <div style={{
+        position: 'absolute', left: 0, top: 0, width: F.w, height: F.h,
+        transform: `scale(${SCALE})`, transformOrigin: 'top left',
+      }}>
+        <Frame time="19:30" battery={86}>
+          <AppPhone initial={p.initial} />
+        </Frame>
+      </div>
+    </div>
+  );
+}
+
+function Board() {
+  return (
+    <div style={{ position: 'relative', width: 1600, height: 1100, background: 'var(--grass-2)' }}>
+      {/* 标题区 */}
+      <div style={{ position: 'absolute', left: 34, top: 26, right: 34, height: 84,
+        display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+        borderBottom: '0.5px solid var(--grass-6)', zIndex: 3 }}>
+        <div>
+          <div style={{ fontSize: 20, fontWeight: 600, color: 'var(--grass-12)', letterSpacing: '-0.01em' }}>每日跑步</div>
+          <div style={{ fontSize: 12, fontWeight: 400, color: 'var(--grass-11)', marginTop: 7 }}>
+            把计划，提醒，跑步和打卡串成一圈
+          </div>
+          <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--grass-11)', marginTop: 6 }}>
+            方向 03　温柔打卡　iOS + Android
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 4 }}>
+          {gentlePhones.map((p) => (
+            <div key={p.no} className="g-num" style={{
+              display: 'flex', alignItems: 'center', gap: 7,
+              background: 'var(--slate-1)', border: '0.5px solid var(--grass-5)',
+              borderRadius: 999, padding: '6px 12px',
+            }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--grass-9)' }}>{p.no}</span>
+              <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--grass-12)' }}>{p.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <FlowLines />
+
+      {gentlePhones.map((p) => <PhoneNode key={p.no} p={p} />)}
+
+      {/* 底部语境注脚 */}
+      <div className="g-num" style={{ position: 'absolute', left: 34, bottom: 22, zIndex: 3,
+        fontSize: 12, fontWeight: 400, color: 'var(--grass-11)' }}>
+        2026-11-06 周五　连续 13 天　本月 42.6 km　8 次打卡
+      </div>
+      <div style={{ position: 'absolute', right: 34, bottom: 22, zIndex: 3,
+        fontSize: 12, fontWeight: 500, color: 'var(--grass-11)' }}>
+        计划　今日　跑中　完成　记录
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Board />);
+</script>
+</body>
+</html>

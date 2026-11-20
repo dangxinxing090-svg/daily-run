@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>每日跑步 记录图</title>
+<style>
+:root{
+  --orange-1:#fefcfb; --orange-2:#fff7ed; --orange-3:#ffefd6; --orange-6:#ffc182;
+  --orange-9:#f76b15; --orange-11:#cc4e00; --teal-9:#12a594;
+  --slate-1:#fcfcfd; --slate-6:#d9d9e0; --slate-11:#60646c; --slate-12:#1c2024;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--orange-1);color:var(--slate-12);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif;padding:26px 32px 50px}
+.bar{display:flex;align-items:center;gap:14px;max-width:900px;margin:0 auto 22px;padding-bottom:14px;border-bottom:.5px solid var(--slate-6)}
+.bar h1{font-size:14px;font-weight:600;margin:0}
+.bar .note{font-size:12px;color:var(--slate-11)}
+button{margin-left:auto;font:inherit;font-size:12px;font-weight:600;color:var(--slate-1);background:var(--orange-9);border:0;border-radius:999px;padding:10px 20px;cursor:pointer}
+button:hover{background:var(--orange-11)}
+.stage{display:flex;justify-content:center;align-items:flex-start;gap:28px;flex-wrap:wrap}
+.cardwrap{width:450px;flex:0 0 450px}
+#card{display:block;width:100%;height:auto;border-radius:12px;box-shadow:0 18px 46px rgba(28,32,36,.14)}
+.side{width:250px;font-size:12px;line-height:1.9;color:var(--slate-11);padding-top:8px}
+.side b{display:block;font-size:14px;font-weight:600;color:var(--slate-12);margin-bottom:8px}
+.side .kv{display:flex;justify-content:space-between;border-bottom:.5px solid var(--slate-6);padding:5px 0}
+.side .kv span:last-child{color:var(--slate-12);font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div class="bar">
+  <h1>每日跑步 记录图</h1>
+  <span class="note">3:4　定稿橙　可导出 1500 × 2000 PNG</span>
+  <button id="export">导出 PNG</button>
+</div>
+
+<div class="stage">
+  <div class="cardwrap">
+    <svg id="card" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 750 1000" width="750" height="1000" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Helvetica Neue, Arial, sans-serif">
+      <defs>
+        <clipPath id="cardClip"><rect x="0" y="0" width="750" height="1000" rx="24"/></clipPath>
+        <clipPath id="mapClip"><rect x="40" y="228" width="670" height="420" rx="18"/></clipPath>
+        <clipPath id="topCut"><polygon points="0,0 750,0 750,116 0,196"/></clipPath>
+      </defs>
+
+      <g clip-path="url(#cardClip)">
+        <rect x="0" y="0" width="750" height="1000" fill="#fefcfb"/>
+
+        <!-- 顶部斜切橙带，约占画面 18% -->
+        <g clip-path="url(#topCut)">
+          <rect x="0" y="0" width="750" height="200" fill="#f76b15"/>
+          <polygon points="520,0 750,0 750,150 640,196" fill="#ef5f00" opacity=".55"/>
+        </g>
+
+        <!-- 页头 -->
+        <g fill="none" stroke="#fefcfb" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" transform="translate(40,52) scale(1.1)">
+          <path d="M12 3 V15 M8.5 6.5 L12 3 L15.5 6.5"/>
+          <path d="M6 11 H5 a1.5 1.5 0 0 0 -1.5 1.5 V19 A1.5 1.5 0 0 0 5 20.5 H19 A1.5 1.5 0 0 0 20.5 19 V12.5 A1.5 1.5 0 0 0 19 11 H18"/>
+        </g>
+        <text x="76" y="76" font-size="26" font-weight="600" fill="#fefcfb">每日跑步</text>
+        <text x="710" y="76" font-size="26" font-weight="400" fill="#fefcfb" text-anchor="end">11月6日 周五</text>
+        <text x="40" y="118" font-size="26" font-weight="500" fill="#fefcfb" opacity=".9">19:30 轻松跑　目标 5.00 km</text>
+
+        <!-- 轨迹区 -->
+        <rect x="40" y="228" width="670" height="420" rx="18" fill="#fff7ed" stroke="#d9d9e0" stroke-width="1"/>
+        <g clip-path="url(#mapClip)" stroke="#d9d9e0" stroke-width="1" fill="none" opacity=".85">
+          <path d="M40 300 H710 M40 380 H710 M40 460 H710 M40 540 H710 M40 620 H710"/>
+          <path d="M130 228 V648 M260 228 V648 M390 228 V648 M520 228 V648 M650 228 V648"/>
+          <path d="M40 648 L200 228 M240 648 L400 228 M440 648 L600 228"/>
+        </g>
+        <g clip-path="url(#mapClip)">
+          <path d="M92 588 C160 566 178 366 250 378 C322 390 320 560 400 534 C480 508 486 310 560 322 C624 332 652 414 690 392"
+                fill="none" stroke="#f76b15" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="92" cy="588" r="11" fill="#fefcfb" stroke="#cc4e00" stroke-width="5"/>
+          <circle cx="690" cy="392" r="15" fill="#f76b15" stroke="#fefcfb" stroke-width="5"/>
+        </g>
+        <g transform="translate(58,248)" fill="none" stroke="#1c2024" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="5.5" cy="18.5" r="2.2"/>
+          <path d="M18.5 2.5 a4 4 0 0 1 4 4 c0 3.5 -4 8 -4 8 s-4 -4.5 -4 -8 a4 4 0 0 1 4 -4 z"/>
+          <circle cx="18.5" cy="6.5" r="1.2"/>
+          <path d="M7.3 17.3 C9 13 12 15 15 12.5"/>
+        </g>
+        <text x="92" y="266" font-size="26" font-weight="500" fill="#60646c">本次轨迹</text>
+
+        <!-- 主数据 -->
+        <g transform="translate(40,706)" fill="none" stroke="#cc4e00" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3.5 12 H20.5 M6.5 9 L3.5 12 L6.5 15 M17.5 9 L20.5 12 L17.5 15" transform="scale(1.7)"/>
+        </g>
+        <text x="112" y="756" font-size="104" font-weight="600" letter-spacing="-4" fill="#cc4e00" font-variant-numeric="tabular-nums">5.21</text>
+        <text x="470" y="756" font-size="44" font-weight="600" fill="#1c2024">km</text>
+        <text x="710" y="756" font-size="26" font-weight="400" fill="#60646c" text-anchor="end">已跑距离</text>
+
+        <line x1="40" y1="790" x2="710" y2="790" stroke="#d9d9e0" stroke-width="1"/>
+
+        <!-- 三项数据 -->
+        <g font-variant-numeric="tabular-nums">
+          <text x="40" y="850" font-size="26" font-weight="400" fill="#60646c">用时</text>
+          <text x="40" y="898" font-size="44" font-weight="600" fill="#1c2024">31:24</text>
+          <text x="290" y="850" font-size="26" font-weight="400" fill="#60646c">平均配速</text>
+          <text x="290" y="898" font-size="44" font-weight="600" fill="#1c2024">6'02"</text>
+          <text x="540" y="850" font-size="26" font-weight="400" fill="#60646c">消耗</text>
+          <text x="540" y="898" font-size="44" font-weight="600" fill="#1c2024">342 kcal</text>
+        </g>
+
+        <!-- 完成态 -->
+        <rect x="40" y="922" width="670" height="56" rx="28" fill="#12a594"/>
+        <g transform="translate(62,938)" fill="none" stroke="#fefcfb" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" transform-origin="10 10">
+          <circle cx="12" cy="12" r="8.5" transform="scale(0.8)"/>
+          <path d="M8 12.2 L11 15 L16 9" transform="scale(0.8)"/>
+        </g>
+        <text x="102" y="959" font-size="26" font-weight="600" fill="#fefcfb">自动打卡成功　连续 13 天</text>
+        <text x="690" y="959" font-size="26" font-weight="500" fill="#fefcfb" text-anchor="end" opacity=".9">11月 42.6 km</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="side">
+    <b>记录图规格</b>
+    <div class="kv"><span>比例</span><span>3:4</span></div>
+    <div class="kv"><span>画布</span><span>750 × 1000</span></div>
+    <div class="kv"><span>导出</span><span>1500 × 2000</span></div>
+    <div class="kv"><span>页面底</span><span>orange 1</span></div>
+    <div class="kv"><span>主色</span><span>orange 9 / 11</span></div>
+    <div class="kv"><span>完成态</span><span>teal 9</span></div>
+    <div class="kv"><span>轨迹线</span><span>13 单位</span></div>
+    <div class="kv"><span>边框</span><span>1 单位</span></div>
+    <div class="kv"><span>字族</span><span>系统中文</span></div>
+    <div style="margin-top:16px;line-height:1.8">内容与定稿原型 ShareCard 组件一致，几何、图标与色值全部取自前端设计规范。导出后可直接分享。</div>
+  </div>
+</div>
+
+<script>
+document.getElementById('export').addEventListener('click', function () {
+  var svg = document.getElementById('card');
+  var s = new XMLSerializer().serializeToString(svg);
+  var blob = new Blob([s], { type: 'image/svg+xml;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var img = new Image();
+  img.onload = function () {
+    var c = document.createElement('canvas');
+    c.width = 1500; c.height = 2000;
+    var ctx = c.getContext('2d');
+    ctx.fillStyle = '#fefcfb';
+    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.drawImage(img, 0, 0, c.width, c.height);
+    var a = document.createElement('a');
+    a.download = '每日跑步-记录图-11月6日.png';
+    a.href = c.toDataURL('image/png');
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  img.src = url;
+});
+</script>
+</body>
+</html>

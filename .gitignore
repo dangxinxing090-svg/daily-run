@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+# 本机工作记录不进仓库
+.workbuddy/
+
+# Flutter 与安卓构建产物
+app/build/
+app/.dart_tool/
+app/android/.gradle/
+app/android/local.properties
+app/android/app/debug/
+app/android/app/profile/
+app/android/app/release/
+app/ios/Pods/
+app/ios/.symlinks/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/coverage/
+
+# 从云端下载回来的安装包
+dist/
