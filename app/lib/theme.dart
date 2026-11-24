@@ -15,14 +15,18 @@ class AppPalette {
   static const int slate12 = 0xFF1C2024;
 }
 
+/// 字号比例。今日与跑中用大字号强化核心操作与结果，记录页用小字号承载密度。
 class AppType {
-  static const double xsmall = 12;
-  static const double body = 14;
-  static const double headline = 24;
-  static const double giant = 72;
+  static const double tiny = 12;
+  static const double small = 14;
+  static const double body = 16;
+  static const double title = 24;
+  static const double hero = 44;
+  static const double display = 76;
   static const int weightRegular = 400;
   static const int weightMedium = 500;
   static const int weightSemibold = 600;
+  static const int weightBold = 700;
 }
 
 /// 12 到 15 度斜切，落地时对应 ClipPath 加 CustomClipper
@@ -36,4 +40,11 @@ class AppRules {
   static const double hairline = 0.5;
   static const double iconStroke = 1.5;
   static const int motionMs = 250;
+
+  // 玻璃拟态
+  static const double glassRadius = 28;
+  static const double glassBlur = 18;
+  static const double glassAlpha = 0.55;
+  static const double glassEdgeAlpha = 0.75;
+  static const double auraAlpha = 0.22;
 }

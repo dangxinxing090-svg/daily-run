@@ -158,7 +158,7 @@ Future<void> main() async {
 
   check('色板与排版常量齐备',
       AppPalette.orange9 == 0xFFF76B15 &&
-          AppType.giant == 72 &&
+          AppType.display == 76 &&
           AppRules.hairline == 0.5 &&
           AppCut.skewX < 0);
 
