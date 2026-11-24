@@ -2,12 +2,34 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// 全 App 的动效节奏，四档够用：按下、切页、强调、结果计数。
+/// 全 App 的动效语言。分四类，不再到处自己写时长：
+/// - press   按下与松手，最快，反复操作不拖沓
+/// - quick   离场、收起、局部替换
+/// - base    位置移动、页内状态切换
+/// - enter   新内容出现
+/// - settle  数字落定
+///
+/// 曲线只用两条：standard（减速，绝大多数）与 emphasized（更明显的减速，
+/// 用于出现与位移）。系统开启「减少动态效果」时全部归零。
 class AppMotion {
-  static const Duration fast = Duration(milliseconds: 140);
-  static const Duration base = Duration(milliseconds: 220);
-  static const Duration slow = Duration(milliseconds: 320);
-  static const Duration result = Duration(milliseconds: 620);
+  static bool reduce = false;
+
+  static const Curve standard = Curves.easeOutCubic;
+  static const Curve emphasized = Cubic(0.2, 0, 0, 1);
+
+  static Duration get press =>
+      reduce ? Duration.zero : const Duration(milliseconds: 120);
+  static Duration get quick =>
+      reduce ? Duration.zero : const Duration(milliseconds: 180);
+  static Duration get base =>
+      reduce ? Duration.zero : const Duration(milliseconds: 240);
+  static Duration get enter =>
+      reduce ? Duration.zero : const Duration(milliseconds: 320);
+  static Duration get settle =>
+      reduce ? Duration.zero : const Duration(milliseconds: 520);
+
+  /// 动效开启时才播的循环装饰（呼吸点、启动图标）。
+  static bool get decorative => !reduce;
 }
 
 /// 触觉反馈。设备不支持时直接忽略，不影响任何流程。
@@ -99,8 +121,8 @@ class SoundService {
   }
 }
 
-/// 可点击容器的统一按压反馈：按下缩到 0.97，抬手回弹。
-/// 卡片、列表行、按钮都用它，保证全 App 手感一致。
+/// 可点击容器的统一按压反馈：按下缩到 0.97，抬起回弹；
+/// 有鼠标时再叠一层很淡的底色，让「可以点」这件事在悬停时就成立。
 class Pressable extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
@@ -121,6 +143,7 @@ class Pressable extends StatefulWidget {
 
 class _PressableState extends State<Pressable> {
   bool _down = false;
+  bool _hover = false;
 
   void _setDown(bool value) {
     if (widget.onTap == null) return;
@@ -128,27 +151,44 @@ class _PressableState extends State<Pressable> {
   }
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
+  Widget build(BuildContext context) {
+    final enabled = widget.onTap != null;
+    return MouseRegion(
+      cursor: enabled ? SystemMouseCursors.click : MouseCursor.defer,
+      onEnter: (_) {
+        if (enabled) setState(() => _hover = true);
+      },
+      onExit: (_) {
+        if (_hover) setState(() => _hover = false);
+      },
+      child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTapDown: (_) => _setDown(true),
         onTapUp: (_) => _setDown(false),
         onTapCancel: () => _setDown(false),
-        onTap: widget.onTap == null
-            ? null
-            : () {
+        onTap: enabled
+            ? () {
                 if (widget.haptic) Haptics.select();
                 widget.onTap!();
-              },
+              }
+            : null,
         child: AnimatedScale(
           scale: _down ? widget.scale : 1,
-          duration: AppMotion.fast,
-          curve: Curves.easeOut,
-          child: widget.child,
+          duration: AppMotion.press,
+          curve: AppMotion.standard,
+          child: AnimatedOpacity(
+            opacity: _hover && !_down ? 0.92 : 1,
+            duration: AppMotion.press,
+            curve: AppMotion.standard,
+            child: widget.child,
+          ),
         ),
-      );
+      ),
+    );
+  }
 }
 
-/// 全 App 的浮层入口：淡入加 0.96 → 1 的轻微放大，比默认弹窗更贴手。
+/// 全 App 的浮层入口：淡入加 0.96 → 1 的轻微放大。
 Future<T?> showAppDialog<T>(BuildContext context, WidgetBuilder builder) {
   return showGeneralDialog<T>(
     context: context,
@@ -158,7 +198,8 @@ Future<T?> showAppDialog<T>(BuildContext context, WidgetBuilder builder) {
     transitionDuration: AppMotion.base,
     pageBuilder: (context, animation, secondary) => builder(context),
     transitionBuilder: (context, animation, secondary, child) {
-      final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+      final curved =
+          CurvedAnimation(parent: animation, curve: AppMotion.emphasized);
       return FadeTransition(
         opacity: curved,
         child: ScaleTransition(
@@ -168,4 +209,65 @@ Future<T?> showAppDialog<T>(BuildContext context, WidgetBuilder builder) {
       );
     },
   );
+}
+
+/// 数字变化时从当前显示值滚到新值，被打断也从半路接上。
+/// 首次出现不滚（避免每次进页面都从 0 数一遍）。
+class RollingNumber extends StatefulWidget {
+  final double value;
+  final String Function(double value) format;
+  final TextStyle style;
+  final Duration? duration;
+
+  const RollingNumber({
+    super.key,
+    required this.value,
+    required this.format,
+    required this.style,
+    this.duration,
+  });
+
+  @override
+  State<RollingNumber> createState() => _RollingNumberState();
+}
+
+class _RollingNumberState extends State<RollingNumber>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: widget.duration ?? AppMotion.settle,
+  )..value = 1;
+  late double _from = widget.value;
+  late double _to = widget.value;
+
+  @override
+  void didUpdateWidget(RollingNumber old) {
+    super.didUpdateWidget(old);
+    if (widget.value == _to) return;
+    _from = _current;
+    _to = widget.value;
+    if (AppMotion.reduce) {
+      _controller.value = 1;
+    } else {
+      _controller.forward(from: 0);
+    }
+  }
+
+  double get _current {
+    final t = AppMotion.emphasized.transform(_controller.value);
+    return _from + (_to - _from) * t;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) =>
+            Text(widget.format(_current), style: widget.style),
+      );
 }

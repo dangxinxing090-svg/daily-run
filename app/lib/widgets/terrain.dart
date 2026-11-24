@@ -56,11 +56,13 @@ void _buildBands() {
   ];
   _mainBands = [
     for (int i = 0; i < main.length; i++)
-      _blob(132 + main[i].$1, 166 + main[i].$2, main[i].$3, main[i].$4, 0.7 + i * 0.63),
+      _blob(132 + main[i].$1, 166 + main[i].$2, main[i].$3, main[i].$4,
+          0.7 + i * 0.63),
   ];
   _sideBands = [
     for (int i = 0; i < side.length; i++)
-      _blob(292 + side[i].$1, 300 + side[i].$2, side[i].$3, side[i].$4, 2.2 + i * 0.63),
+      _blob(292 + side[i].$1, 300 + side[i].$2, side[i].$3, side[i].$4,
+          2.2 + i * 0.63),
   ];
   _backdrop = _blob(70, 80, 300, 250, 1.4);
   _backdropSide = _blob(300, 330, 250, 240, 3.2);
@@ -74,14 +76,19 @@ class TerrainPainter extends CustomPainter {
   final Rect view;
   final bool track;
 
-  /// 轨迹画入进度，0 到 1。结果页用它做「一笔画出来」的入场。
+  /// 整条轨迹画入进度，0 到 1。结果页用它做「一笔画出来」的入场。
   final double progress;
+
+  /// 最后一段的生长比例，0 到 1。跑中每收到一个点就从 0 长到 1，
+  /// 轨迹是一段段接着长出来的，而不是每秒跳一下。
+  final double tail;
 
   TerrainPainter({
     required this.points,
     required this.view,
     required this.track,
     this.progress = 1,
+    this.tail = 1,
   });
 
   @override
@@ -91,20 +98,21 @@ class TerrainPainter extends CustomPainter {
     // 而不是整体放大，否则中间那层会被撑成一整块灰斑。
     final s = size.width / view.width;
     final visibleH = size.height / s;
-    final sy = math.min(
-        visibleH > view.height ? visibleH / view.height : 1.0, 1.35);
-    final far = Rect.fromLTWH(
-        view.left - 2000, view.top - 2000, view.width + 4000, view.height + 4000);
+    final sy =
+        math.min(visibleH > view.height ? visibleH / view.height : 1.0, 1.35);
+    final far = Rect.fromLTWH(view.left - 2000, view.top - 2000,
+        view.width + 4000, view.height + 4000);
     canvas.drawRect(far, Paint()..color = _c(AppPalette.sand2));
     // 先铺一层极淡的鼠尾草底色，主体色块之外不会露出突兀的白边；
     // 再叠两层很淡的背衬做起伏，容器再高也不会显得空。
-    canvas.drawRect(far, Paint()..color = _c(AppPalette.sage3).withValues(alpha: 0.34));
+    canvas.drawRect(
+        far, Paint()..color = _c(AppPalette.sage3).withValues(alpha: 0.34));
     canvas.save();
     canvas.scale(size.width / 320, size.height / 360);
-    canvas.drawPath(
-        _backdrop, Paint()..color = _c(AppPalette.sage4).withValues(alpha: 0.45));
-    canvas.drawPath(
-        _backdropSide, Paint()..color = _c(AppPalette.sand4).withValues(alpha: 0.22));
+    canvas.drawPath(_backdrop,
+        Paint()..color = _c(AppPalette.sage4).withValues(alpha: 0.45));
+    canvas.drawPath(_backdropSide,
+        Paint()..color = _c(AppPalette.sand4).withValues(alpha: 0.22));
     canvas.restore();
     canvas.translate(
       size.width / 2 - view.center.dx * s,
@@ -138,23 +146,40 @@ class TerrainPainter extends CustomPainter {
     final projection = projectTrack(points, visible.size, pad: pad);
     final origin0 = visible.topLeft;
     if (projection.isValid) {
-      final path = Path()
-        ..moveTo(projection.points.first.dx + origin0.dx,
-            projection.points.first.dy + origin0.dy);
-      for (final p in projection.points.skip(1)) {
-        path.lineTo(p.dx + origin0.dx, p.dy + origin0.dy);
+      final pts = <Offset>[
+        for (final p in projection.points)
+          Offset(p.dx + origin0.dx, p.dy + origin0.dy),
+      ];
+      // 折线按段累加长度，画到预算长度为止：整条画入与最后一段生长用同一套算法。
+      final segs = <double>[];
+      double total = 0;
+      for (int i = 1; i < pts.length; i++) {
+        final d = (pts[i] - pts[i - 1]).distance;
+        segs.add(d);
+        total += d;
+      }
+      double budget = total * progress.clamp(0.0, 1.0);
+      if (tail < 1 && progress >= 1 && segs.isNotEmpty) {
+        budget = total - segs.last * (1 - tail.clamp(0.0, 1.0));
+      }
+      final drawn = Path()..moveTo(pts.first.dx, pts.first.dy);
+      double walked = 0;
+      for (int i = 1; i < pts.length; i++) {
+        final seg = segs[i - 1];
+        if (walked + seg <= budget) {
+          drawn.lineTo(pts[i].dx, pts[i].dy);
+          walked += seg;
+        } else {
+          final rest = (budget - walked) / (seg <= 0 ? 1 : seg);
+          if (rest > 0) {
+            final end = Offset.lerp(pts[i - 1], pts[i], rest)!;
+            drawn.lineTo(end.dx, end.dy);
+          }
+          break;
+        }
       }
       final stroke = (3.6 * s).clamp(2.4, 4.6);
       final cap = StrokeCap.round;
-      var drawn = path;
-      if (progress < 1) {
-        final metrics = path.computeMetrics().toList();
-        if (metrics.isNotEmpty) {
-          final metric = metrics.first;
-          drawn = metric.extractPath(
-              0, metric.length * progress.clamp(0.0, 1.0));
-        }
-      }
       canvas.drawPath(
         drawn,
         Paint()
@@ -177,7 +202,7 @@ class TerrainPainter extends CustomPainter {
 
     final dot = (4.6 * s).clamp(2.6, 5.2);
     final origin = projection.isValid ? projection.points.first : null;
-    final end = projection.isValid && progress >= 1
+    final end = projection.isValid && progress >= 1 && tail >= 1
         ? projection.points.last
         : null;
     if (origin != null) {
@@ -212,6 +237,7 @@ class TerrainPainter extends CustomPainter {
       old.track != track ||
       old.view != view ||
       (old.progress - progress).abs() > 0.001 ||
+      (old.tail - tail).abs() > 0.001 ||
       (points.isNotEmpty &&
           old.points.isNotEmpty &&
           old.points.last.ts != points.last.ts);
@@ -224,6 +250,7 @@ class TerrainMap extends StatelessWidget {
   final bool track;
   final double radius;
   final double progress;
+  final double tail;
 
   const TerrainMap({
     super.key,
@@ -232,6 +259,7 @@ class TerrainMap extends StatelessWidget {
     this.track = true,
     this.radius = AppRules.mapRadius,
     this.progress = 1,
+    this.tail = 1,
   });
 
   @override
@@ -239,7 +267,8 @@ class TerrainMap extends StatelessWidget {
         position: DecorationPosition.foreground,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(radius),
-          border: Border.all(width: AppRules.hairline, color: _c(AppPalette.sand6)),
+          border:
+              Border.all(width: AppRules.hairline, color: _c(AppPalette.sand6)),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(radius),
@@ -249,6 +278,7 @@ class TerrainMap extends StatelessWidget {
               view: view,
               track: track,
               progress: progress,
+              tail: tail,
             ),
             child: const SizedBox.expand(),
           ),
@@ -348,7 +378,8 @@ class PaceProfilePainter extends CustomPainter {
       ..lineTo(size.width, size.height)
       ..lineTo(0, size.height)
       ..close();
-    canvas.drawPath(area, Paint()..color = _c(AppPalette.orange3).withValues(alpha: 0.42));
+    canvas.drawPath(
+        area, Paint()..color = _c(AppPalette.orange3).withValues(alpha: 0.42));
     canvas.drawPath(
       line,
       Paint()

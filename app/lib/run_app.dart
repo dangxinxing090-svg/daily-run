@@ -46,10 +46,14 @@ class RunApp extends StatelessWidget {
     return MaterialApp(
       title: '每日跑步',
       debugShowCheckedModeBanner: false,
+      themeMode: ThemeMode.light,
       theme: ThemeData(
         useMaterial3: true,
+        brightness: Brightness.light,
         scaffoldBackgroundColor: _c(AppPalette.sand2),
         colorScheme: ColorScheme.light(primary: _c(AppPalette.orange11)),
+        splashFactory: NoSplash.splashFactory,
+        highlightColor: Colors.transparent,
       ),
       home: const AppShell(),
     );
@@ -90,6 +94,7 @@ class _AppShellState extends State<AppShell> {
   CheckIn? _todayCheckIn;
   bool _paused = false;
   int _tab = 0;
+  int _tabShift = 1;
   String? _deletingId;
 
   @override
@@ -137,6 +142,13 @@ class _AppShellState extends State<AppShell> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 系统开启「减少动态效果」时，所有时长归零、循环动效停掉。
+    AppMotion.reduce = MediaQuery.disableAnimationsOf(context);
+  }
+
+  @override
   void dispose() {
     _timer?.cancel();
     _fixSub?.cancel();
@@ -145,7 +157,8 @@ class _AppShellState extends State<AppShell> {
   }
 
   int get _streak => _checkIn.streak(_repo.checkIns, _today);
-  double get _todayKm => _repo.sessions
+  double get _todayKm =>
+      _repo.sessions
           .where((s) => dateOnly(s.startTime) == _today)
           .fold<double>(0, (sum, s) => sum + s.distanceMeters) /
       1000;
@@ -253,6 +266,7 @@ class _AppShellState extends State<AppShell> {
     setState(() {
       _elapsed = Duration.zero;
       _pace = 0;
+      _tabShift = 1;
       _tab = 1;
     });
   }
@@ -459,42 +473,60 @@ class _AppShellState extends State<AppShell> {
 
     final running = _tracker != null && _finished == null;
     return PopScope(
+      key: const ValueKey<String>('app'),
       canPop: !running,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
         Haptics.light();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('跑步还在进行中，结束或退出跑中页再返回',
-                style: TextStyle(fontSize: 14)),
+            content:
+                Text('跑步还在进行中，结束或退出跑中页再返回', style: TextStyle(fontSize: 14)),
             duration: Duration(seconds: 2),
           ),
         );
       },
       child: Scaffold(
-      body: SafeArea(
-        child: AnimatedSwitcher(
-          duration: AppMotion.base,
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeIn,
-          transitionBuilder: (child, animation) {
-            final curved =
-                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
-            return FadeTransition(
-              opacity: curved,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0, 0.02),
-                  end: Offset.zero,
-                ).animate(curved),
-                child: child,
+        body: SafeArea(
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 620),
+              child: AnimatedSwitcher(
+                duration: AppMotion.base,
+                switchInCurve: AppMotion.emphasized,
+                switchOutCurve: AppMotion.standard,
+                transitionBuilder: (child, animation) {
+                  final curved = CurvedAnimation(
+                      parent: animation, curve: AppMotion.emphasized);
+                  // 往右边的标签走，新页从右侧 12 px 进来，旧页往右退，反之镜像。
+                  final dx = _tabShift * 0.03;
+                  return FadeTransition(
+                    opacity: curved,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: Offset(dx, 0.012),
+                        end: Offset.zero,
+                      ).animate(curved),
+                      child: child,
+                    ),
+                  );
+                },
+                child: KeyedSubtree(
+                  key: ValueKey<int>(_tab),
+                  child: pages[_tab],
+                ),
               ),
-            );
-          },
-          child: KeyedSubtree(key: ValueKey<int>(_tab), child: pages[_tab]),
+            ),
+          ),
         ),
-      ),
-      bottomNavigationBar: _TabBar(selected: _tab, onChanged: (i) => setState(() => _tab = i)),
+        bottomNavigationBar: _TabBar(
+          selected: _tab,
+          onChanged: (i) => setState(() {
+            _tabShift = i > _tab ? 1 : -1;
+            _tab = i;
+          }),
+        ),
       ),
     );
   }
@@ -506,8 +538,18 @@ const double _gap = 10;
 const double _pagePad = 14;
 
 const List<String> _monthCn = [
-  '一月', '二月', '三月', '四月', '五月', '六月',
-  '七月', '八月', '九月', '十月', '十一月', '十二月',
+  '一月',
+  '二月',
+  '三月',
+  '四月',
+  '五月',
+  '六月',
+  '七月',
+  '八月',
+  '九月',
+  '十月',
+  '十一月',
+  '十二月',
 ];
 
 TextStyle _txt(double size, int weight, Color color) => TextStyle(
@@ -554,7 +596,8 @@ Widget _pageTitle(String text) => Text(
       style: _txt(20, 600, _c(AppPalette.sand12)).copyWith(letterSpacing: -0.2),
     );
 
-Widget _pageMeta(String text) => Text(text, style: _txt(12, 500, _c(AppPalette.sand11)));
+Widget _pageMeta(String text) =>
+    Text(text, style: _txt(12, 500, _c(AppPalette.sand11)));
 
 Widget _card({
   required Widget child,
@@ -568,7 +611,8 @@ Widget _card({
       decoration: BoxDecoration(
         color: _c(AppPalette.sand1),
         borderRadius: BorderRadius.circular(AppRules.cardRadius),
-        border: Border.all(width: AppRules.hairline, color: _c(AppPalette.sand6)),
+        border:
+            Border.all(width: AppRules.hairline, color: _c(AppPalette.sand6)),
         boxShadow: shadow
             ? [
                 BoxShadow(
@@ -633,8 +677,10 @@ class _StatBar extends StatelessWidget {
       return Container(
         decoration: BoxDecoration(
           border: Border(
-            top: BorderSide(width: AppRules.hairline, color: _c(AppPalette.sand6)),
-            bottom: BorderSide(width: AppRules.hairline, color: _c(AppPalette.sand6)),
+            top: BorderSide(
+                width: AppRules.hairline, color: _c(AppPalette.sand6)),
+            bottom: BorderSide(
+                width: AppRules.hairline, color: _c(AppPalette.sand6)),
           ),
         ),
         child: row,
@@ -648,24 +694,42 @@ class _StatCell extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+  final double? number;
+  final String Function(double value)? format;
 
-  const _StatCell({required this.icon, required this.label, required this.value});
+  const _StatCell({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.number,
+    this.format,
+  });
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _iconLabel(icon, label),
-            const SizedBox(height: 4),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(value, style: _num(20, 600, AppPalette.sand12)),
-            ),
-          ],
-        ),
-      );
+  Widget build(BuildContext context) {
+    final num = number;
+    final fmt = format;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _iconLabel(icon, label),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: num != null && fmt != null
+                ? RollingNumber(
+                    value: num,
+                    format: fmt,
+                    style: _num(20, 600, AppPalette.sand12),
+                  )
+                : Text(value, style: _num(20, 600, AppPalette.sand12)),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _Pill extends StatelessWidget {
@@ -755,7 +819,9 @@ class _RunnerPainter extends CustomPainter {
 
     canvas.drawCircle(const Offset(28, 8.4), 4.4, Paint()..color = _c(color));
 
-    final torso = Path()..moveTo(25.4, 13.6)..lineTo(19, 26);
+    final torso = Path()
+      ..moveTo(25.4, 13.6)
+      ..lineTo(19, 26);
     final frontLeg = Path()
       ..moveTo(19, 26)
       ..lineTo(27.6, 30.4)
@@ -796,7 +862,7 @@ class _StartButtonState extends State<_StartButton>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulse = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 520),
+    duration: const Duration(milliseconds: 460),
   );
   bool _down = false;
 
@@ -807,9 +873,13 @@ class _StartButtonState extends State<_StartButton>
   }
 
   void _fire() {
+    if (!AppMotion.decorative) {
+      widget.onTap();
+      return;
+    }
     _pulse.forward(from: 0);
     // 先让脉冲跑起来再切页，否则动效刚起就被新页面盖掉。
-    Future<void>.delayed(const Duration(milliseconds: 200), () {
+    Future<void>.delayed(AppMotion.quick, () {
       if (mounted) widget.onTap();
     });
   }
@@ -859,8 +929,8 @@ class _StartButtonState extends State<_StartButton>
               ),
               AnimatedScale(
                 scale: _down ? 0.92 : 1,
-                duration: const Duration(milliseconds: 160),
-                curve: Curves.easeOut,
+                duration: AppMotion.press,
+                curve: AppMotion.standard,
                 child: Container(
                   width: 108,
                   height: 108,
@@ -904,7 +974,8 @@ class _Tag extends StatelessWidget {
         decoration: BoxDecoration(
           color: _c(AppPalette.teal3),
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(width: AppRules.hairline, color: _c(AppPalette.teal6)),
+          border:
+              Border.all(width: AppRules.hairline, color: _c(AppPalette.teal6)),
         ),
         child: _iconLabel(icon, label,
             color: AppPalette.teal12, weight: 600, gap: 5),
@@ -944,7 +1015,12 @@ class _BootLoaderState extends State<_BootLoader>
   late final AnimationController _breathe = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 900),
-  )..repeat(reverse: true);
+  );
+  @override
+  void initState() {
+    super.initState();
+    if (AppMotion.decorative) _breathe.repeat(reverse: true);
+  }
 
   @override
   void dispose() {
@@ -960,7 +1036,9 @@ class _BootLoaderState extends State<_BootLoader>
             AnimatedBuilder(
               animation: _breathe,
               builder: (context, _) {
-                final t = Curves.easeInOut.transform(_breathe.value);
+                final t = AppMotion.decorative
+                    ? Curves.easeInOut.transform(_breathe.value)
+                    : 1.0;
                 return Opacity(
                   opacity: 0.35 + 0.65 * t,
                   child: SizedBox(
@@ -980,6 +1058,105 @@ class _BootLoaderState extends State<_BootLoader>
       );
 }
 
+/// 跑中的轨迹：每来一个新点，最后一段从 0 长到 1，轨迹是接着长出来的。
+class _LiveMap extends StatefulWidget {
+  final List<TrackPoint> points;
+
+  const _LiveMap({required this.points});
+
+  @override
+  State<_LiveMap> createState() => _LiveMapState();
+}
+
+class _LiveMapState extends State<_LiveMap>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _grow = AnimationController(
+    vsync: this,
+    duration: AppMotion.base,
+    value: 1,
+  );
+  late int _count = widget.points.length;
+
+  @override
+  void didUpdateWidget(_LiveMap old) {
+    super.didUpdateWidget(old);
+    final changed = widget.points.length != _count;
+    _count = widget.points.length;
+    if (changed && AppMotion.decorative) _grow.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _grow.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _grow,
+        builder: (context, child) => TerrainMap(
+          points: widget.points,
+          tail:
+              AppMotion.reduce ? 1 : AppMotion.standard.transform(_grow.value),
+        ),
+      );
+}
+
+/// 颜色变化时才过渡，首帧直接落到目标色，不会从透明淡进来。
+class _TintIcon extends StatefulWidget {
+  final IconData icon;
+  final int color;
+
+  const _TintIcon({required this.icon, required this.color});
+
+  @override
+  State<_TintIcon> createState() => _TintIconState();
+}
+
+class _TintIconState extends State<_TintIcon>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: AppMotion.base,
+    value: 1,
+  );
+  late int _from = widget.color;
+  late int _to = widget.color;
+
+  @override
+  void didUpdateWidget(_TintIcon old) {
+    super.didUpdateWidget(old);
+    if (widget.color == _to) return;
+    _from = _to;
+    _to = widget.color;
+    if (AppMotion.reduce) {
+      _controller.value = 1;
+    } else {
+      _controller.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) => Icon(
+          widget.icon,
+          size: 20,
+          color: Color.lerp(
+            _c(_from),
+            _c(_to),
+            AppMotion.standard.transform(_controller.value),
+          ),
+        ),
+      );
+}
+
 /// 记录中的呼吸点，告诉用户轨迹还在采。
 class _PulseDot extends StatefulWidget {
   final double size;
@@ -995,7 +1172,12 @@ class _PulseDotState extends State<_PulseDot>
   late final AnimationController _pulse = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1100),
-  )..repeat(reverse: true);
+  );
+  @override
+  void initState() {
+    super.initState();
+    if (AppMotion.decorative) _pulse.repeat(reverse: true);
+  }
 
   @override
   void dispose() {
@@ -1007,7 +1189,9 @@ class _PulseDotState extends State<_PulseDot>
   Widget build(BuildContext context) => AnimatedBuilder(
         animation: _pulse,
         builder: (context, _) {
-          final t = Curves.easeInOut.transform(_pulse.value);
+          final t = AppMotion.decorative
+              ? Curves.easeInOut.transform(_pulse.value)
+              : 1.0;
           return Container(
             width: widget.size,
             height: widget.size,
@@ -1017,22 +1201,6 @@ class _PulseDotState extends State<_PulseDot>
             ),
           );
         },
-      );
-}
-
-/// 结果页整体淡入，配合数字滚动与轨迹画入。
-class _EnterFade extends StatelessWidget {
-  final Widget child;
-
-  const _EnterFade({required this.child});
-
-  @override
-  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
-        tween: Tween<double>(begin: 0, end: 1),
-        duration: AppMotion.slow,
-        curve: Curves.easeOut,
-        builder: (context, value, child) => Opacity(opacity: value, child: child),
-        child: child,
       );
 }
 
@@ -1047,42 +1215,49 @@ class _TabBar extends StatelessWidget {
         decoration: BoxDecoration(
           color: _c(AppPalette.sand1),
           border: Border(
-            top: BorderSide(width: AppRules.hairline, color: _c(AppPalette.sand6)),
+            top: BorderSide(
+                width: AppRules.hairline, color: _c(AppPalette.sand6)),
           ),
         ),
         child: SafeArea(
           top: false,
+          // 高度必须先钉死在 52，再谈居中；否则 Center 会吃掉整屏高度。
           child: SizedBox(
             height: 52,
-            child: LayoutBuilder(
-              builder: (context, box) {
-                final w = box.maxWidth / 3;
-                return Stack(
-                  children: [
-                    AnimatedPositioned(
-                      duration: AppMotion.base,
-                      curve: Curves.easeOutCubic,
-                      left: w * selected + 20,
-                      width: w - 40,
-                      top: 7,
-                      height: 38,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: _c(AppPalette.sand3),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                      ),
-                    ),
-                    Row(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 620),
+                child: LayoutBuilder(
+                  builder: (context, box) {
+                    final w = box.maxWidth / 3;
+                    return Stack(
                       children: [
-                        _item(0, Icons.calendar_today_outlined, '今日'),
-                        _item(1, Icons.route_outlined, '跑中'),
-                        _item(2, Icons.list_outlined, '记录'),
+                        AnimatedPositioned(
+                          duration: AppMotion.base,
+                          curve: AppMotion.standard,
+                          left: w * selected + 20,
+                          width: w - 40,
+                          top: 7,
+                          height: 38,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: _c(AppPalette.sand3),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            _item(0, Icons.calendar_today_outlined, '今日'),
+                            _item(1, Icons.route_outlined, '跑中'),
+                            _item(2, Icons.list_outlined, '记录'),
+                          ],
+                        ),
                       ],
-                    ),
-                  ],
-                );
-              },
+                    );
+                  },
+                ),
+              ),
             ),
           ),
         ),
@@ -1101,12 +1276,13 @@ class _TabBar extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon,
-                size: on ? 21 : 20,
-                color: _c(on ? AppPalette.orange11 : AppPalette.sand11)),
+            _TintIcon(
+              icon: icon,
+              color: on ? AppPalette.orange11 : AppPalette.sand11,
+            ),
             const SizedBox(height: 3),
             AnimatedDefaultTextStyle(
-              duration: AppMotion.fast,
+              duration: AppMotion.press,
               curve: Curves.easeOut,
               style: _txt(12, on ? 600 : 400,
                   _c(on ? AppPalette.orange11 : AppPalette.sand11)),
@@ -1157,7 +1333,8 @@ class _TodayPage extends StatelessWidget {
           return _page([
             _header(
               _pageTitle('今日'),
-              _pageMeta('${today.month}月${today.day}日 周${_weekCn[today.weekday - 1]}'),
+              _pageMeta(
+                  '${today.month}月${today.day}日 周${_weekCn[today.weekday - 1]}'),
             ),
             const SizedBox(height: _gap),
             SizedBox(
@@ -1194,17 +1371,26 @@ class _TodayPage extends StatelessWidget {
                       height: 64,
                       cells: [
                         _StatCell(
-                            icon: Icons.check_circle_outline,
-                            label: '连续',
-                            value: '$streak 天'),
+                          icon: Icons.check_circle_outline,
+                          label: '连续',
+                          value: '$streak 天',
+                          number: streak.toDouble(),
+                          format: (v) => '${v.round()} 天',
+                        ),
                         _StatCell(
-                            icon: Icons.straighten,
-                            label: '本月',
-                            value: '${monthKm.toStringAsFixed(1)} km'),
+                          icon: Icons.straighten,
+                          label: '本月',
+                          value: '${monthKm.toStringAsFixed(1)} km',
+                          number: monthKm,
+                          format: (v) => '${v.toStringAsFixed(1)} km',
+                        ),
                         _StatCell(
-                            icon: Icons.calendar_month_outlined,
-                            label: '打卡',
-                            value: '$monthCount 次'),
+                          icon: Icons.calendar_month_outlined,
+                          label: '打卡',
+                          value: '$monthCount 次',
+                          number: monthCount.toDouble(),
+                          format: (v) => '${v.round()} 次',
+                        ),
                       ],
                     ),
                   ),
@@ -1245,7 +1431,9 @@ class _TodayPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    last == null ? '还没有跑步记录' : '上次跑步　${_dateShort(last.startTime)}',
+                    last == null
+                        ? '还没有跑步记录'
+                        : '上次跑步　${_dateShort(last.startTime)}',
                     style: _txt(12, 500, _c(AppPalette.sand11)),
                   ),
                   if (last != null) ...[
@@ -1288,8 +1476,11 @@ Widget _targetCard(
             children: [
               _iconLabel(Icons.track_changes, '今日目标'),
               const Spacer(),
-              Text('${targetKm.toStringAsFixed(2)} km',
-                  style: _num(20, 600, AppPalette.sand12)),
+              RollingNumber(
+                value: targetKm,
+                format: (v) => '${v.toStringAsFixed(2)} km',
+                style: _num(20, 600, AppPalette.sand12),
+              ),
               const SizedBox(width: 8),
               Icon(Icons.edit_outlined, size: 16, color: _c(AppPalette.sand11)),
             ],
@@ -1300,8 +1491,8 @@ Widget _targetCard(
               borderRadius: BorderRadius.circular(999),
               child: TweenAnimationBuilder<double>(
                 tween: Tween<double>(begin: 0, end: ratio),
-                duration: const Duration(milliseconds: 520),
-                curve: Curves.easeOutCubic,
+                duration: AppMotion.settle,
+                curve: AppMotion.standard,
                 builder: (context, value, child) => Stack(
                   children: [
                     Container(height: 5, color: _c(AppPalette.sand4)),
@@ -1309,9 +1500,8 @@ Widget _targetCard(
                       widthFactor: value,
                       child: Container(
                         height: 5,
-                        color: _c(reached
-                            ? AppPalette.teal9
-                            : AppPalette.orange9),
+                        color:
+                            _c(reached ? AppPalette.teal9 : AppPalette.orange9),
                       ),
                     ),
                   ],
@@ -1379,9 +1569,36 @@ class _RunningPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (session != null) return _result(session!);
-    if (tracker == null) return _idle();
-    return _live();
+    final stage = session != null
+        ? 'result'
+        : tracker == null
+            ? 'idle'
+            : 'live';
+    final child = session != null
+        ? _result(session!)
+        : tracker == null
+            ? _idle()
+            : _live();
+    return AnimatedSwitcher(
+      duration: AppMotion.base,
+      switchInCurve: AppMotion.emphasized,
+      switchOutCurve: AppMotion.standard,
+      transitionBuilder: (child, animation) {
+        final curved =
+            CurvedAnimation(parent: animation, curve: AppMotion.emphasized);
+        return FadeTransition(
+          opacity: curved,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 0.015),
+              end: Offset.zero,
+            ).animate(curved),
+            child: child,
+          ),
+        );
+      },
+      child: KeyedSubtree(key: ValueKey<String>(stage), child: child),
+    );
   }
 
   Widget _idle() => _page([
@@ -1433,16 +1650,16 @@ class _RunningPage extends StatelessWidget {
         _StatCell(
             icon: Icons.favorite_outline, label: '心率', value: '$heartRate'),
       _StatCell(
-          icon: Icons.local_fire_department_outlined, label: '消耗', value: '$kcal'),
+          icon: Icons.local_fire_department_outlined,
+          label: '消耗',
+          value: '$kcal'),
     ];
     return _page([
       _header(
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            paused
-                ? _liveDot(7, AppPalette.sand11)
-                : const _PulseDot(size: 7),
+            paused ? _liveDot(7, AppPalette.sand11) : const _PulseDot(size: 7),
             const SizedBox(width: 7),
             _pageTitle(paused ? '已暂停' : '运动中'),
           ],
@@ -1455,7 +1672,8 @@ class _RunningPage extends StatelessWidget {
         children: [
           FittedBox(
             alignment: Alignment.centerLeft,
-            child: Text(_clock(elapsed), style: _num(48, 700, AppPalette.sand12)),
+            child:
+                Text(_clock(elapsed), style: _num(48, 700, AppPalette.sand12)),
           ),
           const SizedBox(height: 5),
           _iconLabel(Icons.schedule, '已用时间'),
@@ -1465,7 +1683,7 @@ class _RunningPage extends StatelessWidget {
       Expanded(
         child: Stack(
           children: [
-            Positioned.fill(child: TerrainMap(points: points)),
+            Positioned.fill(child: _LiveMap(points: points)),
             Positioned(
               right: 10,
               top: 10,
@@ -1481,9 +1699,7 @@ class _RunningPage extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       paused ? '已暂停' : '记录中',
-                      style: _txt(
-                          12,
-                          600,
+                      style: _txt(12, 600,
                           _c(paused ? AppPalette.sand11 : AppPalette.orange11)),
                     ),
                   ],
@@ -1537,8 +1753,7 @@ class _RunningPage extends StatelessWidget {
   Widget _result(WorkoutSession s) => LayoutBuilder(
         builder: (context, box) {
           final splits = [for (final sp in s.splits) sp.seconds];
-          return _EnterFade(
-            child: _page([
+          return _page([
             _header(
               _pageTitle('完成'),
               _Tag(
@@ -1553,8 +1768,10 @@ class _RunningPage extends StatelessWidget {
                   Positioned.fill(
                     child: TweenAnimationBuilder<double>(
                       tween: Tween<double>(begin: 0, end: 1),
-                      duration: const Duration(milliseconds: 760),
-                      curve: Curves.easeOutCubic,
+                      duration: AppMotion.reduce
+                          ? Duration.zero
+                          : const Duration(milliseconds: 720),
+                      curve: AppMotion.emphasized,
                       builder: (context, value, child) =>
                           TerrainMap(points: s.points, progress: value),
                     ),
@@ -1579,9 +1796,10 @@ class _RunningPage extends StatelessWidget {
                   Text('本次距离', style: _txt(12, 500, _c(AppPalette.sand11))),
                   const SizedBox(height: 4),
                   TweenAnimationBuilder<double>(
-                    tween: Tween<double>(begin: 0, end: s.distanceMeters / 1000),
-                    duration: AppMotion.result,
-                    curve: Curves.easeOutCubic,
+                    tween:
+                        Tween<double>(begin: 0, end: s.distanceMeters / 1000),
+                    duration: AppMotion.settle,
+                    curve: AppMotion.emphasized,
                     builder: (context, value, child) => Text(
                       '${value.toStringAsFixed(2)} km',
                       style: _num(48, 700, AppPalette.sand12),
@@ -1594,14 +1812,23 @@ class _RunningPage extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         _iconLabel(Icons.schedule, _clock(s.elapsed),
-                            color: AppPalette.sand12, size: 14, weight: 600, gap: 5),
+                            color: AppPalette.sand12,
+                            size: 14,
+                            weight: 600,
+                            gap: 5),
                         const SizedBox(width: 16),
                         _iconLabel(Icons.speed_outlined, s.averagePaceLabel,
-                            color: AppPalette.sand12, size: 14, weight: 600, gap: 5),
+                            color: AppPalette.sand12,
+                            size: 14,
+                            weight: 600,
+                            gap: 5),
                         const SizedBox(width: 16),
                         _iconLabel(Icons.local_fire_department_outlined,
                             '${s.calories} kcal',
-                            color: AppPalette.sand12, size: 14, weight: 600, gap: 5),
+                            color: AppPalette.sand12,
+                            size: 14,
+                            weight: 600,
+                            gap: 5),
                       ],
                     ),
                   ),
@@ -1651,8 +1878,7 @@ class _RunningPage extends StatelessWidget {
                 ),
               ],
             ),
-          ]),
-          );
+          ]);
         },
       );
 }
@@ -1694,13 +1920,19 @@ class _HistoryPage extends StatelessWidget {
             _StatBar(
               cells: [
                 _StatCell(
-                    icon: Icons.straighten,
-                    label: '本月里程',
-                    value: '${monthKm.toStringAsFixed(1)} km'),
+                  icon: Icons.straighten,
+                  label: '本月里程',
+                  value: '${monthKm.toStringAsFixed(1)} km',
+                  number: monthKm,
+                  format: (v) => '${v.toStringAsFixed(1)} km',
+                ),
                 _StatCell(
-                    icon: Icons.calendar_month_outlined,
-                    label: '打卡次数',
-                    value: '$monthCount 次'),
+                  icon: Icons.calendar_month_outlined,
+                  label: '打卡次数',
+                  value: '$monthCount 次',
+                  number: monthCount.toDouble(),
+                  format: (v) => '${v.round()} 次',
+                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -1711,8 +1943,12 @@ class _HistoryPage extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      _iconLabel(Icons.calendar_today_outlined, '${today.month} 月月历',
-                          color: AppPalette.sand12, size: 14, weight: 600, gap: 7),
+                      _iconLabel(
+                          Icons.calendar_today_outlined, '${today.month} 月月历',
+                          color: AppPalette.sand12,
+                          size: 14,
+                          weight: 600,
+                          gap: 7),
                       const Spacer(),
                       Text('周一起', style: _txt(12, 500, _c(AppPalette.sand11))),
                     ],
@@ -1725,14 +1961,26 @@ class _HistoryPage extends StatelessWidget {
             const SizedBox(height: 12),
             Text('历史记录', style: _txt(12, 500, _c(AppPalette.sand11))),
             const SizedBox(height: 2),
-            if (sessions.isEmpty) _emptyState(),
-            for (final s in sessions)
-              _HistoryRow(
-                session: s,
-                removing: s.id == deletingId,
-                onTap: () => onSession(s),
-                onDelete: () => onDelete(s),
-              ),
+            AnimatedSwitcher(
+              duration: AppMotion.quick,
+              switchInCurve: AppMotion.standard,
+              switchOutCurve: AppMotion.standard,
+              child: sessions.isEmpty
+                  ? _emptyState()
+                  : Column(
+                      key: const ValueKey<String>('rows'),
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (final s in sessions)
+                          _HistoryRow(
+                            session: s,
+                            removing: s.id == deletingId,
+                            onTap: () => onSession(s),
+                            onDelete: () => onDelete(s),
+                          ),
+                      ],
+                    ),
+            ),
           ],
         ),
       ),
@@ -1753,8 +2001,7 @@ Widget _emptyState() => Padding(
             ),
           ),
           const SizedBox(height: 12),
-          Text('还没有跑步记录',
-              style: _txt(14, 600, _c(AppPalette.sand11))),
+          Text('还没有跑步记录', style: _txt(14, 600, _c(AppPalette.sand11))),
           const SizedBox(height: 4),
           Text('回今日页点一下开跑，第一条记录就出现在这里',
               textAlign: TextAlign.center,
@@ -1779,69 +2026,73 @@ class _HistoryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final km = session.distanceMeters / 1000;
-    return AnimatedOpacity(
-      opacity: removing ? 0 : 1,
-      duration: AppMotion.base,
-      curve: Curves.easeOut,
-      child: AnimatedScale(
-        scale: removing ? 0.96 : 1,
-        duration: AppMotion.base,
-        curve: Curves.easeOut,
-        child: Pressable(
-          onTap: onTap,
-          haptic: false,
-          scale: 0.985,
-          child: _card(
-        margin: const EdgeInsets.only(top: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 54,
-              height: 46,
-              child: TerrainMap(
-                points: session.points,
-                view: const Rect.fromLTWH(50, 96, 220, 220),
-                radius: AppRules.thumbRadius,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+    return ClipRect(
+      child: AnimatedAlign(
+        alignment: Alignment.topCenter,
+        heightFactor: removing ? 0 : 1,
+        duration: AppMotion.quick,
+        curve: AppMotion.standard,
+        child: AnimatedOpacity(
+          opacity: removing ? 0 : 1,
+          duration: AppMotion.quick,
+          curve: AppMotion.standard,
+          child: Pressable(
+            onTap: onTap,
+            haptic: false,
+            scale: 0.985,
+            child: _card(
+              margin: const EdgeInsets.only(top: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Expanded(
-                        child: Text(_dateCn(session.startTime),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: _txt(14, 600, _c(AppPalette.sand12))),
-                      ),
-                      Text('${km.toStringAsFixed(2)} km',
-                          style: _num(14, 600, AppPalette.orange11)),
-                    ],
+                  SizedBox(
+                    width: 54,
+                    height: 46,
+                    child: TerrainMap(
+                      points: session.points,
+                      view: const Rect.fromLTWH(50, 96, 220, 220),
+                      radius: AppRules.thumbRadius,
+                    ),
                   ),
-                  const SizedBox(height: 6),
-                  Text('${_clock(session.elapsed)}　${session.averagePaceLabel}',
-                      style: _num(12, 500, AppPalette.sand11)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Expanded(
+                              child: Text(_dateCn(session.startTime),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: _txt(14, 600, _c(AppPalette.sand12))),
+                            ),
+                            Text('${km.toStringAsFixed(2)} km',
+                                style: _num(14, 600, AppPalette.orange11)),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                            '${_clock(session.elapsed)}　${session.averagePaceLabel}',
+                            style: _num(12, 500, AppPalette.sand11)),
+                      ],
+                    ),
+                  ),
+                  // 44 宽的点击区，避免手指落在卡片空白处反而打开详情。
+                  Pressable(
+                    onTap: onDelete,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+                      child: Icon(Icons.delete_outline,
+                          size: 16, color: _c(AppPalette.sand11)),
+                    ),
+                  ),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, size: 16, color: _c(AppPalette.sand11)),
-            Pressable(
-              onTap: onDelete,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 10, 2, 10),
-                child: Icon(Icons.delete_outline,
-                    size: 16, color: _c(AppPalette.sand11)),
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
         ),
       ),
     );
@@ -1933,8 +2184,10 @@ class _MonthGrid extends StatelessWidget {
       edge = AppPalette.sand6;
       weight = 500;
     }
-    return Container(
+    return AnimatedContainer(
       height: 26,
+      duration: AppMotion.base,
+      curve: AppMotion.standard,
       decoration: BoxDecoration(
         color: _c(bg),
         borderRadius: BorderRadius.circular(AppRules.cellRadius),
@@ -1964,8 +2217,7 @@ class _SplitBars extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (seconds.isEmpty) {
-      return Text('这次没有分段数据',
-          style: _txt(12, 500, _c(AppPalette.sand11)));
+      return Text('这次没有分段数据', style: _txt(12, 500, _c(AppPalette.sand11)));
     }
     final shown = seconds.take(6).toList();
     var lo = shown.first;
@@ -1994,11 +2246,13 @@ class _SplitBars extends StatelessWidget {
                       color: _c(AppPalette.sage7),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                          width: AppRules.hairline, color: _c(AppPalette.sage8)),
+                          width: AppRules.hairline,
+                          color: _c(AppPalette.sage8)),
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text('${i + 1} km', style: _txt(12, 400, _c(AppPalette.sand11))),
+                  Text('${i + 1} km',
+                      style: _txt(12, 400, _c(AppPalette.sand11))),
                 ],
               ),
             ),
@@ -2023,7 +2277,8 @@ Widget _dialogShell(BuildContext context,
           decoration: BoxDecoration(
             color: _c(AppPalette.sand1),
             borderRadius: BorderRadius.circular(AppRules.dialogRadius),
-            border: Border.all(width: AppRules.hairline, color: _c(AppPalette.sand6)),
+            border: Border.all(
+                width: AppRules.hairline, color: _c(AppPalette.sand6)),
             boxShadow: [
               BoxShadow(
                 color: _c(AppPalette.sand12).withValues(alpha: 0.22),
@@ -2093,8 +2348,8 @@ class _ConfirmDialog extends StatelessWidget {
               decoration: BoxDecoration(
                 color: _c(AppPalette.sand1),
                 borderRadius: BorderRadius.circular(AppRules.dialogRadius),
-                border:
-                    Border.all(width: AppRules.hairline, color: _c(AppPalette.sand6)),
+                border: Border.all(
+                    width: AppRules.hairline, color: _c(AppPalette.sand6)),
                 boxShadow: [
                   BoxShadow(
                     color: _c(AppPalette.sand12).withValues(alpha: 0.22),
@@ -2191,8 +2446,8 @@ class _TargetDialogState extends State<_TargetDialog> {
               decoration: BoxDecoration(
                 color: _c(AppPalette.sand1),
                 borderRadius: BorderRadius.circular(AppRules.dialogRadius),
-                border:
-                    Border.all(width: AppRules.hairline, color: _c(AppPalette.sand6)),
+                border: Border.all(
+                    width: AppRules.hairline, color: _c(AppPalette.sand6)),
                 boxShadow: [
                   BoxShadow(
                     color: _c(AppPalette.sand12).withValues(alpha: 0.22),
@@ -2245,8 +2500,7 @@ class _TargetDialogState extends State<_TargetDialog> {
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: 6),
-                    Text(_error!,
-                        style: _txt(12, 500, _c(AppPalette.red11))),
+                    Text(_error!, style: _txt(12, 500, _c(AppPalette.red11))),
                   ],
                   const SizedBox(height: 12),
                   Row(
@@ -2511,8 +2765,7 @@ class _CardScreenState extends State<_CardScreen> {
         appBar: AppBar(
           backgroundColor: _c(AppPalette.sand2),
           surfaceTintColor: Colors.transparent,
-          title: Text('运动记录图',
-              style: _txt(16, 600, _c(AppPalette.sand12))),
+          title: Text('运动记录图', style: _txt(16, 600, _c(AppPalette.sand12))),
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(18),
