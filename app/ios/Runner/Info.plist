@@ -43,7 +43,7 @@
 					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
 					<key>UISceneStoryboardFile</key>
 					<string>Main</string>
-				</dict>
+</dict>
 			</array>
 		</dict>
 	</dict>
@@ -70,5 +70,9 @@
 	<string>把跑步计划写进日历，到点提醒你出发</string>
 	<key>NSCalendarsUsageDescription</key>
 	<string>把跑步计划写进日历，到点提醒你出发</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>保存运动记录图到相册</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>保存运动记录图到相册</string>
 </dict>
 </plist>

@@ -71,6 +71,7 @@ class TrackPoint {
   final DateTime ts;
   final double accuracyMeters;
   final double? speedMps;
+  final int? heartRateBpm;
   final bool isPauseBoundary;
 
   const TrackPoint({
@@ -80,6 +81,7 @@ class TrackPoint {
     required this.ts,
     required this.accuracyMeters,
     this.speedMps,
+    this.heartRateBpm,
     this.isPauseBoundary = false,
   });
 }
@@ -137,6 +139,16 @@ class WorkoutSession {
   String get averagePaceLabel {
     final s = averagePaceSecPerKm.round();
     return '${s ~/ 60}\'${(s % 60).toString().padLeft(2, '0')}"';
+  }
+
+  /// 只统计真实采集到的心率。没有任何心率源时返回 null，界面据此隐藏心率。
+  int? get averageHeartRate {
+    final values = points
+        .where((p) => !p.isPauseBoundary && p.heartRateBpm != null)
+        .map((p) => p.heartRateBpm!)
+        .toList();
+    if (values.isEmpty) return null;
+    return (values.reduce((a, b) => a + b) / values.length).round();
   }
 }
 

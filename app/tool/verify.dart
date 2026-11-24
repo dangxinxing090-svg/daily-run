@@ -2,6 +2,8 @@
 // M1 业务内核验证，零外部依赖
 // 运行：cd app && dart run tool/verify.dart
 
+import 'package:daily_run/data/session_codec.dart';
+import 'package:daily_run/data/persistence_web.dart';
 import 'package:daily_run/domain/checkin.dart';
 import 'package:daily_run/domain/models.dart';
 import 'package:daily_run/domain/plan_service.dart';
@@ -174,6 +176,93 @@ Future<void> main() async {
   check('更新时带上已有事件 ID', bridge.events.last.id == 'evt-1');
   await planSvc.remove(saved);
   check('删除时按事件 ID 调用', bridge.removed.contains('evt-1'));
+
+
+  // ---- 持久化与本次修复的验证 ----
+  final codecSession = WorkoutSession(
+    id: 'codec-1',
+    startTime: t0,
+    endTime: t0.add(const Duration(minutes: 31)),
+    elapsed: const Duration(minutes: 31, seconds: 24),
+    distanceMeters: 5210,
+    calories: 339,
+    points: [
+      TrackPoint(
+          seq: 0, lat: 39.9, lng: 116.3, ts: t0, accuracyMeters: 5,
+          speedMps: 2.8, heartRateBpm: 138),
+      TrackPoint(
+          seq: 1, lat: 39.901, lng: 116.31,
+          ts: t0.add(const Duration(seconds: 60)), accuracyMeters: 6,
+          heartRateBpm: 142),
+      TrackPoint(
+          seq: 2, lat: 39.901, lng: 116.31,
+          ts: t0.add(const Duration(seconds: 90)), accuracyMeters: 6,
+          isPauseBoundary: true),
+    ],
+    splits: [Split(kmIndex: 1, seconds: 302, startTs: t0, endTs: t0.add(const Duration(seconds: 302)))],
+    pausedIntervals: [const Duration(seconds: 45)],
+  );
+  final row = WorkoutSessionCodec.toMap(codecSession);
+  final restored = WorkoutSessionCodec.fromMap(row);
+  check('会话编解码保留轨迹点', restored.points.length == 3,
+      '${restored.points.length} 点');
+  check('会话编解码保留心率', restored.points.first.heartRateBpm == 138);
+  check('会话编解码保留分段', restored.splits.length == 1);
+  check('会话编解码保留暂停区间',
+      restored.pausedIntervals.single.inSeconds == 45);
+  check('会话编解码保留距离', near(restored.distanceMeters, 5210, 0.01));
+  check('平均心率只统计真实值', restored.averageHeartRate == 140,
+      '${restored.averageHeartRate}');
+  check('无心率源时平均心率为 null',
+      WorkoutSession(id: 'nohr', startTime: t0, points: [
+        TrackPoint(seq: 0, lat: 39.9, lng: 116.3, ts: t0, accuracyMeters: 5),
+      ]).averageHeartRate == null);
+
+  final planRow = PlanCodec.toMap(plan);
+  final planBack = PlanCodec.fromMap(planRow);
+  check('计划编解码往返一致',
+      planBack.id == plan.id &&
+          planBack.startLabel == plan.startLabel &&
+          planBack.type == plan.type &&
+          near(planBack.targetMeters, plan.targetMeters, 0.01));
+  final checkInBack = CheckInCodec.fromMap(CheckInCodec.toMap(
+      CheckIn(id: 'ci-c', date: t0, source: CheckInSource.auto, createdAt: t0)));
+  check('打卡编解码往返一致',
+      checkInBack.source == CheckInSource.auto && checkInBack.id == 'ci-c');
+
+  final store = MemoryPersistenceStore();
+  await store.init();
+  await store.upsertPlan(PlanCodec.toMap(plan));
+  await store.upsertSession(WorkoutSessionCodec.toMap(codecSession));
+  await store.upsertCheckIn(CheckInCodec.toMap(
+      CheckIn(id: 'ci-c', date: t0, source: CheckInSource.auto, createdAt: t0)));
+  final reopened = PersistentRepository(store);
+  await reopened.init();
+  check('重启后可读取历史会话', reopened.sessions.length == 1,
+      '${reopened.sessions.length} 条');
+  check('重启后会话轨迹完整', reopened.sessions.first.points.length == 3);
+  check('重启后可读取计划', reopened.planFor(t0)?.id == 'p1');
+  check('重启后可读取打卡', reopened.hasCheckIn(t0));
+
+  // 模拟修改计划后保存，再以新仓储读取，确认不是原计划
+  final edited = Plan(
+    id: plan.id,
+    date: plan.date,
+    startMinutes: 20 * 60 + 15,
+    type: '间歇跑',
+    targetMeters: 8000,
+    reminderOffsetMinutes: 30,
+  );
+  await reopened.savePlan(edited);
+  final afterRestart = PersistentRepository(store);
+  await afterRestart.init();
+  check('修改计划后落盘并可读到新值',
+      afterRestart.planFor(t0)?.startLabel == '20:15' &&
+          afterRestart.planFor(t0)?.type == '间歇跑' &&
+          afterRestart.planFor(t0)?.targetMeters == 8000,
+      afterRestart.planFor(t0)?.startLabel ?? 'null');
+  check('计划按 ID 更新不新增重复行', afterRestart.plans.length == 1,
+      '${afterRestart.plans.length} 行');
 
   print('\n$passed 项通过，$failed 项失败');
   if (failed > 0) {

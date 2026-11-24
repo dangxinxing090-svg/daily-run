@@ -8,12 +8,16 @@ class TrackFix {
   final double accuracyMeters;
   final double? speedMps;
 
+  /// 只有接入真实心率设备或健康平台时才有值，当前定位源不提供心率。
+  final int? heartRateBpm;
+
   const TrackFix({
     required this.lat,
     required this.lng,
     required this.ts,
     required this.accuracyMeters,
     this.speedMps,
+    this.heartRateBpm,
   });
 }
 

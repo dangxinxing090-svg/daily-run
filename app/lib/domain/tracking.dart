@@ -55,6 +55,7 @@ class TrackingManager {
     required DateTime ts,
     double accuracyMeters = 5.0,
     double? speedMps,
+    int? heartRateBpm,
   }) {
     if (status != SessionStatus.recording) return false;
     if (accuracyMeters > maxAccuracyMeters) return false;
@@ -73,6 +74,7 @@ class TrackingManager {
       ts: ts,
       accuracyMeters: accuracyMeters,
       speedMps: speedMps,
+      heartRateBpm: heartRateBpm,
     ));
     return true;
   }
