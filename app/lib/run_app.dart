@@ -682,6 +682,54 @@ class _Pill extends StatelessWidget {
   }
 }
 
+/// 粗笔跑者：44×44 骨架、4.8 笔重、圆头圆角，和设计板里第 6 个方案一致。
+class _RunnerPainter extends CustomPainter {
+  final int color;
+
+  const _RunnerPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width / 44;
+    canvas.scale(s);
+    // 骨架本身略偏左，整体右移让它在圆里看起来居中。
+    canvas.translate(2.3, -0.6);
+    final body = Paint()
+      ..color = _c(color)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4.8
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    canvas.drawCircle(const Offset(28, 8.4), 4.4, Paint()..color = _c(color));
+
+    final torso = Path()..moveTo(25.4, 13.6)..lineTo(19, 26);
+    final frontLeg = Path()
+      ..moveTo(19, 26)
+      ..lineTo(27.6, 30.4)
+      ..lineTo(26.2, 39);
+    final backLeg = Path()
+      ..moveTo(19, 26)
+      ..lineTo(11.6, 29.8)
+      ..lineTo(5, 27.2);
+    final frontArm = Path()
+      ..moveTo(23.8, 16.4)
+      ..lineTo(31.4, 18.6)
+      ..lineTo(34.4, 12.6);
+    final backArm = Path()
+      ..moveTo(22.8, 17.4)
+      ..lineTo(14.6, 20.2)
+      ..lineTo(11.6, 26.6);
+
+    for (final path in [torso, frontLeg, backLeg, frontArm, backArm]) {
+      canvas.drawPath(path, body);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _RunnerPainter old) => old.color != color;
+}
+
 /// 地形上的开跑钮：按下缩到 0.92，松手后一圈橙色脉冲扩散再进入跑中。
 class _StartButton extends StatefulWidget {
   final VoidCallback onTap;
@@ -775,23 +823,14 @@ class _StartButtonState extends State<_StartButton>
                       ),
                     ],
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.play_arrow_rounded,
-                          size: 26, color: _c(AppPalette.sand1)),
-                      const SizedBox(height: 2),
-                      Text(
-                        '开跑',
-                        style: TextStyle(
-                          fontFamily: AppRules.displayFont,
-                          fontSize: 22,
-                          height: 1.05,
-                          letterSpacing: 2,
-                          color: _c(AppPalette.sand1),
-                        ),
+                  child: const Center(
+                    child: SizedBox(
+                      width: 58,
+                      height: 58,
+                      child: CustomPaint(
+                        painter: _RunnerPainter(color: AppPalette.sand1),
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),

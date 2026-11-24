@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: 'Qingke'; src: url('refs/fonts2/zcool-qingke.ttf') format('truetype'); }
+  @font-face { font-family: 'Kuaile'; src: url('refs/fonts2/zcool-kuaile.ttf') format('truetype'); }
+  @font-face { font-family: 'Serif900'; src: url('refs/fonts2/noto-serif-sc-900.ttf') format('truetype'); }
+  @font-face { font-family: 'Brush'; src: url('refs/fonts2/ma-shan-zheng.ttf') format('truetype'); }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1600px; height: 1100px; padding: 40px 44px;
+    background: #f9f9f8; color: #1f211f;
+    font-family: -apple-system, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+  }
+  h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
+  p.sub { font-size: 13px; font-weight: 400; color: #6f6a62; margin-top: 8px; }
+  .grid {
+    margin-top: 30px;
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+  }
+  .card {
+    background: #fdfdfc; border: 0.5px solid #dbd8d5; border-radius: 24px;
+    padding: 14px;
+  }
+  .tile {
+    position: relative; height: 336px; border-radius: 20px; overflow: hidden;
+    border: 0.5px solid #dbd8d5;
+  }
+  .tile svg.terrain { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .btn {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 224px; height: 224px; border-radius: 50%;
+    background: #cc4e00;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 14px 36px rgba(247, 107, 21, 0.35);
+  }
+  .ring {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 284px; height: 284px; border-radius: 50%;
+    border: 0.5px solid rgba(253, 253, 252, 0.95);
+  }
+  .word {
+    color: #fdfdfc; line-height: 1; display: block;
+    font-size: 46px; letter-spacing: 4px;
+  }
+  .f1 { font-family: 'Qingke'; }
+  .f2 { font-family: 'Kuaile'; }
+  .f3 { font-family: 'Serif900'; font-size: 42px; letter-spacing: 5px; }
+  .f4 { font-family: 'Brush'; font-size: 54px; letter-spacing: 3px; }
+  .stack { display: flex; flex-direction: column; align-items: center; gap: 8px; transform: translateY(9px); }
+  .stack .word { font-size: 36px; letter-spacing: 3px; }
+  .cap { margin-top: 12px; padding: 0 4px; }
+  .cap .row { display: flex; align-items: baseline; gap: 8px; }
+  .cap .no { font-size: 12px; font-weight: 600; color: #cc4e00; font-variant-numeric: tabular-nums; }
+  .cap .name { font-size: 15px; font-weight: 600; color: #1f211f; }
+  .cap .note { font-size: 12px; color: #6f6a62; margin-top: 5px; line-height: 1.6; }
+  .now {
+    font-size: 12px; font-weight: 500; color: #6f6a62;
+    border: 0.5px solid #dbd8d5; border-radius: 999px; padding: 2px 8px;
+    margin-left: auto;
+  }
+</style>
+</head>
+<body>
+<h1>开跑按钮　六个方案</h1>
+<p class="sub">同一颗按钮、同一套配色，只换字体或图标。按 2 倍放大展示。</p>
+<div class="grid" id="grid"></div>
+
+<script>
+// 地形：三层不规则闭合色块，和 App 里同源
+function blob(cx, cy, rx, ry, seed) {
+  const N = 11, pts = [];
+  for (let i = 0; i < N; i++) {
+    const a = (i / N) * Math.PI * 2;
+    const wob = 1 + 0.13 * Math.sin(3 * a + seed) + 0.07 * Math.cos(5 * a - seed * 0.7) + 0.04 * Math.sin(2 * a + seed * 0.45);
+    pts.push([cx + rx * wob * Math.cos(a), cy + ry * wob * Math.sin(a)]);
+  }
+  const mids = pts.map((p, i) => [(p[0] + pts[(i + 1) % N][0]) / 2, (p[1] + pts[(i + 1) % N][1]) / 2]);
+  let d = 'M' + mids[N - 1][0].toFixed(1) + ' ' + mids[N - 1][1].toFixed(1);
+  for (let i = 0; i < N; i++) d += ' Q ' + pts[i][0].toFixed(1) + ' ' + pts[i][1].toFixed(1) + ' ' + mids[i][0].toFixed(1) + ' ' + mids[i][1].toFixed(1);
+  return d + ' Z';
+}
+
+const terrain = `
+  <svg class="terrain" viewBox="0 0 460 268" preserveAspectRatio="xMidYMid slice">
+    <rect x="-40" y="-40" width="540" height="348" fill="#eef2ea" opacity="0.5"/>
+    <path d="${blob(140, 110, 240, 150, 1.4)}" fill="#e4ebdf" opacity="0.6"/>
+    <path d="${blob(330, 210, 200, 140, 3.2)}" fill="#e9e8e6" opacity="0.22"/>
+    <path d="${blob(210, 132, 168, 118, 0.7)}" fill="#eef2ea"/>
+    <path d="${blob(200, 124, 120, 92, 1.33)}" fill="#e4ebdf"/>
+    <path d="${blob(208, 118, 78, 64, 1.96)}" fill="#d9e4d1"/>
+    <path d="${blob(204, 122, 52, 46, 2.59)}" fill="#e9e8e6"/>
+  </svg>`;
+
+// 简笔跑者：同一套骨架，两个笔重
+function runner(width, stroke) {
+  return `
+  <svg width="${width}" height="${width}" viewBox="0 0 44 44" fill="none"
+       stroke="#fdfdfc" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="28" cy="8.4" r="4.4" fill="#fdfdfc" stroke="none"/>
+    <path d="M25.4 13.6 L19 26"/>
+    <path d="M19 26 L27.6 30.4 L26.2 39"/>
+    <path d="M19 26 L11.6 29.8 L5 27.2"/>
+    <path d="M23.8 16.4 L31.4 18.6 L34.4 12.6"/>
+    <path d="M22.8 17.4 L14.6 20.2 L11.6 26.6"/>
+  </svg>`;
+}
+
+const options = [
+  { no: '01', name: '站酷庆科黄油体', note: '圆头粗笔，最硬气，现在的字体去掉三角', now: true,
+    html: `<span class="word f1">开跑</span>` },
+  { no: '02', name: '站酷快乐体', note: '圆润俏皮，更亲和',
+    html: `<span class="word f2">开跑</span>` },
+  { no: '03', name: '思源宋体 900', note: '厚重衬线，像印刷标题',
+    html: `<span class="word f3">开跑</span>` },
+  { no: '04', name: '马善政毛笔楷书', note: '手写毛笔，最有情绪',
+    html: `<span class="word f4">开跑</span>` },
+  { no: '05', name: '线条跑者', note: '细线人形在上，字在下',
+    html: `<span class="stack">${runner(84, 2.4)}<span class="word f1">开跑</span></span>` },
+  { no: '06', name: '粗笔跑者', note: '剪影人形在上，远看更清楚',
+    html: `<span class="stack">${runner(82, 4.8)}<span class="word f2">开跑</span></span>` },
+];
+
+document.getElementById('grid').innerHTML = options.map(o => `
+  <div class="card">
+    <div class="tile">
+      ${terrain}
+      <div class="ring"></div>
+      <div class="btn">${o.html}</div>
+    </div>
+    <div class="cap">
+      <div class="row">
+        <span class="no">${o.no}</span>
+        <span class="name">${o.name}</span>
+        ${o.now ? '<span class="now">当前</span>' : ''}
+      </div>
+      <div class="note">${o.note}</div>
+    </div>
+  </div>`).join('');
+</script>
+</body>
+</html>

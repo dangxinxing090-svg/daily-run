@@ -74,9 +74,6 @@ class AppRules {
   static const double dialogRadius = 28;
   static const double fieldRadius = 16;
 
-  // 只有「开跑」两个字用的展示字体，子集化后约 2 KB。
-  static const String displayFont = 'RunDisplay';
-
   // 玻璃拟态
   static const double glassRadius = 28;
   static const double glassBlur = 18;
