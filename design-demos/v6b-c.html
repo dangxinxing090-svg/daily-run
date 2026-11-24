@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>每日跑步 02C 点阵路网</title>
+<script src="refs/vendor/react.js"></script>
+<script src="refs/vendor/react-dom.js"></script>
+<script src="refs/vendor/babel.js"></script>
+<style>
+/* Radix UI Colors 3.0.0 - light + dark, selected scales */
+/* 原本 .dark, .dark-theme { 的选择器统一改成 :root { */
+
+:root, .light, .light-theme {
+  --orange-1: #fefcfb;
+  --orange-2: #fff7ed;
+  --orange-3: #ffefd6;
+  --orange-4: #ffdfb5;
+  --orange-5: #ffd19a;
+  --orange-6: #ffc182;
+  --orange-7: #f5ae73;
+  --orange-8: #ec9455;
+  --orange-9: #f76b15;
+  --orange-10: #ef5f00;
+  --orange-11: #cc4e00;
+  --orange-12: #582d1d;
+}
+
+:root {
+  --oranged-1: #17120e;
+  --oranged-2: #1e160f;
+  --oranged-3: #331e0b;
+  --oranged-4: #462100;
+  --oranged-5: #562800;
+  --oranged-6: #66350c;
+  --oranged-7: #7e451d;
+  --oranged-8: #a35829;
+  --oranged-9: #f76b15;
+  --oranged-10: #ff801f;
+  --oranged-11: #ffa057;
+  --oranged-12: #ffe0c2;
+}
+
+:root, .light, .light-theme {
+  --red-1: #fffcfc;
+  --red-2: #fff7f7;
+  --red-3: #feebec;
+  --red-4: #ffdbdc;
+  --red-5: #ffcdce;
+  --red-6: #fdbdbe;
+  --red-7: #f4a9aa;
+  --red-8: #eb8e90;
+  --red-9: #e5484d;
+  --red-10: #dc3e42;
+  --red-11: #ce2c31;
+  --red-12: #641723;
+}
+
+:root {
+  --redd-1: #191111;
+  --redd-2: #201314;
+  --redd-3: #3b1219;
+  --redd-4: #611623;
+  --redd-5: #72232d;
+  --redd-6: #8c333a;
+  --redd-7: #b54548;
+  --redd-8: #e5484d;
+  --redd-9: #ec5d5e;
+  --redd-10: #ff9592;
+  --redd-11: #ff9592;
+  --redd-12: #ffd1d9;
+}
+
+:root, .light, .light-theme {
+  --grass-1: #fbfefb;
+  --grass-2: #f5fbf5;
+  --grass-3: #e9f6e9;
+  --grass-4: #daf1db;
+  --grass-5: #c9e8ca;
+  --grass-6: #b2ddb5;
+  --grass-7: #94ce9a;
+  --grass-8: #65ba74;
+  --grass-9: #46a758;
+  --grass-10: #3e9b4f;
+  --grass-11: #2a7e3b;
+  --grass-12: #203c25;
+}
+
+:root {
+  --grassd-1: #0e1511;
+  --grassd-2: #141a15;
+  --grassd-3: #1b2a1e;
+  --grassd-4: #1d3a24;
+  --grassd-5: #25482d;
+  --grassd-6: #2d5736;
+  --grassd-7: #366740;
+  --grassd-8: #3e7949;
+  --grassd-9: #46a758;
+  --grassd-10: #53b365;
+  --grassd-11: #71d083;
+  --grassd-12: #c2f0c2;
+}
+
+:root, .light, .light-theme {
+  --teal-1: #fafefd;
+  --teal-2: #f3fbf9;
+  --teal-3: #e0f8f3;
+  --teal-4: #ccf3ea;
+  --teal-5: #b8eae0;
+  --teal-6: #a1ded2;
+  --teal-7: #83cdc1;
+  --teal-8: #53b9ab;
+  --teal-9: #12a594;
+  --teal-10: #0d9b8a;
+  --teal-11: #008573;
+  --teal-12: #0d3d38;
+}
+
+:root {
+  --teald-1: #0d1514;
+  --teald-2: #111c1b;
+  --teald-3: #0d2d2a;
+  --teald-4: #023b37;
+  --teald-5: #084843;
+  --teald-6: #145750;
+  --teald-7: #1c6961;
+  --teald-8: #207e73;
+  --teald-9: #12a594;
+  --teald-10: #0eb39e;
+  --teald-11: #0bd8b6;
+  --teald-12: #adf0dd;
+}
+
+:root, .light, .light-theme {
+  --indigo-1: #fdfdfe;
+  --indigo-2: #f7f9ff;
+  --indigo-3: #edf2fe;
+  --indigo-4: #e1e9ff;
+  --indigo-5: #d2deff;
+  --indigo-6: #c1d0ff;
+  --indigo-7: #abbdf9;
+  --indigo-8: #8da4ef;
+  --indigo-9: #3e63dd;
+  --indigo-10: #3358d4;
+  --indigo-11: #3a5bc7;
+  --indigo-12: #1f2d5c;
+}
+
+:root {
+  --indigod-1: #11131f;
+  --indigod-2: #141726;
+  --indigod-3: #182449;
+  --indigod-4: #1d2e62;
+  --indigod-5: #304384;
+  --indigod-6: #3a4f97;
+  --indigod-7: #3a4f97;
+  --indigod-8: #5472e4;
+  --indigod-9: #3e63dd;
+  --indigod-10: #5472e4;
+  --indigod-11: #9eb1ff;
+  --indigod-12: #d6e1ff;
+}
+
+:root, .light, .light-theme {
+  --slate-1: #fcfcfd;
+  --slate-2: #f9f9fb;
+  --slate-3: #f0f0f3;
+  --slate-4: #e8e8ec;
+  --slate-5: #e0e1e6;
+  --slate-6: #d9d9e0;
+  --slate-7: #cdced6;
+  --slate-8: #b9bbc6;
+  --slate-9: #8b8d98;
+  --slate-10: #80838d;
+  --slate-11: #60646c;
+  --slate-12: #1c2024;
+}
+
+:root {
+  --slated-1: #111113;
+  --slated-2: #18191b;
+  --slated-3: #212225;
+  --slated-4: #272a2d;
+  --slated-5: #2e3135;
+  --slated-6: #363a3f;
+  --slated-7: #43484e;
+  --slated-8: #5a6169;
+  --slated-9: #696e77;
+  --slated-10: #777b84;
+  --slated-11: #b0b4ba;
+  --slated-12: #edeef0;
+}
+
+:root, .light, .light-theme {
+  --gray-1: #fcfcfc;
+  --gray-2: #f9f9f9;
+  --gray-3: #f0f0f0;
+  --gray-4: #e8e8e8;
+  --gray-5: #e0e0e0;
+  --gray-6: #d9d9d9;
+  --gray-7: #cecece;
+  --gray-8: #bbbbbb;
+  --gray-9: #8d8d8d;
+  --gray-10: #838383;
+  --gray-11: #646464;
+  --gray-12: #202020;
+}
+
+:root {
+  --grayd-1: #111111;
+  --grayd-2: #191919;
+  --grayd-3: #222222;
+  --grayd-4: #2a2a2a;
+  --grayd-5: #313131;
+  --grayd-6: #3a3a3a;
+  --grayd-7: #484848;
+  --grayd-8: #606060;
+  --grayd-9: #6e6e6e;
+  --grayd-10: #7b7b84;
+  --grayd-11: #b4b4b4;
+  --grayd-12: #eeeeee;
+}
+
+:root, .light, .light-theme {
+  --amber-1: #fefdfb;
+  --amber-2: #fefbe9;
+  --amber-3: #fff7c2;
+  --amber-4: #ffee9c;
+  --amber-5: #fbe577;
+  --amber-6: #f3d673;
+  --amber-7: #e9c162;
+  --amber-8: #e2a336;
+  --amber-9: #ffc53d;
+  --amber-10: #ffba18;
+  --amber-11: #ab6400;
+  --amber-12: #4f3422;
+}
+
+:root {
+  --amberd-1: #16120c;
+  --amberd-2: #1d180f;
+  --amberd-3: #302008;
+  --amberd-4: #3f2700;
+  --amberd-5: #4d3000;
+  --amberd-6: #5c3d05;
+  --amberd-7: #714f19;
+  --amberd-8: #8f6424;
+  --amberd-9: #ffc53d;
+  --amberd-10: #ffd60a;
+  --amberd-11: #ffca16;
+  --amberd-12: #ffe7b3;
+}
+
+/* 第五轮补充：blue 与 lime */
+
+:root, .light, .light-theme {
+  --blue-1: #fbfdff;
+  --blue-2: #f4faff;
+  --blue-3: #e6f4fe;
+  --blue-4: #d5efff;
+  --blue-5: #c2e5ff;
+  --blue-6: #acd8fc;
+  --blue-7: #8ec8f6;
+  --blue-8: #5eb1ef;
+  --blue-9: #0090ff;
+  --blue-10: #0588f0;
+  --blue-11: #0d74ce;
+  --blue-12: #113264;
+}
+
+:root, .light, .light-theme {
+  --lime-1: #fcfdfa;
+  --lime-2: #f8faf3;
+  --lime-3: #eef6d6;
+  --lime-4: #e2f0bd;
+  --lime-5: #d3e7a6;
+  --lime-6: #c2da91;
+  --lime-7: #abc978;
+  --lime-8: #8db654;
+  --lime-9: #bdee63;
+  --lime-10: #b0e64c;
+  --lime-11: #5c7c2f;
+  --lime-12: #37401c;
+}
+
+/* 大地色补充：Radix sand / sage（radix-all.css 未包含，按 Radix 色阶补齐） */
+:root, .light, .light-theme {
+  --sand-1: #fdfdfc;
+  --sand-2: #f9f9f8;
+  --sand-3: #f1f0ef;
+  --sand-4: #e9e8e6;
+  --sand-5: #e2e0de;
+  --sand-6: #dbd8d5;
+  --sand-7: #d2cec9;
+  --sand-8: #c3bcb5;
+  --sand-9: #a89f91;
+  --sand-10: #9e9481;
+  --sand-11: #6f6a62;
+  --sand-12: #1f211f;
+
+  --sage-1: #fbfdfb;
+  --sage-2: #f7f9f6;
+  --sage-3: #eef2ea;
+  --sage-4: #e4ebdf;
+  --sage-5: #d9e4d1;
+  --sage-6: #cddbc0;
+  --sage-7: #bdceab;
+  --sage-8: #a7bd90;
+  --sage-9: #819467;
+  --sage-10: #798a60;
+  --sage-11: #5c6b47;
+  --sage-12: #2a3321;
+}
+
+/* 展示板全局 */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; width: 100%; height: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+  background: var(--sand-2);
+  color: var(--sand-12);
+}
+#root { width: 1600px; height: 1100px; position: relative; overflow: hidden; }
+button { font-family: inherit; }
+.num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+@keyframes topoModal {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+/* ============================================================
+   设备框：完整原样移植 ios_frame.jsx / android_frame.jsx
+   ============================================================ */
+
+const iosFrameStyles = {
+  wrapper: {
+    display: 'inline-block',
+    padding: 12,
+    background: '#000',
+    borderRadius: 60,
+    boxShadow: '0 0 0 2px #1f2937, 0 20px 60px rgba(0,0,0,0.3)',
+    position: 'relative',
+  },
+  screen: {
+    position: 'relative',
+    borderRadius: 48,
+    overflow: 'hidden',
+    background: '#fff',
+  },
+  statusBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 54,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0 32px 0 32px',
+    fontSize: 16,
+    fontWeight: 600,
+    fontFamily: '-apple-system, "SF Pro Text", sans-serif',
+    zIndex: 20,
+    pointerEvents: 'none',
+  },
+  dynamicIsland: {
+    position: 'absolute',
+    top: 12,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: 124,
+    height: 36,
+    background: '#000',
+    borderRadius: 999,
+    zIndex: 30,
+  },
+  statusIcons: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+  },
+  signalIcon: {
+    display: 'flex',
+    alignItems: 'flex-end',
+    gap: 2,
+    height: 12,
+  },
+  signalBar: {
+    width: 3,
+    background: 'currentColor',
+    borderRadius: 1,
+  },
+  wifiIcon: {
+    width: 16,
+    height: 12,
+    position: 'relative',
+  },
+  batteryIcon: {
+    width: 26,
+    height: 12,
+    border: '1.5px solid currentColor',
+    borderRadius: 3,
+    padding: 1,
+    position: 'relative',
+    opacity: 0.8,
+  },
+  batteryCap: {
+    position: 'absolute',
+    top: 3,
+    right: -3,
+    width: 2,
+    height: 6,
+    background: 'currentColor',
+    borderRadius: '0 1px 1px 0',
+  },
+  content: {
+    position: 'absolute',
+    top: 54,
+    left: 0,
+    right: 0,
+    bottom: 34,
+    overflow: 'auto',
+  },
+  homeIndicator: {
+    position: 'absolute',
+    bottom: 10,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: 140,
+    height: 5,
+    background: 'rgba(0,0,0,0.3)',
+    borderRadius: 999,
+    zIndex: 10,
+  },
+  homeIndicatorDark: {
+    background: 'rgba(255,255,255,0.5)',
+  },
+};
+
+function IosFrame({
+  children,
+  width = 393,
+  height = 852,
+  time = '9:41',
+  battery = 100,
+  darkMode = false,
+  showStatusBar = true,
+  showDynamicIsland = true,
+  showHomeIndicator = true,
+}) {
+  const textColor = darkMode ? '#fff' : '#000';
+
+  return (
+    <div style={iosFrameStyles.wrapper}>
+      <div style={{
+        ...iosFrameStyles.screen,
+        width,
+        height,
+        background: darkMode ? '#000' : '#fff',
+      }}>
+        {showStatusBar && (
+          <div style={{ ...iosFrameStyles.statusBar, color: textColor }}>
+            <span>{time}</span>
+            <div style={iosFrameStyles.statusIcons}>
+              <div style={iosFrameStyles.signalIcon}>
+                <div style={{ ...iosFrameStyles.signalBar, height: 4 }} />
+                <div style={{ ...iosFrameStyles.signalBar, height: 6 }} />
+                <div style={{ ...iosFrameStyles.signalBar, height: 9 }} />
+                <div style={{ ...iosFrameStyles.signalBar, height: 11 }} />
+              </div>
+              <svg width="16" height="12" viewBox="0 0 16 12" fill="none" style={{ color: textColor }}>
+                <path d="M8 11.5a1 1 0 100-2 1 1 0 000 2z" fill="currentColor" />
+                <path d="M3 7.5a7 7 0 0110 0" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+                <path d="M1 4.5a11 11 0 0114 0" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" opacity="0.7" />
+              </svg>
+              <div style={iosFrameStyles.batteryIcon}>
+                <div style={{
+                  width: `${battery}%`,
+                  height: '100%',
+                  background: 'currentColor',
+                  borderRadius: 1,
+                  opacity: 0.9,
+                }} />
+                <div style={iosFrameStyles.batteryCap} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showDynamicIsland && <div style={iosFrameStyles.dynamicIsland} />}
+
+        <div style={iosFrameStyles.content}>
+          {children}
+        </div>
+
+        {showHomeIndicator && (
+          <div style={{
+            ...iosFrameStyles.homeIndicator,
+            ...(darkMode ? iosFrameStyles.homeIndicatorDark : {}),
+          }} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+if (typeof window !== 'undefined') {
+  window.IosFrame = IosFrame;
+}
+
+const androidFrameStyles = {
+  wrapper: {
+    display: 'inline-block',
+    padding: 10,
+    background: '#1a1a1a',
+    borderRadius: 44,
+    boxShadow: '0 0 0 2px #2a2a2a, 0 20px 60px rgba(0,0,0,0.3)',
+    position: 'relative',
+  },
+  screen: {
+    position: 'relative',
+    borderRadius: 36,
+    overflow: 'hidden',
+    background: '#fff',
+  },
+  statusBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 32,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0 24px',
+    fontSize: 14,
+    fontWeight: 500,
+    fontFamily: 'Roboto, -apple-system, sans-serif',
+    zIndex: 20,
+    pointerEvents: 'none',
+  },
+  punchHole: {
+    position: 'absolute',
+    top: 10,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: 14,
+    height: 14,
+    background: '#000',
+    borderRadius: '50%',
+    zIndex: 30,
+  },
+  statusIcons: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+  },
+  batteryText: {
+    fontSize: 11,
+    fontWeight: 600,
+    marginLeft: 2,
+  },
+  content: {
+    position: 'absolute',
+    top: 32,
+    left: 0,
+    right: 0,
+    bottom: 24,
+    overflow: 'auto',
+  },
+  navBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 24,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 60,
+    zIndex: 10,
+  },
+  navButton: {
+    width: 36,
+    height: 4,
+    background: 'rgba(0,0,0,0.3)',
+    borderRadius: 999,
+  },
+};
+
+function AndroidFrame({
+  children,
+  width = 412,
+  height = 892,
+  time = '9:41',
+  battery = 100,
+  darkMode = false,
+  navStyle = 'gesture',
+}) {
+  const textColor = darkMode ? '#fff' : '#1a1a1a';
+
+  return (
+    <div style={androidFrameStyles.wrapper}>
+      <div style={{
+        ...androidFrameStyles.screen,
+        width,
+        height,
+        background: darkMode ? '#000' : '#fff',
+      }}>
+        <div style={{ ...androidFrameStyles.statusBar, color: textColor }}>
+          <span>{time}</span>
+          <div style={androidFrameStyles.statusIcons}>
+            <svg width="14" height="10" viewBox="0 0 14 10" fill="currentColor">
+              <rect x="0" y="6" width="2" height="4" rx="0.5" />
+              <rect x="4" y="4" width="2" height="6" rx="0.5" />
+              <rect x="8" y="2" width="2" height="8" rx="0.5" />
+              <rect x="12" y="0" width="2" height="10" rx="0.5" />
+            </svg>
+            <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
+              <path d="M7 9a1 1 0 100-2 1 1 0 000 2z" fill="currentColor" />
+              <path d="M3 6a5 5 0 018 0" stroke="currentColor" strokeWidth="1.2" />
+              <path d="M0.5 3.5a11 11 0 0113 0" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
+            </svg>
+            <div style={{
+              width: 22,
+              height: 10,
+              border: '1.5px solid currentColor',
+              borderRadius: 2,
+              padding: 1,
+              position: 'relative',
+            }}>
+              <div style={{
+                width: `${battery}%`,
+                height: '100%',
+                background: 'currentColor',
+                borderRadius: 1,
+              }} />
+            </div>
+            <span style={androidFrameStyles.batteryText}>{battery}%</span>
+          </div>
+        </div>
+
+        <div style={androidFrameStyles.punchHole} />
+
+        <div style={androidFrameStyles.content}>
+          {children}
+        </div>
+
+        {navStyle === 'gesture' && (
+          <div style={androidFrameStyles.navBar}>
+            <div style={{
+              ...androidFrameStyles.navButton,
+              width: 100,
+              height: 4,
+              background: darkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+            }} />
+          </div>
+        )}
+
+        {navStyle === 'buttons' && (
+          <div style={androidFrameStyles.navBar}>
+            <span style={{ color: textColor, fontSize: 20 }}>◁</span>
+            <span style={{ color: textColor, fontSize: 16 }}>○</span>
+            <span style={{ color: textColor, fontSize: 16 }}>□</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+if (typeof window !== 'undefined') {
+  window.AndroidFrame = AndroidFrame;
+}
+
+/* ============================================================
+   统一内联 SVG 图标：1.5px 线性描边，currentColor，16 / 20 两档
+   ============================================================ */
+
+const ICON_PATHS = {
+  calendar: (
+    <g>
+      <rect x="4" y="5" width="16" height="15" rx="2.5" />
+      <path d="M4 10 H20" />
+      <path d="M9 3 V7 M15 3 V7" />
+    </g>
+  ),
+  route: (
+    <g>
+      <circle cx="6" cy="18.5" r="2.3" />
+      <path d="M18 3 a4.2 4.2 0 0 1 0 8.4 c-2.8 0 -4.2 -2.4 -4.2 -4.2 A4.2 4.2 0 0 1 18 3 z" />
+      <circle cx="18" cy="7.2" r="1.2" />
+      <path d="M8 16.4 C11 13 13 15 15.8 11.4" />
+    </g>
+  ),
+  list: (
+    <g>
+      <path d="M9 6.5 H20 M9 12 H20 M9 17.5 H20" />
+      <path d="M4 6.5 H5.5 M4 12 H5.5 M4 17.5 H5.5" />
+    </g>
+  ),
+  distance: (
+    <g>
+      <path d="M4 12 H20" />
+      <path d="M7 9 L4 12 L7 15" />
+      <path d="M17 9 L20 12 L17 15" />
+    </g>
+  ),
+  clock: (
+    <g>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7 V12 L15.5 14" />
+    </g>
+  ),
+  pace: (
+    <g>
+      <path d="M4 17 a8 8 0 1 1 16 0" />
+      <path d="M12 17 L15.5 10.5" />
+      <circle cx="12" cy="17" r="1.2" />
+      <path d="M3.5 17 H6 M18 17 H20.5" />
+    </g>
+  ),
+  elevation: (
+    <g>
+      <path d="M3 18.5 L9 9 L13 14 L17 7 L21 18.5 Z" />
+      <path d="M3 18.5 H21" />
+    </g>
+  ),
+  check: (
+    <g>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M8 12.2 L11 15 L16 9" />
+    </g>
+  ),
+  play: (
+    <g>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M10.4 8.4 L15.4 12 L10.4 15.6 Z" />
+    </g>
+  ),
+  pause: (
+    <g>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M10 9 V15 M14 9 V15" />
+    </g>
+  ),
+  finish: (
+    <g>
+      <path d="M6 21 V3" />
+      <path d="M6 4 H18 L15.5 8 L18 12 H6" />
+    </g>
+  ),
+  share: (
+    <g>
+      <path d="M12 3 V15" />
+      <path d="M8.5 6.5 L12 3 L15.5 6.5" />
+      <path d="M6 11 H5 A1.5 1.5 0 0 0 3.5 12.5 V19 A1.5 1.5 0 0 0 5 20.5 H19 A1.5 1.5 0 0 0 20.5 19 V12.5 A1.5 1.5 0 0 0 19 11 H18" />
+    </g>
+  ),
+  chevron: (
+    <g>
+      <path d="M9 5 L16 12 L9 19" />
+    </g>
+  ),
+  target: (
+    <g>
+      <circle cx="12" cy="12" r="8.5" />
+      <circle cx="12" cy="12" r="4.5" />
+      <circle cx="12" cy="12" r="1" />
+    </g>
+  ),
+  flame: (
+    <g>
+      <path d="M12 3 C13 7 17 8 17 13 A5 5 0 0 1 7 13 C7 10 9 8 10 6 C10.5 8.5 12 9 12 11 C13 9 12 6 12 3 Z" />
+    </g>
+  ),
+};
+
+function Icon({ name, size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+      style={{ display: 'block', flex: '0 0 auto' }} aria-hidden="true">
+      {ICON_PATHS[name]}
+    </svg>
+  );
+}
+
+function IconLabel({ name, children, size = 16 }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <Icon name={name} size={size} />
+      <span>{children}</span>
+    </span>
+  );
+}
+
+/* ============================================================
+   统一内容数据
+   ============================================================ */
+
+const RUN = {
+  date: '11月24日 周二',
+  dateShort: '11月24日',
+  target: '5.00 km',
+  dist: '5.37 km',
+  time: '27:35',
+  pace: `5'08"`,
+  kcal: '349 kcal',
+  elev: '486 m',
+  points: 27,
+  streak: '6 天',
+  monthKm: '11.3 km',
+  monthCount: '5 次',
+  rec1: { date: '11月20日', dist: '6.30 km', time: '37:12', pace: `5'54"`, points: 34 },
+  rec2: { date: '11月17日', dist: '5.02 km', time: '30:08', pace: `6'00"`, points: 28 },
+};
+
+const TABS = [
+  { key: 'today', label: '今日', icon: 'calendar' },
+  { key: 'running', label: '跑中', icon: 'route' },
+  { key: 'history', label: '记录', icon: 'list' },
+];
+
+const SCREEN_LABELS = [
+  { num: '01', label: '今日', main: false },
+  { num: '02', label: '跑中', main: true },
+  { num: '03', label: '记录', main: false },
+];
+
+/* ============================================================
+   点阵路网：网格圆点 + 折线路网（替代等高线，无闭合曲线）
+   ============================================================ */
+
+let dotIdSeq = 0;
+function nextDotId(prefix) {
+  dotIdSeq += 1;
+  return prefix + dotIdSeq;
+}
+
+const DOT_ROADS = [
+  'M -20 70 H 150 L 172 92 H 340',
+  'M -20 176 H 96 L 118 154 H 340',
+  'M -20 282 H 210 L 232 304 H 340',
+  'M 44 -20 V 120 L 66 142 V 380',
+  'M 136 -20 V 224 L 158 246 V 380',
+  'M 228 -20 V 60 L 250 82 V 380',
+  'M -20 348 L 140 40 L 340 40',
+  'M 300 -20 L 300 200 L 340 240',
+];
+
+const DOT_JUNCTIONS = [
+  [150, 70], [172, 92], [96, 176], [118, 154], [210, 282], [232, 304],
+  [44, 120], [66, 142], [136, 224], [158, 246], [228, 60], [250, 82],
+  [140, 40], [300, 200],
+];
+
+const BOARD_ROADS = [
+  'M -60 880 L 360 480 L 760 480 L 1120 180 L 1660 180',
+  'M -60 1010 L 300 660 L 620 660 L 980 360 L 1660 360',
+  'M 120 1160 L 120 760 L 480 400 L 480 -60',
+  'M 1280 1160 L 1280 720 L 1560 440 L 1560 -60',
+];
+
+const BOARD_JUNCTIONS = [
+  [360, 480], [760, 480], [1120, 180], [300, 660], [620, 660], [980, 360],
+  [120, 760], [480, 400], [1280, 720], [1560, 440],
+];
+
+const TRACK_PATH = 'M 18 330 C 56 300 44 236 96 214 S 168 230 190 172 S 168 118 138 132 S 142 176 174 168';
+
+/* ============================================================
+   topoStyles：唯一命名的样式对象
+   ============================================================ */
+
+const topoStyles = {
+  board: {
+    width: 1600, height: 1100, position: 'relative', overflow: 'hidden',
+    background: 'var(--sand-2)',
+  },
+  head: { position: 'absolute', left: 56, top: 28, zIndex: 5 },
+  title: { fontSize: 28, fontWeight: 600, color: 'var(--sand-12)', letterSpacing: '-0.02em', margin: 0 },
+  sub: { fontSize: 12, fontWeight: 500, color: 'var(--sand-11)', marginTop: 8 },
+  chips: { display: 'flex', gap: 10, marginTop: 16, alignItems: 'center' },
+  chip: {
+    fontSize: 12, fontWeight: 600, color: 'var(--sand-11)',
+    background: 'var(--sand-3)', border: '0.5px solid var(--sand-6)',
+    padding: '7px 16px', borderRadius: 999, fontVariantNumeric: 'tabular-nums',
+  },
+  chipMain: { background: 'var(--sage-7)', color: 'var(--sand-12)', borderColor: 'var(--sage-7)' },
+  meta: { position: 'absolute', right: 56, top: 30, zIndex: 5, textAlign: 'right' },
+  metaA: { fontSize: 12, fontWeight: 600, color: 'var(--sand-12)' },
+  metaB: { fontSize: 12, fontWeight: 400, color: 'var(--sand-11)', marginTop: 6 },
+  boardLabel: { position: 'absolute', display: 'flex', alignItems: 'center', gap: 9 },
+  boardNum: { fontSize: 12, fontWeight: 600, color: 'var(--orange-11)', fontVariantNumeric: 'tabular-nums' },
+  boardTxt: { fontSize: 14, fontWeight: 600, color: 'var(--sand-12)' },
+  screenRoot: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    overflow: 'hidden', color: 'var(--sand-12)',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Arial, sans-serif',
+  },
+  page: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    background: 'var(--sand-2)', padding: '14px 14px 64px',
+    display: 'flex', flexDirection: 'column', gap: 10, overflow: 'hidden',
+  },
+  card: {
+    background: 'var(--sand-1)', border: '0.5px solid var(--sand-6)', borderRadius: 12,
+  },
+  hdr: { display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' },
+  hdrBig: { fontSize: 20, fontWeight: 600, color: 'var(--sand-12)', letterSpacing: '-0.01em' },
+  hdrSmall: { fontSize: 12, fontWeight: 500, color: 'var(--sand-11)' },
+  kicker: { fontSize: 12, fontWeight: 600, color: 'var(--sand-11)' },
+  label: { fontSize: 12, fontWeight: 500, color: 'var(--sand-11)' },
+  num28: { fontSize: 28, fontWeight: 600, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' },
+  num48: { fontSize: 48, fontWeight: 700, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.04em' },
+  row: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
+  divider: { width: '0.5px', alignSelf: 'stretch', background: 'var(--sand-6)' },
+  pill: {
+    fontSize: 14, fontWeight: 600, borderRadius: 999, padding: '11px 16px', cursor: 'pointer',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+  },
+  pillMain: { background: 'var(--orange-11)', color: 'var(--sand-1)', border: '0.5px solid var(--orange-11)' },
+  pillGhost: { background: 'var(--sand-1)', color: 'var(--sand-12)', border: '0.5px solid var(--sand-6)' },
+  tabbar: {
+    position: 'absolute', left: 0, right: 0, bottom: 0, height: 52, zIndex: 8,
+    display: 'flex', alignItems: 'stretch', background: 'var(--sand-1)',
+    borderTop: '0.5px solid var(--sand-6)',
+  },
+  tabItem: {
+    flex: 1, border: 'none', background: 'transparent', cursor: 'pointer',
+    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
+    fontSize: 12, fontFamily: 'inherit',
+  },
+  doneTag: {
+    display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600,
+    background: 'var(--teal-3)', color: 'var(--teal-12)', borderRadius: 999, padding: '5px 11px',
+    border: '0.5px solid var(--teal-6)',
+  },
+  calGrid: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginTop: 8 },
+  calHead: { fontSize: 12, fontWeight: 500, color: 'var(--sand-11)', textAlign: 'center' },
+  calCell: {
+    height: 26, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: 12, fontWeight: 500, fontVariantNumeric: 'tabular-nums',
+    background: 'var(--sand-2)', color: 'var(--sand-11)', border: '0.5px solid var(--sand-6)',
+  },
+  calDone: { background: 'var(--teal-9)', color: 'var(--sand-12)', borderColor: 'var(--teal-9)', fontWeight: 600 },
+  calToday: { background: 'var(--sand-1)', color: 'var(--orange-11)', borderColor: 'var(--orange-11)', fontWeight: 700 },
+};
+
+function TopoMap({ height = 220, viewBox = '0 0 320 360', track = true, radius = 12, style = {} }) {
+  const dotId = nextDotId('topoDot');
+  return (
+    <div style={{
+      position: 'relative', height, width: '100%', overflow: 'hidden',
+      background: 'var(--sand-3)', borderRadius: radius,
+      border: '0.5px solid var(--sand-6)', ...style,
+    }}>
+      <svg viewBox={viewBox} preserveAspectRatio="xMidYMid slice"
+        style={{ width: '100%', height: '100%', display: 'block' }}>
+        <defs>
+          <pattern id={dotId} x="0" y="0" width="18" height="18" patternUnits="userSpaceOnUse">
+            <circle cx="9" cy="9" r="1" fill="var(--sage-7)" />
+          </pattern>
+        </defs>
+        <rect x="-40" y="-40" width="400" height="440" fill="var(--sand-2)" />
+        <path d="M-20 -20 H196 C168 60 196 116 150 168 C104 220 126 286 60 380 H-20 Z"
+          fill="var(--sage-3)" opacity="0.55" />
+        <path d="M340 60 V380 H238 C270 300 242 236 278 184 C302 148 294 104 340 60 Z"
+          fill="var(--sand-4)" opacity="0.45" />
+        <rect x="-40" y="-40" width="400" height="440" fill={'url(#' + dotId + ')'} opacity="0.8" />
+        <g fill="none" stroke="var(--sage-6)" strokeWidth="0.9" opacity="0.62" strokeLinecap="round">
+          {DOT_ROADS.map((d, i) => <path key={'r' + i} d={d} />)}
+        </g>
+        <g fill="var(--sage-6)" opacity="0.72">
+          {DOT_JUNCTIONS.map((p, i) => <circle key={'j' + i} cx={p[0]} cy={p[1]} r="1.6" />)}
+        </g>
+        {track && (
+          <g>
+            <path d={TRACK_PATH} fill="none" stroke="var(--sand-1)" strokeWidth="6.4"
+              strokeLinecap="round" opacity="0.95" />
+            <path d={TRACK_PATH} fill="none" stroke="var(--orange-9)" strokeWidth="3.6"
+              strokeLinecap="round" />
+            <circle cx="18" cy="330" r="4.4" fill="var(--orange-9)" stroke="var(--sand-1)" strokeWidth="1.6" />
+            <circle cx="174" cy="168" r="4.8" fill="var(--sand-1)" stroke="var(--orange-9)" strokeWidth="2" />
+          </g>
+        )}
+      </svg>
+    </div>
+  );
+}
+
+function ElevationProfile({ height = 48 }) {
+  const pts = [
+    [0, 52], [24, 46], [48, 42], [72, 34], [96, 30], [120, 18], [144, 10],
+    [168, 22], [192, 34], [216, 40], [240, 46], [264, 50], [288, 54], [320, 56],
+  ];
+  const line = 'M' + pts.map(p => p[0] + ' ' + p[1]).join(' L ');
+  const area = line + ' L 320 64 L 0 64 Z';
+  return (
+    <svg viewBox="0 0 320 64" preserveAspectRatio="none"
+      style={{ width: '100%', height, display: 'block' }}>
+      <g fill="none" stroke="var(--sand-5)" strokeWidth="0.5">
+        <path d="M0 16 H320 M0 34 H320 M0 52 H320" />
+      </g>
+      <path d={area} fill="var(--orange-3)" opacity="0.9" />
+      <path d={line} fill="none" stroke="var(--orange-9)" strokeWidth="1.7" strokeLinejoin="round" />
+      <circle cx="144" cy="10" r="3.6" fill="var(--orange-9)" stroke="var(--sand-1)" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+function PaceSegments() {
+  const segs = [`5'12"`, `5'06"`, `5'09"`, `5'05"`, `5'11"`];
+  const hs = [34, 42, 38, 44, 36];
+  return (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+      {segs.map((s, i) => (
+        <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+          <span className="num" style={{ fontSize: 12, fontWeight: 500, color: 'var(--sand-11)' }}>{s}</span>
+          <div style={{
+            width: '100%', height: hs[i], background: 'var(--sage-7)', borderRadius: 5,
+            border: '0.5px solid var(--sage-8)',
+          }} />
+          <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--sand-11)' }}>{i + 1} km</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function StartButton({ onClick, label = '开跑' }) {
+  return (
+    <div style={{
+      position: 'absolute', left: '50%', top: '46%', transform: 'translate(-50%, -50%)',
+      width: 132, height: 132, borderRadius: '50%',
+      border: '0.5px solid var(--sand-1)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      pointerEvents: 'none',
+    }}>
+      <button data-act="start" onClick={onClick} style={{
+        width: 104, height: 104, borderRadius: '50%', pointerEvents: 'auto',
+        background: 'var(--orange-11)', color: 'var(--sand-1)',
+        border: '0.5px solid var(--orange-11)', cursor: 'pointer',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
+      }}>
+        <Icon name="play" size={20} />
+        <span style={{ fontSize: 12, fontWeight: 600 }}>{label}</span>
+      </button>
+    </div>
+  );
+}
+
+function StatCell({ icon, label, value, borderRight }) {
+  return (
+    <div style={{
+      flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+      padding: '10px 2px', borderRight: borderRight ? '0.5px solid var(--sand-6)' : 'none',
+    }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: 'var(--sand-11)' }}>
+        <Icon name={icon} size={16} />
+        <span style={{ fontSize: 12, fontWeight: 500 }}>{label}</span>
+      </span>
+      <span className="num" style={{ fontSize: 20, fontWeight: 600, color: 'var(--sand-12)' }}>{value}</span>
+    </div>
+  );
+}
+
+/* ============================================================
+   TabBar / Modal
+   ============================================================ */
+
+function TabBar({ current, onTab }) {
+  return (
+    <div data-act="tabbar" style={topoStyles.tabbar}>
+      {TABS.map(t => {
+        const on = current === t.key;
+        return (
+          <button key={t.key} data-tab={t.key} data-act="tab" onClick={() => onTab(t.key)}
+            style={{
+              ...topoStyles.tabItem,
+              fontWeight: on ? 600 : 400,
+              color: on ? 'var(--orange-11)' : 'var(--sand-11)',
+            }}>
+            <Icon name={t.icon} size={20} />
+            {t.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function TopoModal({ title, onClose, children }) {
+  return (
+    <div data-act="modal-overlay" onClick={onClose}
+      style={{ position: 'absolute', inset: 0, zIndex: 40 }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'var(--sand-12)', opacity: 0.28 }} />
+      <div style={{
+        position: 'relative', height: '100%', display: 'flex', alignItems: 'center',
+        justifyContent: 'center', padding: 14, pointerEvents: 'none',
+      }}>
+        <div data-act="modal" onClick={e => e.stopPropagation()} style={{
+          width: '92%', maxHeight: '92%', overflow: 'auto', pointerEvents: 'auto',
+          background: 'var(--sand-1)', borderRadius: 14, padding: 14,
+          border: '0.5px solid var(--sand-6)',
+          boxShadow: '0 18px 48px color-mix(in srgb, var(--sand-12) 22%, transparent)',
+          animation: 'topoModal 250ms ease-out',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--sand-12)' }}>{title}</span>
+            <button data-act="modal-close" onClick={onClose} style={{
+              fontSize: 12, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+              color: 'var(--sand-11)', background: 'transparent',
+              border: '0.5px solid var(--sand-6)', borderRadius: 999, padding: '4px 10px',
+            }}>关闭</button>
+          </div>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   三个屏幕：今日 / 跑中 / 记录
+   ============================================================ */
+
+function TodayScreen({ onStart }) {
+  return (
+    <div style={topoStyles.page}>
+
+      <div style={topoStyles.hdr}>
+        <span style={topoStyles.hdrBig}>今日</span>
+        <span style={topoStyles.hdrSmall}>{RUN.date}</span>
+      </div>
+
+      <div style={{ position: 'relative' }}>
+        <TopoMap height={236} track={false} />
+        <div style={{
+          position: 'absolute', top: 12, left: 12, display: 'inline-flex', alignItems: 'center', gap: 6,
+          background: 'var(--sand-1)', border: '0.5px solid var(--sand-6)', borderRadius: 999,
+          padding: '5px 11px', color: 'var(--sand-12)',
+        }}>
+          <Icon name="elevation" size={16} />
+          <span className="num" style={{ fontSize: 12, fontWeight: 600 }}>海拔 128 m</span>
+        </div>
+        <StartButton onClick={onStart} />
+
+        <div style={{
+          ...topoStyles.card, position: 'relative', zIndex: 2,
+          margin: '-26px 8px 0', display: 'flex',
+          boxShadow: '0 10px 28px color-mix(in srgb, var(--sand-12) 8%, transparent)',
+        }}>
+          <StatCell icon="check" label="连续" value={RUN.streak} borderRight />
+          <StatCell icon="distance" label="本月" value={RUN.monthKm} borderRight />
+          <StatCell icon="calendar" label="打卡" value={RUN.monthCount} />
+        </div>
+      </div>
+
+      <div style={{ ...topoStyles.card, padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, color: 'var(--sand-11)' }}>
+          <Icon name="target" size={16} />
+          <span style={{ fontSize: 12, fontWeight: 500 }}>今日目标</span>
+        </span>
+        <span className="num" style={{ fontSize: 20, fontWeight: 600, color: 'var(--sand-12)' }}>{RUN.target}</span>
+      </div>
+
+      <div style={{ ...topoStyles.card, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ width: 56, height: 50, flex: '0 0 auto' }}>
+          <TopoMap height={50} viewBox="56 96 200 200" radius={8} track />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--sand-11)' }}>上次跑步　{RUN.rec1.date}</div>
+          <div className="num" style={{ fontSize: 14, fontWeight: 600, color: 'var(--sand-12)', marginTop: 4 }}>
+            {RUN.rec1.dist}　{RUN.rec1.time}
+          </div>
+        </div>
+        <Icon name="chevron" size={16} />
+      </div>
+
+    </div>
+  );
+}
+
+function RunningScreen({ runState, onStart, onEnd, onAgain, onFinishData, paused, setPaused }) {
+
+  if (runState === 'idle') {
+    return (
+      <div style={topoStyles.page}>
+        <div style={topoStyles.hdr}>
+          <span style={topoStyles.hdrBig}>跑中</span>
+          <span style={topoStyles.hdrSmall}>未开始</span>
+        </div>
+        <div style={{ position: 'relative' }}>
+          <TopoMap height={278} track={false} />
+          <div style={{
+            position: 'absolute', top: 12, left: 12, display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: 'var(--sand-1)', border: '0.5px solid var(--sand-6)', borderRadius: 999,
+            padding: '5px 11px', color: 'var(--sand-11)',
+          }}>
+            <Icon name="route" size={16} />
+            <span style={{ fontSize: 12, fontWeight: 500 }}>待记录</span>
+          </div>
+          <StartButton onClick={onStart} label="开跑" />
+        </div>
+        <div style={{ ...topoStyles.card, padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, color: 'var(--sand-11)' }}>
+            <Icon name="target" size={16} />
+            <span style={{ fontSize: 12, fontWeight: 500 }}>今日目标</span>
+          </span>
+          <span className="num" style={{ fontSize: 20, fontWeight: 600, color: 'var(--sand-12)' }}>{RUN.target}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (runState === 'live') {
+    return (
+      <div style={topoStyles.page}>
+        <div style={topoStyles.hdr}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--orange-9)' }} />
+            <span style={topoStyles.hdrBig}>运动中</span>
+          </span>
+          <span style={topoStyles.hdrSmall}>{RUN.dateShort}　轻松跑</span>
+        </div>
+
+        <div>
+          <div className="num" style={{ ...topoStyles.num48, color: 'var(--sand-12)', lineHeight: 1 }}>{RUN.time}</div>
+          <div style={{ ...topoStyles.label, marginTop: 5, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="clock" size={16} />已用时间
+          </div>
+        </div>
+
+        <div style={{ position: 'relative' }}>
+          <TopoMap height={186} />
+          <div style={{
+            position: 'absolute', top: 10, right: 10, display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: 'var(--sand-1)', border: '0.5px solid var(--orange-6)', borderRadius: 999,
+            padding: '5px 10px', color: 'var(--orange-11)',
+          }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--orange-9)' }} />
+            <span style={{ fontSize: 12, fontWeight: 600 }}>记录中</span>
+          </div>
+        </div>
+
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span style={topoStyles.kicker}>海拔剖面</span>
+            <span className="num" style={{ fontSize: 12, fontWeight: 500, color: 'var(--sand-11)' }}>128 → 486 m</span>
+          </div>
+          <ElevationProfile height={46} />
+        </div>
+
+        <div style={{ ...topoStyles.card, display: 'flex', padding: '4px 0' }}>
+          <StatCell icon="distance" label="距离" value={RUN.dist} borderRight />
+          <StatCell icon="pace" label="配速" value={RUN.pace} borderRight />
+          <StatCell icon="elevation" label="爬升" value={RUN.elev} />
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, marginTop: 'auto' }}>
+          <button data-act="pause" onClick={() => setPaused(!paused)}
+            style={{ ...topoStyles.pill, ...topoStyles.pillGhost, flex: 1 }}>
+            <Icon name="pause" size={16} />{paused ? '继续' : '暂停'}
+          </button>
+          <button data-act="end" onClick={onEnd}
+            style={{ ...topoStyles.pill, ...topoStyles.pillMain, flex: 1 }}>
+            <Icon name="finish" size={16} />结束
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={topoStyles.page}>
+      <div style={topoStyles.hdr}>
+        <span style={topoStyles.hdrBig}>完成</span>
+        <span style={topoStyles.doneTag}><Icon name="check" size={16} />已打卡</span>
+      </div>
+
+      <div style={{ position: 'relative' }}>
+        <TopoMap height={168} />
+        <div style={{
+          position: 'absolute', bottom: 10, right: 10,
+          background: 'var(--sand-1)', border: '0.5px solid var(--sand-6)', borderRadius: 999,
+          padding: '5px 10px', color: 'var(--sand-11)',
+        }}>
+          <span className="num" style={{ fontSize: 12, fontWeight: 600 }}>轨迹 {RUN.points} 点</span>
+        </div>
+      </div>
+
+      <div style={{ ...topoStyles.card, padding: '10px 14px' }}>
+        <div style={topoStyles.label}>本次距离</div>
+        <div className="num" style={{ ...topoStyles.num48, color: 'var(--sand-12)', lineHeight: 1.05, marginTop: 4 }}>
+          {RUN.dist}
+        </div>
+        <div style={{ display: 'flex', gap: 16, marginTop: 10 }}>
+          <span className="num" style={{ fontSize: 14, fontWeight: 600, color: 'var(--sand-12)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <Icon name="clock" size={16} />{RUN.time}
+          </span>
+          <span className="num" style={{ fontSize: 14, fontWeight: 600, color: 'var(--sand-12)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <Icon name="pace" size={16} />{RUN.pace}
+          </span>
+          <span className="num" style={{ fontSize: 14, fontWeight: 600, color: 'var(--sand-12)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <Icon name="flame" size={16} />{RUN.kcal}
+          </span>
+        </div>
+      </div>
+
+      <div style={{ ...topoStyles.card, padding: '8px 14px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <span style={topoStyles.kicker}>海拔剖面</span>
+          <span className="num" style={{ fontSize: 12, fontWeight: 500, color: 'var(--sand-11)' }}>最高 {RUN.elev}</span>
+        </div>
+        <ElevationProfile height={36} />
+      </div>
+
+      <div style={{ display: 'flex', gap: 10, marginTop: 'auto' }}>
+        <button data-act="finishData" onClick={onFinishData}
+          style={{ ...topoStyles.pill, ...topoStyles.pillMain, flex: 1, fontSize: 12, padding: '11px 8px' }}>
+          <Icon name="route" size={16} />查看完成数据
+        </button>
+        <button data-act="again" onClick={onAgain}
+          style={{ ...topoStyles.pill, ...topoStyles.pillGhost, flex: 1 }}>
+          <Icon name="play" size={16} />再跑一次
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function HistoryScreen({ open }) {
+  const lead = 6;
+  const days = [...Array(lead).fill(null), ...Array.from({ length: 30 }, (_, i) => i + 1)];
+  const doneSet = [19, 20, 21, 22, 23];
+  const records = [RUN.rec1, RUN.rec2];
+
+  return (
+    <div style={{ ...topoStyles.page, gap: 8 }}>
+
+      <div style={topoStyles.hdr}>
+        <span style={topoStyles.hdrBig}>记录</span>
+        <span style={topoStyles.hdrSmall}>十一月</span>
+      </div>
+
+      <div style={{ ...topoStyles.card, display: 'flex', padding: '4px 0' }}>
+        <StatCell icon="distance" label="本月里程" value={RUN.monthKm} borderRight />
+        <StatCell icon="calendar" label="打卡次数" value={RUN.monthCount} />
+      </div>
+
+      <div style={{ ...topoStyles.card, padding: '10px 14px' }}>
+        <div style={topoStyles.row}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+            <Icon name="calendar" size={16} />
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--sand-12)' }}>11 月月历</span>
+          </span>
+          <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--sand-11)' }}>周一起</span>
+        </div>
+        <div style={topoStyles.calGrid}>
+          {['一', '二', '三', '四', '五', '六', '日'].map((h, i) =>
+            <div key={'h' + i} style={topoStyles.calHead}>{h}</div>
+          )}
+          {days.map((d, i) => (
+            <div key={'d' + i} style={{
+              ...topoStyles.calCell,
+              ...(d === null ? { background: 'transparent', border: '0.5px solid transparent' } : {}),
+              ...(d !== null && doneSet.indexOf(d) >= 0 ? topoStyles.calDone : {}),
+              ...(d === 24 ? topoStyles.calToday : {}),
+            }}>{d === null ? '' : d}</div>
+          ))}
+        </div>
+      </div>
+
+      <div style={topoStyles.label}>历史记录</div>
+
+      {records.map((r, i) => (
+        <div key={i} data-act={'rec' + i} onClick={() => open('rec' + i)}
+          style={{ ...topoStyles.card, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+          <div style={{ width: 54, height: 46, flex: '0 0 auto' }}>
+            <TopoMap height={46} viewBox="50 96 220 220" radius={8} track />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--sand-12)' }}>{r.date}</span>
+              <span className="num" style={{ fontSize: 14, fontWeight: 600, color: 'var(--orange-11)' }}>{r.dist}</span>
+            </div>
+            <div className="num" style={{ fontSize: 12, fontWeight: 500, color: 'var(--sand-11)', marginTop: 6 }}>
+              {r.time}　{r.pace}
+            </div>
+          </div>
+          <Icon name="chevron" size={16} />
+        </div>
+      ))}
+
+    </div>
+  );
+}
+
+/* ============================================================
+   弹层内容
+   ============================================================ */
+
+function ModalBody({ kind, onClose }) {
+  if (kind === 'finishData') {
+    return (
+      <TopoModal title="完成数据" onClose={onClose}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+          <span className="num" style={{ fontSize: 28, fontWeight: 600, color: 'var(--sand-12)' }}>{RUN.dist}</span>
+          <span className="num" style={{ fontSize: 20, fontWeight: 600, color: 'var(--sand-12)' }}>{RUN.time}</span>
+        </div>
+        <div style={{ marginTop: 10 }}>
+          <TopoMap height={132} />
+        </div>
+        <div style={{ display: 'flex', marginTop: 12, padding: '8px 0', borderTop: '0.5px solid var(--sand-6)', borderBottom: '0.5px solid var(--sand-6)' }}>
+          <StatCell icon="pace" label="配速" value={RUN.pace} borderRight />
+          <StatCell icon="flame" label="消耗" value={RUN.kcal} borderRight />
+          <StatCell icon="route" label="轨迹点" value={String(RUN.points)} />
+        </div>
+        <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--sand-12)' }}>分段配速</span>
+          <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--sand-11)' }}>每公里</span>
+        </div>
+        <div style={{ marginTop: 10 }}><PaceSegments /></div>
+        <button data-act="saveRecord" onClick={onClose}
+          style={{ ...topoStyles.pill, ...topoStyles.pillMain, width: '100%', marginTop: 14 }}>
+          <Icon name="share" size={16} />保存记录图
+        </button>
+      </TopoModal>
+    );
+  }
+
+  if (kind === 'rec0' || kind === 'rec1') {
+    const r = kind === 'rec0' ? RUN.rec1 : RUN.rec2;
+    return (
+      <TopoModal title="单次记录" onClose={onClose}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--sand-12)' }}>{r.date}</span>
+          <span style={topoStyles.doneTag}><Icon name="check" size={16} />已完成</span>
+        </div>
+        <div className="num" style={{ fontSize: 28, fontWeight: 600, color: 'var(--orange-11)', marginTop: 6 }}>{r.dist}</div>
+        <div style={{ marginTop: 10 }}>
+          <TopoMap height={130} />
+        </div>
+        <div style={{ display: 'flex', marginTop: 12, padding: '8px 0', borderTop: '0.5px solid var(--sand-6)', borderBottom: '0.5px solid var(--sand-6)' }}>
+          <StatCell icon="clock" label="用时" value={r.time} borderRight />
+          <StatCell icon="pace" label="配速" value={r.pace} borderRight />
+          <StatCell icon="route" label="轨迹点" value={String(r.points)} />
+        </div>
+        <div style={{ marginTop: 10 }}>
+          <ElevationProfile height={38} />
+        </div>
+        <button data-act="genRecord" onClick={onClose}
+          style={{ ...topoStyles.pill, ...topoStyles.pillMain, width: '100%', marginTop: 12 }}>
+          <Icon name="share" size={16} />生成记录图
+        </button>
+      </TopoModal>
+    );
+  }
+
+  return null;
+}
+
+/* ============================================================
+   AppPhone：每台独立状态机
+   ============================================================ */
+
+function AppPhone({ initial, initialRun, Frame, scale, left, top, z, num, label, labelTop }) {
+  const [screen, setScreen] = React.useState(initial);
+  const [runState, setRunState] = React.useState(initialRun || 'idle');
+  const [modal, setModal] = React.useState(null);
+  const [paused, setPaused] = React.useState(false);
+
+  const go = (s) => { setScreen(s); setModal(null); };
+  const open = (m) => setModal(m);
+  const startRun = () => { setRunState('live'); setPaused(false); setScreen('running'); setModal(null); };
+  const endRun = () => { setRunState('result'); setModal(null); };
+  const again = () => { setRunState('live'); setPaused(false); setModal(null); };
+
+  const screenEl = (() => {
+    switch (screen) {
+      case 'today': return <TodayScreen onStart={startRun} />;
+      case 'running': return (
+        <RunningScreen
+          runState={runState}
+          onStart={startRun}
+          onEnd={endRun}
+          onAgain={again}
+          onFinishData={() => open('finishData')}
+          paused={paused}
+          setPaused={setPaused}
+        />
+      );
+      case 'history': return <HistoryScreen open={open} />;
+      default: return null;
+    }
+  })();
+
+  const FrameCmp = Frame === 'android' ? AndroidFrame : IosFrame;
+
+  return (
+    <React.Fragment>
+      <div data-phone={num} style={{
+        position: 'absolute', left, top, zIndex: z,
+        transform: 'scale(' + scale + ')', transformOrigin: 'top left',
+      }}>
+        <FrameCmp width={320} height={660} time="19:30" battery={82} darkMode={false}>
+          <div style={topoStyles.screenRoot}>
+            {screenEl}
+            <TabBar current={screen} onTab={go} />
+            {modal && <ModalBody kind={modal} onClose={() => setModal(null)} />}
+          </div>
+        </FrameCmp>
+      </div>
+      <div style={{ ...topoStyles.boardLabel, left, top: labelTop, zIndex: z }}>
+        <span style={topoStyles.boardNum}>{num}</span>
+        <span style={topoStyles.boardTxt}>{label}</span>
+      </div>
+    </React.Fragment>
+  );
+}
+
+/* ============================================================
+   展示板：主次放大构图
+   ============================================================ */
+
+function BoardTexture() {
+  const dotId = nextDotId('boardDot');
+  return (
+    <svg viewBox="0 0 1600 1100" preserveAspectRatio="xMidYMid slice"
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0 }}>
+      <defs>
+        <pattern id={dotId} x="0" y="0" width="26" height="26" patternUnits="userSpaceOnUse">
+          <circle cx="13" cy="13" r="1" fill="var(--sage-7)" />
+        </pattern>
+      </defs>
+      <path d="M-60 120 C220 40 420 220 620 140 S1040 20 1240 160 S1560 300 1680 220 V-60 H-60 Z"
+        fill="var(--sage-3)" opacity="0.3" />
+      <path d="M-60 980 C260 880 480 1080 760 960 S1240 860 1680 1000 V1160 H-60 Z"
+        fill="var(--sand-3)" opacity="0.45" />
+      <rect x="0" y="0" width="1600" height="1100" fill={'url(#' + dotId + ')'} opacity="0.24" />
+      <g fill="none" stroke="var(--sage-6)" strokeWidth="1" opacity="0.26" strokeLinecap="round">
+        {BOARD_ROADS.map((d, i) => <path key={'br' + i} d={d} />)}
+      </g>
+      <g fill="var(--sage-7)" opacity="0.32">
+        {BOARD_JUNCTIONS.map((p, i) => <circle key={'bj' + i} cx={p[0]} cy={p[1]} r="2.2" />)}
+      </g>
+    </svg>
+  );
+}
+
+function Board() {
+  return (
+    <div style={topoStyles.board}>
+      <BoardTexture />
+
+      <div style={topoStyles.head}>
+        <h1 style={topoStyles.title}>每日跑步　02C 点阵路网</h1>
+        <div style={topoStyles.sub}>定位　滨海丘陵　海拔 128 m</div>
+        <div style={topoStyles.chips}>
+          {SCREEN_LABELS.map(s => (
+            <div key={s.num} style={{
+              ...topoStyles.chip,
+              ...(s.main ? topoStyles.chipMain : {}),
+            }}>{s.num} {s.label}</div>
+          ))}
+        </div>
+      </div>
+
+      <div style={topoStyles.meta}>
+        <div style={topoStyles.metaA}>2026-11-24　周二</div>
+        <div style={topoStyles.metaB}>iOS + Android</div>
+      </div>
+
+      <AppPhone initial="today" initialRun="idle" Frame="android" scale={0.95}
+        left={64} top={265} z={4} num="01" label="今日" labelTop={930} />
+      <AppPhone initial="running" initialRun="result" Frame="ios" scale={1.25}
+        left={590} top={160} z={10} num="02" label="跑中结果" labelTop={1032} />
+      <AppPhone initial="history" initialRun="idle" Frame="android" scale={0.95}
+        left={1140} top={300} z={4} num="03" label="记录" labelTop={965} />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Board />);
+</script>
+</body>
+</html>

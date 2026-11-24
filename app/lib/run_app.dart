@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
@@ -13,7 +12,7 @@ import 'platform/gallery.dart';
 import 'platform/location_source.dart';
 import 'theme.dart';
 import 'widgets/run_share_card.dart';
-import 'widgets/field_shapes.dart';
+import 'widgets/terrain.dart';
 
 Color _c(int v) => Color(v);
 
@@ -48,8 +47,8 @@ class RunApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        scaffoldBackgroundColor: _c(AppPalette.orange1),
-        colorScheme: ColorScheme.light(primary: _c(AppPalette.orange9)),
+        scaffoldBackgroundColor: _c(AppPalette.sand2),
+        colorScheme: ColorScheme.light(primary: _c(AppPalette.orange11)),
       ),
       home: const AppShell(),
     );
@@ -163,6 +162,12 @@ class _AppShellState extends State<AppShell> {
       _checkIn.monthDistance(_repo.sessions, _today.year, _today.month) / 1000;
   int get _monthCount =>
       _checkIn.monthCheckInCount(_repo.checkIns, _today.year, _today.month);
+
+  WorkoutSession? get _latestSession {
+    final list = List<WorkoutSession>.from(_repo.sessions)
+      ..sort((a, b) => b.startTime.compareTo(a.startTime));
+    return list.isEmpty ? null : list.first;
+  }
 
   void _addSimulatedPoint() {
     _tick++;
@@ -316,16 +321,22 @@ class _AppShellState extends State<AppShell> {
   void _showResult(BuildContext context) {
     final s = _finished;
     if (s == null) return;
-    showModalBottomSheet<void>(
+    showDialog<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _ResultSheet(
+      barrierColor: _c(AppPalette.sand12).withValues(alpha: 0.28),
+      builder: (dialogContext) => _ResultDialog(
         session: s,
-        streak: _streak,
         autoCheckedIn: _todayCheckIn != null,
-        onSave: () => _openCard(context, s),
-        onManualCheckIn: _todayCheckIn == null ? _manualCheckIn : null,
+        onSave: () {
+          Navigator.pop(dialogContext);
+          _openCard(context, s);
+        },
+        onManualCheckIn: _todayCheckIn == null
+            ? () {
+                Navigator.pop(dialogContext);
+                _manualCheckIn();
+              }
+            : null,
       ),
     );
   }
@@ -342,13 +353,15 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _showSession(BuildContext context, WorkoutSession s) {
-    showModalBottomSheet<void>(
+    showDialog<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _SessionSheet(
+      barrierColor: _c(AppPalette.sand12).withValues(alpha: 0.28),
+      builder: (dialogContext) => _SessionDialog(
         session: s,
-        onCard: () => _openCard(context, s),
+        onCard: () {
+          Navigator.pop(dialogContext);
+          _openCard(context, s);
+        },
       ),
     );
   }
@@ -367,7 +380,11 @@ class _AppShellState extends State<AppShell> {
         monthKm: _monthKm,
         monthCount: _monthCount,
         targetKm: _plan.targetMeters / 1000,
+        planType: _plan.type,
+        planLabel: _plan.startLabel,
+        lastSession: _latestSession,
         onRun: _start,
+        onLastSession: (s) => _showSession(context, s),
       ),
       _RunningPage(
         session: _finished,
@@ -377,14 +394,16 @@ class _AppShellState extends State<AppShell> {
         distance: (_tracker?.distanceMeters ?? 0) / 1000,
         pace: _paceLabel(_pace),
         heartRate: _heartRate > 0 ? _heartRate : null,
+        kcal: ((_tracker?.distanceMeters ?? 0) / 1000 * 65).round(),
         paused: _paused,
-        streak: _streak,
         autoCheckedIn: _todayCheckIn != null,
+        today: _today,
+        planType: _plan.type,
+        targetKm: _plan.targetMeters / 1000,
         onStart: _start,
         onPause: _togglePause,
         onFinish: _finish,
         onResult: () => _showResult(context),
-        onManualCheckIn: _manualCheckIn,
       ),
       _HistoryPage(
         repo: _repo,
@@ -402,72 +421,336 @@ class _AppShellState extends State<AppShell> {
   }
 }
 
-/* ---------------- 流场页面骨架 ---------------- */
+/* ---------------- 色块地形页面骨架 ---------------- */
 
-/// 每页底色都是浅暖白，流带由各页自己决定，不用满版玻璃或深色。
-Widget _fieldPage({
-  required List<Widget> bands,
+const double _gap = 10;
+const double _pagePad = 14;
+
+const List<String> _monthCn = [
+  '一月', '二月', '三月', '四月', '五月', '六月',
+  '七月', '八月', '九月', '十月', '十一月', '十二月',
+];
+
+TextStyle _txt(double size, int weight, Color color) => TextStyle(
+      fontSize: size,
+      fontWeight: FontWeight.values[weight ~/ 100],
+      color: color,
+      height: 1.2,
+    );
+
+/// 数字统一等宽，字号大到 28 以上才收紧字距，避免小字挤在一起。
+TextStyle _num(double size, int weight, int color) => TextStyle(
+      fontSize: size,
+      fontWeight: FontWeight.values[weight ~/ 100],
+      color: _c(color),
+      height: 1.05,
+      letterSpacing: size >= 28 ? -size * 0.02 : 0,
+      fontFeatures: const [FontFeature.tabularFigures()],
+    );
+
+String _dateShort(DateTime d) => '${d.month}月${d.day}日';
+
+Widget _page(List<Widget> children) => Container(
+      color: _c(AppPalette.sand2),
+      padding: const EdgeInsets.all(_pagePad),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: children,
+      ),
+    );
+
+Widget _header(Widget left, Widget right) => SizedBox(
+      height: 28,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [left, right],
+      ),
+    );
+
+Widget _pageTitle(String text) => Text(
+      text,
+      style: _txt(20, 600, _c(AppPalette.sand12)).copyWith(letterSpacing: -0.2),
+    );
+
+Widget _pageMeta(String text) => Text(text, style: _txt(12, 500, _c(AppPalette.sand11)));
+
+Widget _card({
   required Widget child,
-  bool bottomInset = true,
+  EdgeInsetsGeometry padding = EdgeInsets.zero,
+  EdgeInsetsGeometry? margin,
+  bool shadow = false,
 }) =>
-    Stack(
+    Container(
+      margin: margin,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: _c(AppPalette.sand1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(width: AppRules.hairline, color: _c(AppPalette.sand6)),
+        boxShadow: shadow
+            ? [
+                BoxShadow(
+                  color: _c(AppPalette.sand12).withValues(alpha: 0.08),
+                  blurRadius: 28,
+                  offset: const Offset(0, 10),
+                ),
+              ]
+            : null,
+      ),
+      child: child,
+    );
+
+Widget _iconLabel(
+  IconData icon,
+  String text, {
+  int color = AppPalette.sand11,
+  double size = 12,
+  int weight = 500,
+  double gap = 6,
+}) =>
+    Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Positioned.fill(child: Container(color: _c(AppPalette.orange1))),
-        ...bands,
-        Positioned.fill(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(18, 18, 18, bottomInset ? 78 : 18),
-            child: child,
+        Icon(icon, size: 16, color: _c(color)),
+        SizedBox(width: gap),
+        Flexible(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: _txt(size, weight, _c(color)),
           ),
         ),
       ],
     );
 
-/// 流场里的玻璃卡，比上一版克制：圆角 10，半透明浅底加 0.5px 边。
-Widget _fieldGlass({
-  required Widget child,
-  EdgeInsetsGeometry padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-}) =>
-    ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            color: _c(AppPalette.slate1).withValues(alpha: 0.82),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(width: AppRules.hairline, color: _c(AppPalette.slate6)),
+/// 三格数据条：竖分隔线高度由容器固定高度约束，避免用 1px 描边。
+class _StatBar extends StatelessWidget {
+  final List<Widget> cells;
+  final double height;
+  final bool card;
+
+  const _StatBar({required this.cells, this.height = 64, this.card = true});
+
+  @override
+  Widget build(BuildContext context) {
+    final row = SizedBox(
+      height: height,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (int i = 0; i < cells.length; i++) ...[
+            Expanded(child: cells[i]),
+            if (i < cells.length - 1)
+              Container(width: AppRules.hairline, color: _c(AppPalette.sand6)),
+          ],
+        ],
+      ),
+    );
+    if (!card) {
+      return Container(
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(width: AppRules.hairline, color: _c(AppPalette.sand6)),
+            bottom: BorderSide(width: AppRules.hairline, color: _c(AppPalette.sand6)),
           ),
-          child: child,
+        ),
+        child: row,
+      );
+    }
+    return _card(child: row);
+  }
+}
+
+class _StatCell extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _StatCell({required this.icon, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _iconLabel(icon, label),
+            const SizedBox(height: 4),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(value, style: _num(20, 600, AppPalette.sand12)),
+            ),
+          ],
+        ),
+      );
+}
+
+class _Pill extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool filled;
+  final VoidCallback? onTap;
+  final double fontSize;
+
+  const _Pill({
+    required this.label,
+    required this.icon,
+    required this.filled,
+    required this.onTap,
+    this.fontSize = 14,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = filled ? _c(AppPalette.sand1) : _c(AppPalette.sand12);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        height: 44,
+        decoration: BoxDecoration(
+          color: filled ? _c(AppPalette.orange11) : _c(AppPalette.sand1),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            width: AppRules.hairline,
+            color: filled ? _c(AppPalette.orange11) : _c(AppPalette.sand6),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: fg),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: _txt(fontSize, 600, fg),
+              ),
+            ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+/// 地形上的开跑钮：104 实心圆套一圈 0.5px 光环，落在地图中央偏上。
+class _StartButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _StartButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          width: 132,
+          height: 132,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              width: AppRules.hairline,
+              color: _c(AppPalette.sand1).withValues(alpha: 0.9),
+            ),
+          ),
+          child: Center(
+            child: Container(
+              width: 104,
+              height: 104,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _c(AppPalette.orange11),
+                border: Border.all(
+                    width: AppRules.hairline, color: _c(AppPalette.orange11)),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.play_arrow, size: 22, color: _c(AppPalette.sand1)),
+                  const SizedBox(height: 3),
+                  Text('开跑', style: _txt(12, 600, _c(AppPalette.sand1))),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+}
+
+class _Tag extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _Tag({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+        decoration: BoxDecoration(
+          color: _c(AppPalette.teal3),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(width: AppRules.hairline, color: _c(AppPalette.teal6)),
+        ),
+        child: _iconLabel(icon, label,
+            color: AppPalette.teal12, weight: 600, gap: 5),
+      );
+}
+
+/// 贴在地图角上的小胶囊，浅底细边，不抢地形。
+Widget _mapChip(Widget child, {bool accent = false}) => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+      decoration: BoxDecoration(
+        color: _c(AppPalette.sand1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          width: AppRules.hairline,
+          color: _c(accent ? AppPalette.orange6 : AppPalette.sand6),
+        ),
+      ),
+      child: child,
+    );
+
+Widget _liveDot(double size, int color) => Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: _c(color)),
     );
 
 class _TabBar extends StatelessWidget {
   final int selected;
   final ValueChanged<int> onChanged;
+
   const _TabBar({required this.selected, required this.onChanged});
 
   @override
   Widget build(BuildContext context) => Container(
-        height: 78,
         decoration: BoxDecoration(
-          color: _c(AppPalette.orange1),
+          color: _c(AppPalette.sand1),
           border: Border(
-            top: BorderSide(width: AppRules.hairline, color: _c(AppPalette.slate6)),
+            top: BorderSide(width: AppRules.hairline, color: _c(AppPalette.sand6)),
           ),
         ),
-        child: Row(
-          children: [
-            _tabItem(0, Icons.today, '今日'),
-            _tabItem(1, Icons.route, '跑中'),
-            _tabItem(2, Icons.history, '记录'),
-          ],
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 52,
+            child: Row(
+              children: [
+                _item(0, Icons.calendar_today_outlined, '今日'),
+                _item(1, Icons.route_outlined, '跑中'),
+                _item(2, Icons.list_outlined, '记录'),
+              ],
+            ),
+          ),
         ),
       );
 
-  Widget _tabItem(int index, IconData icon, String label) {
+  Widget _item(int index, IconData icon, String label) {
     final on = selected == index;
     return Expanded(
       child: GestureDetector(
@@ -476,23 +759,13 @@ class _TabBar extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 20,
-                color: on ? _c(AppPalette.orange11) : _c(AppPalette.slate11)),
-            const SizedBox(height: 4),
-            ClipPath(
-              clipper: const PolygonClipper(FieldCut.chip),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 3),
-                color: on ? _c(AppPalette.orange3) : Colors.transparent,
-                child: Text(label,
-                    style: TextStyle(
-                        fontSize: AppType.tiny,
-                        fontWeight: on ? FontWeight.w700 : FontWeight.w400,
-                        color: on
-                            ? _c(AppPalette.orange11)
-                            : _c(AppPalette.slate11))),
-              ),
-            ),
+            Icon(icon,
+                size: 20,
+                color: _c(on ? AppPalette.orange11 : AppPalette.sand11)),
+            const SizedBox(height: 3),
+            Text(label,
+                style: _txt(
+                    12, on ? 600 : 400, _c(on ? AppPalette.orange11 : AppPalette.sand11))),
           ],
         ),
       ),
@@ -508,155 +781,149 @@ class _TodayPage extends StatelessWidget {
   final double monthKm;
   final int monthCount;
   final double targetKm;
+  final String planType;
+  final String planLabel;
+  final WorkoutSession? lastSession;
   final VoidCallback onRun;
+  final ValueChanged<WorkoutSession>? onLastSession;
+
   const _TodayPage({
     required this.today,
     required this.streak,
     required this.monthKm,
     required this.monthCount,
     required this.targetKm,
+    required this.planType,
+    required this.planLabel,
+    required this.lastSession,
     required this.onRun,
+    required this.onLastSession,
   });
 
   @override
-  Widget build(BuildContext context) => _fieldPage(
-        bands: [
-          flowBand(vertices: FieldCut.bandDown, height: 150, top: 92, left: -48, right: -48),
-          flowBand(
-            vertices: FieldCut.bandThin,
-            height: 54,
-            top: 320,
-            left: -48,
-            right: -48,
-            opacity: 0.32,
-          ),
-        ],
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('今日',
-                    style: TextStyle(
-                        fontSize: AppType.title,
-                        fontWeight: FontWeight.w700,
-                        color: _c(AppPalette.slate12),
-                        letterSpacing: -0.02)),
-                Text('${today.month}月${today.day}日 ${_weekCn[today.weekday - 1]}',
-                    style: TextStyle(
-                        fontSize: AppType.tiny,
-                        fontWeight: FontWeight.w500,
-                        color: _c(AppPalette.slate11))),
-              ],
+  Widget build(BuildContext context) => LayoutBuilder(
+        builder: (context, box) {
+          final mapH = (box.maxHeight - 300).clamp(200.0, 560.0);
+          return _page([
+            _header(
+              _pageTitle('今日'),
+              _pageMeta('${today.month}月${today.day}日 周${_weekCn[today.weekday - 1]}'),
             ),
-            const SizedBox(height: 26),
-            Row(
-              children: [
-                Icon(Icons.flag_outlined,
-                    size: 16, color: _c(AppPalette.slate12)),
-                const SizedBox(width: 6),
-                Text('今日目标',
-                    style: TextStyle(
-                        fontSize: AppType.tiny,
-                        fontWeight: FontWeight.w500,
-                        color: _c(AppPalette.slate12))),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                cutNumber(targetKm.toStringAsFixed(2)),
-                const SizedBox(width: 8),
-                Text('km',
-                    style: TextStyle(
-                        fontSize: AppType.title,
-                        fontWeight: FontWeight.w600,
-                        color: _c(AppPalette.slate12))),
-              ],
-            ),
-            const SizedBox(height: 22),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Icon(Icons.local_fire_department,
-                    size: 20, color: _c(AppPalette.slate12)),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('连续打卡',
-                        style: TextStyle(
-                            fontSize: AppType.tiny,
-                            fontWeight: FontWeight.w500,
-                            color: _c(AppPalette.slate12))),
-                    Text('$streak',
-                        style: TextStyle(
-                            fontSize: AppType.hero,
-                            fontWeight: FontWeight.w700,
-                            color: _c(AppPalette.slate12),
-                            height: 1.05,
-                            fontFeatures: const [FontFeature.tabularFigures()])),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 22),
-            _FieldButton(
-              label: '开跑',
-              icon: Icons.play_arrow,
-              onTap: onRun,
-              filled: true,
-            ),
-            const Spacer(),
-            _fieldGlass(
-              child: Column(
+            const SizedBox(height: _gap),
+            SizedBox(
+              height: mapH + 40,
+              child: Stack(
                 children: [
-                  _glassLine(
-                    icon: Icons.straighten,
-                    label: '本月累计',
-                    value: '${monthKm.toStringAsFixed(1)} km',
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    height: mapH,
+                    child: TerrainMap(track: false),
                   ),
-                  _glassLine(
-                    icon: Icons.check_circle_outline,
-                    label: '打卡次数',
-                    value: '$monthCount 次',
+                  Positioned(
+                    left: 12,
+                    top: 12,
+                    child: _mapChip(
+                      _iconLabel(Icons.schedule, '$planType $planLabel',
+                          color: AppPalette.sand12, weight: 600, gap: 5),
+                    ),
+                  ),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: mapH * 0.46 - 66,
+                    height: 132,
+                    child: Center(child: _StartButton(onTap: onRun)),
+                  ),
+                  Positioned(
+                    left: 8,
+                    right: 8,
+                    bottom: 0,
+                    child: _StatBar(
+                      height: 64,
+                      cells: [
+                        _StatCell(
+                            icon: Icons.check_circle_outline,
+                            label: '连续',
+                            value: '$streak 天'),
+                        _StatCell(
+                            icon: Icons.straighten,
+                            label: '本月',
+                            value: '${monthKm.toStringAsFixed(1)} km'),
+                        _StatCell(
+                            icon: Icons.calendar_month_outlined,
+                            label: '打卡',
+                            value: '$monthCount 次'),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
+            const SizedBox(height: _gap),
+            _card(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                children: [
+                  _iconLabel(Icons.track_changes, '今日目标'),
+                  const Spacer(),
+                  Text('${targetKm.toStringAsFixed(2)} km',
+                      style: _num(20, 600, AppPalette.sand12)),
+                ],
+              ),
+            ),
+            const SizedBox(height: _gap),
+            _lastRun(),
+          ]);
+        },
       );
 
-  Widget _glassLine({
-    required IconData icon,
-    required String label,
-    required String value,
-  }) =>
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3),
+  Widget _lastRun() {
+    final last = lastSession;
+    return GestureDetector(
+      onTap: last != null && onLastSession != null
+          ? () => onLastSession!(last)
+          : null,
+      behavior: HitTestBehavior.opaque,
+      child: _card(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
           children: [
-            Icon(icon, size: 16, color: _c(AppPalette.slate11)),
-            const SizedBox(width: 6),
-            Text(label,
-                style: TextStyle(
-                    fontSize: AppType.tiny, color: _c(AppPalette.slate11))),
-            const Spacer(),
-            Text(value,
-                style: TextStyle(
-                    fontSize: AppType.small,
-                    fontWeight: FontWeight.w600,
-                    color: _c(AppPalette.slate12),
-                    fontFeatures: const [FontFeature.tabularFigures()])),
+            SizedBox(
+              width: 56,
+              height: 50,
+              child: TerrainMap(
+                points: last?.points ?? const <TrackPoint>[],
+                view: const Rect.fromLTWH(56, 96, 200, 200),
+                radius: 8,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    last == null ? '还没有跑步记录' : '上次跑步　${_dateShort(last.startTime)}',
+                    style: _txt(12, 500, _c(AppPalette.sand11)),
+                  ),
+                  if (last != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      '${(last.distanceMeters / 1000).toStringAsFixed(2)} km　${_clock(last.elapsed)}',
+                      style: _num(14, 600, AppPalette.sand12),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, size: 16, color: _c(AppPalette.sand11)),
           ],
         ),
-      );
+      ),
+    );
+  }
 }
 
 /* ---------------- 跑中 ---------------- */
@@ -669,14 +936,16 @@ class _RunningPage extends StatelessWidget {
   final double distance;
   final String pace;
   final int? heartRate;
+  final int kcal;
   final bool paused;
-  final int streak;
   final bool autoCheckedIn;
+  final DateTime today;
+  final String planType;
+  final double targetKm;
   final VoidCallback onStart;
   final VoidCallback onPause;
   final Future<void> Function() onFinish;
   final VoidCallback onResult;
-  final Future<void> Function() onManualCheckIn;
 
   const _RunningPage({
     required this.session,
@@ -686,355 +955,281 @@ class _RunningPage extends StatelessWidget {
     required this.distance,
     required this.pace,
     required this.heartRate,
+    required this.kcal,
     required this.paused,
-    required this.streak,
     required this.autoCheckedIn,
+    required this.today,
+    required this.planType,
+    required this.targetKm,
     required this.onStart,
     required this.onPause,
     required this.onFinish,
     required this.onResult,
-    required this.onManualCheckIn,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (session != null) return _result(context, session!);
-    if (tracker == null) return _idle(context);
-    return _live(context);
+    if (session != null) return _result(session!);
+    if (tracker == null) return _idle();
+    return _live();
   }
 
-  Widget _idle(BuildContext context) => _fieldPage(
-        bands: [
-          flowBand(vertices: FieldCut.bandDown, height: 150,
-              top: 180, left: -48, right: -48),
-        ],
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+  Widget _idle() => _page([
+        _header(_pageTitle('跑中'), _pageMeta('未开始')),
+        const SizedBox(height: _gap),
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, box) {
+              final mapH = box.maxHeight.clamp(240.0, 900.0);
+              return Stack(
+                children: [
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    height: mapH,
+                    child: const TerrainMap(track: false),
+                  ),
+                  Positioned(
+                    left: 12,
+                    top: 12,
+                    child: _mapChip(_iconLabel(Icons.route_outlined, '待记录')),
+                  ),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: mapH * 0.46 - 66,
+                    height: 132,
+                    child: Center(child: _StartButton(onTap: onStart)),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: _gap),
+        _card(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              _iconLabel(Icons.track_changes, '今日目标'),
+              const Spacer(),
+              Text('${targetKm.toStringAsFixed(2)} km',
+                  style: _num(20, 600, AppPalette.sand12)),
+            ],
+          ),
+        ),
+      ]);
+
+  Widget _live() {
+    final livePace = paceBuckets(points);
+    final cells = <Widget>[
+      _StatCell(
+          icon: Icons.straighten,
+          label: '距离',
+          value: '${distance.toStringAsFixed(2)} km'),
+      _StatCell(icon: Icons.speed_outlined, label: '配速', value: pace),
+      if (heartRate != null)
+        _StatCell(
+            icon: Icons.favorite_outline, label: '心率', value: '$heartRate'),
+      _StatCell(
+          icon: Icons.local_fire_department_outlined, label: '消耗', value: '$kcal'),
+    ];
+    return _page([
+      _header(
+        Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('跑中',
-                    style: TextStyle(
-                        fontSize: AppType.title,
-                        fontWeight: FontWeight.w700,
-                        color: _c(AppPalette.slate12))),
-                Text('准备就绪',
-                    style: TextStyle(
-                        fontSize: AppType.tiny, color: _c(AppPalette.slate11))),
-              ],
-            ),
-            const Spacer(),
-            Text('0:00',
-                style: TextStyle(
-                    fontSize: AppType.hero,
-                    fontWeight: FontWeight.w700,
-                    color: _c(AppPalette.slate12),
-                    letterSpacing: -0.04)),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.flag_outlined,
-                    size: 16, color: _c(AppPalette.slate11)),
-                const SizedBox(width: 6),
-                Text('目标 5.00 km',
-                    style: TextStyle(
-                        fontSize: AppType.tiny, color: _c(AppPalette.slate11))),
-              ],
-            ),
-            const SizedBox(height: 26),
-            _FieldButton(
-                label: '开跑', icon: Icons.play_arrow, onTap: onStart, filled: true),
-            const Spacer(),
-            Center(
-              child: Text('点开跑进入实时',
-                  style: TextStyle(
-                      fontSize: AppType.tiny, color: _c(AppPalette.slate11))),
+            _liveDot(7, AppPalette.orange9),
+            const SizedBox(width: 7),
+            _pageTitle(paused ? '已暂停' : '运动中'),
+          ],
+        ),
+        _pageMeta('${_dateShort(today)}　$planType'),
+      ),
+      const SizedBox(height: _gap),
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FittedBox(
+            alignment: Alignment.centerLeft,
+            child: Text(_clock(elapsed), style: _num(48, 700, AppPalette.sand12)),
+          ),
+          const SizedBox(height: 5),
+          _iconLabel(Icons.schedule, '已用时间'),
+        ],
+      ),
+      const SizedBox(height: _gap),
+      Expanded(
+        child: Stack(
+          children: [
+            Positioned.fill(child: TerrainMap(points: points)),
+            Positioned(
+              right: 10,
+              top: 10,
+              child: _mapChip(
+                accent: true,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _liveDot(6, AppPalette.orange9),
+                    const SizedBox(width: 6),
+                    Text('记录中', style: _txt(12, 600, _c(AppPalette.orange11))),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
-      );
-
-  Widget _live(BuildContext context) => Stack(
+      ),
+      if (livePace.length >= 2) ...[
+        const SizedBox(height: _gap),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text('配速曲线', style: _txt(12, 600, _c(AppPalette.sand11))),
+            const Spacer(),
+            Text('每 500 米', style: _num(12, 500, AppPalette.sand11)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        PaceProfile(values: livePace),
+      ],
+      const SizedBox(height: _gap),
+      _StatBar(cells: cells),
+      const SizedBox(height: _gap),
+      Row(
         children: [
-          Positioned.fill(child: Container(color: _c(AppPalette.orange1))),
-          // 抽象街区在流带下层
-          Positioned(
-            left: 12,
-            right: 12,
-            top: 62,
-            height: 190,
-            child: Opacity(
-              opacity: 0.45,
-              child: CustomPaint(painter: FieldTrackPainter(points: points)),
+          Expanded(
+            child: _Pill(
+              label: paused ? '继续' : '暂停',
+              icon: paused ? Icons.play_arrow_outlined : Icons.pause_outlined,
+              filled: false,
+              onTap: onPause,
             ),
           ),
-          // 主流带，轨迹画成带内白线
-          flowBand(
-            vertices: FieldCut.bandMid,
-            height: 92,
-            top: 150,
-            left: -48,
-            right: -48,
-          ),
-          Positioned(
-            left: 12,
-            right: 12,
-            top: 150,
-            height: 100,
-            child: ClipPath(
-              clipper: const PolygonClipper(FieldCut.bandMid),
-              child: CustomPaint(
-                  painter: FieldTrackPainter(points: points, whiteTrack: true)),
+          const SizedBox(width: _gap),
+          Expanded(
+            child: _Pill(
+              label: '结束',
+              icon: Icons.flag_outlined,
+              filled: true,
+              onTap: () => onFinish(),
             ),
           ),
-          Positioned(
-            left: 18,
-            right: 18,
-            top: 4,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.route, size: 16, color: _c(AppPalette.slate12)),
-                    const SizedBox(width: 6),
-                    Text(paused ? '已暂停' : '运动中',
-                        style: TextStyle(
-                            fontSize: AppType.body,
-                            fontWeight: FontWeight.w600,
-                            color: _c(AppPalette.slate12))),
-                  ],
-                ),
-                Text('5.00 km',
-                    style: TextStyle(
-                        fontSize: AppType.tiny, color: _c(AppPalette.slate11))),
-              ],
+        ],
+      ),
+    ]);
+  }
+
+  Widget _result(WorkoutSession s) => LayoutBuilder(
+        builder: (context, box) {
+          final splits = [for (final sp in s.splits) sp.seconds];
+          return _page([
+            _header(
+              _pageTitle('完成'),
+              _Tag(
+                icon: Icons.check,
+                label: autoCheckedIn ? '已打卡' : '已记录',
+              ),
             ),
-          ),
-          Positioned(
-            left: 18,
-            top: 42,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                cutNumber(_clock(elapsed)),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Icon(Icons.schedule,
-                        size: 16, color: _c(AppPalette.slate11)),
-                    const SizedBox(width: 6),
-                    Text('已用时间',
-                        style: TextStyle(
-                            fontSize: AppType.tiny,
-                            color: _c(AppPalette.slate11))),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            left: 14,
-            right: 14,
-            bottom: 148,
-            child: _fieldGlass(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            const SizedBox(height: _gap),
+            Expanded(
+              child: Stack(
                 children: [
-                  _metric(Icons.straighten, '${distance.toStringAsFixed(2)} km', '已跑距离'),
-                  _metric(Icons.speed, pace, '当前配速'),
-                  if (heartRate != null)
-                    _metric(Icons.favorite, '$heartRate', '心率'),
+                  Positioned.fill(
+                    child: TerrainMap(points: s.points),
+                  ),
+                  Positioned(
+                    right: 10,
+                    bottom: 10,
+                    child: _mapChip(
+                      Text('轨迹 ${s.points.length} 点',
+                          style: _num(12, 600, AppPalette.sand11)),
+                    ),
+                  ),
                 ],
               ),
             ),
-          ),
-          Positioned(
-            left: 14,
-            right: 14,
-            bottom: 76,
-            child: Row(
-              children: [
-                Expanded(
-                  child: _FieldButton(
-                    label: paused ? '继续' : '暂停',
-                    icon: paused ? Icons.play_arrow : Icons.pause,
-                    onTap: onPause,
-                    filled: false,
+            const SizedBox(height: _gap),
+            _card(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('本次距离', style: _txt(12, 500, _c(AppPalette.sand11))),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${(s.distanceMeters / 1000).toStringAsFixed(2)} km',
+                    style: _num(48, 700, AppPalette.sand12),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _FieldButton(
-                    label: '结束',
-                    icon: Icons.flag,
-                    onTap: () => onFinish(),
-                    filled: true,
+                  const SizedBox(height: 10),
+                  FittedBox(
+                    alignment: Alignment.centerLeft,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _iconLabel(Icons.schedule, _clock(s.elapsed),
+                            color: AppPalette.sand12, size: 14, weight: 600, gap: 5),
+                        const SizedBox(width: 16),
+                        _iconLabel(Icons.speed_outlined, s.averagePaceLabel,
+                            color: AppPalette.sand12, size: 14, weight: 600, gap: 5),
+                        const SizedBox(width: 16),
+                        _iconLabel(Icons.local_fire_department_outlined,
+                            '${s.calories} kcal',
+                            color: AppPalette.sand12, size: 14, weight: 600, gap: 5),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
-      );
-
-  Widget _metric(IconData icon, String value, String label) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(value,
-              style: TextStyle(
-                  fontSize: AppType.title,
-                  fontWeight: FontWeight.w700,
-                  color: _c(AppPalette.slate12),
-                  fontFeatures: const [FontFeature.tabularFigures()])),
-          const SizedBox(height: 3),
-          Row(
-            children: [
-              Icon(icon, size: 16, color: _c(AppPalette.slate11)),
-              const SizedBox(width: 5),
-              Text(label,
-                  style: TextStyle(
-                      fontSize: AppType.tiny, color: _c(AppPalette.slate11))),
-            ],
-          ),
-        ],
-      );
-
-  Widget _result(BuildContext context, WorkoutSession s) => _fieldPage(
-        bands: [
-          flowBand(vertices: FieldCut.bandDown, height: 146,
-              top: 96, left: -48, right: -48),
-          flowBand(vertices: FieldCut.bandThin, height: 52,
-              top: 300, left: -48, right: -48, opacity: 0.3),
-        ],
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('完成',
-                    style: TextStyle(
-                        fontSize: AppType.title,
-                        fontWeight: FontWeight.w700,
-                        color: _c(AppPalette.slate12))),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _c(autoCheckedIn
-                        ? AppPalette.teal9
-                        : AppPalette.slate6),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+            const SizedBox(height: _gap),
+            _card(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
                     children: [
-                      Icon(Icons.check,
-                          size: 12, color: _c(AppPalette.orange1)),
-                      const SizedBox(width: 4),
-                      Text(autoCheckedIn ? '已打卡' : '已记录',
-                          style: TextStyle(
-                              fontSize: AppType.tiny,
-                              fontWeight: FontWeight.w600,
-                              color: _c(AppPalette.orange1))),
+                      Text('配速曲线', style: _txt(12, 600, _c(AppPalette.sand11))),
+                      const Spacer(),
+                      Text('每公里', style: _num(12, 500, AppPalette.sand11)),
                     ],
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 22),
-            Row(
-              children: [
-                Icon(Icons.straighten,
-                    size: 16, color: _c(AppPalette.slate12)),
-                const SizedBox(width: 6),
-                Text('本次距离',
-                    style: TextStyle(
-                        fontSize: AppType.tiny,
-                        fontWeight: FontWeight.w500,
-                        color: _c(AppPalette.slate12))),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                cutNumber((s.distanceMeters / 1000).toStringAsFixed(2)),
-                const SizedBox(width: 8),
-                Text('km',
-                    style: TextStyle(
-                        fontSize: AppType.title,
-                        fontWeight: FontWeight.w600,
-                        color: _c(AppPalette.slate12))),
-              ],
-            ),
-            const SizedBox(height: 18),
-            _fieldGlass(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _resultMetric(Icons.schedule, _clock(s.elapsed), '用时'),
-                  _resultMetric(Icons.speed, s.averagePaceLabel, '平均配速'),
-                  _resultMetric(Icons.local_fire_department, '${s.calories}', '消耗'),
+                  const SizedBox(height: 4),
+                  PaceProfile(values: splits, height: 36),
                 ],
               ),
             ),
-            const SizedBox(height: 14),
-            Container(
-              height: 92,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                    width: AppRules.hairline, color: _c(AppPalette.slate6)),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: CustomPaint(
-                    painter: FieldTrackPainter(points: s.points),
-                    size: Size.fromHeight(92)),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: _Pill(
+                    label: '查看完成数据',
+                    icon: Icons.route_outlined,
+                    filled: true,
+                    onTap: onResult,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(width: _gap),
+                Expanded(
+                  child: _Pill(
+                    label: '再跑一次',
+                    icon: Icons.play_arrow_outlined,
+                    filled: false,
+                    onTap: onStart,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
-            const Spacer(),
-            _FieldButton(
-              label: '查看完成数据',
-              icon: Icons.list,
-              onTap: onResult,
-              filled: true,
-            ),
-            const SizedBox(height: 8),
-            _FieldButton(
-              label: '再跑一次',
-              icon: Icons.play_arrow,
-              onTap: onStart,
-              filled: false,
-            ),
-          ],
-        ),
-      );
-
-  Widget _resultMetric(IconData icon, String value, String label) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(value,
-              style: TextStyle(
-                  fontSize: value.length > 5 ? AppType.body : AppType.title,
-                  fontWeight: FontWeight.w700,
-                  color: _c(AppPalette.slate12),
-                  fontFeatures: const [FontFeature.tabularFigures()])),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Icon(icon, size: 16, color: _c(AppPalette.slate11)),
-              const SizedBox(width: 5),
-              Text(label,
-                  style: TextStyle(
-                      fontSize: AppType.tiny, color: _c(AppPalette.slate11))),
-            ],
-          ),
-        ],
+          ]);
+        },
       );
 }
 
@@ -1046,6 +1241,7 @@ class _HistoryPage extends StatelessWidget {
   final double monthKm;
   final int monthCount;
   final ValueChanged<WorkoutSession> onSession;
+
   const _HistoryPage({
     required this.repo,
     required this.today,
@@ -1058,98 +1254,61 @@ class _HistoryPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final sessions = List<WorkoutSession>.from(repo.sessions)
       ..sort((a, b) => b.startTime.compareTo(a.startTime));
-    return _fieldPage(
-      bands: const [],
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text('记录',
-                  style: TextStyle(
-                      fontSize: AppType.title,
-                      fontWeight: FontWeight.w700,
-                      color: _c(AppPalette.slate12))),
-              Text('${today.month}月',
-                  style: TextStyle(
-                      fontSize: AppType.tiny, color: _c(AppPalette.slate11))),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(monthKm.toStringAsFixed(1),
-                  style: TextStyle(
-                      fontSize: AppType.title,
-                      fontWeight: FontWeight.w600,
-                      color: _c(AppPalette.slate12),
-                      fontFeatures: const [FontFeature.tabularFigures()])),
-              const SizedBox(width: 10),
-              Text('$monthCount 打卡',
-                  style: TextStyle(
-                      fontSize: AppType.small, color: _c(AppPalette.slate11))),
-            ],
-          ),
-          const SizedBox(height: 10),
-          _fieldGlass(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.calendar_month,
-                            size: 16, color: _c(AppPalette.slate12)),
-                        const SizedBox(width: 5),
-                        Text('${today.month}月月历',
-                            style: TextStyle(
-                                fontSize: AppType.small,
-                                fontWeight: FontWeight.w600,
-                                color: _c(AppPalette.slate12))),
-                      ],
-                    ),
-                    Text('打卡完成',
-                        style: TextStyle(
-                            fontSize: AppType.tiny,
-                            color: _c(AppPalette.slate11))),
-                  ],
-                ),
-                const SizedBox(height: 7),
-                _MonthGrid(repo: repo, today: today),
+    return Container(
+      color: _c(AppPalette.sand2),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(_pagePad, _pagePad, _pagePad, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _header(_pageTitle('记录'), _pageMeta(_monthCn[today.month - 1])),
+            const SizedBox(height: 8),
+            _StatBar(
+              cells: [
+                _StatCell(
+                    icon: Icons.straighten,
+                    label: '本月里程',
+                    value: '${monthKm.toStringAsFixed(1)} km'),
+                _StatCell(
+                    icon: Icons.calendar_month_outlined,
+                    label: '打卡次数',
+                    value: '$monthCount 次'),
               ],
             ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Icon(Icons.list, size: 16, color: _c(AppPalette.slate12)),
-              const SizedBox(width: 6),
-              Text('历史记录',
-                  style: TextStyle(
-                      fontSize: AppType.small,
-                      fontWeight: FontWeight.w600,
-                      color: _c(AppPalette.slate12))),
-            ],
-          ),
-          const SizedBox(height: 2),
-          if (sessions.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Center(
-                child: Text('还没有跑步记录',
-                    style: TextStyle(
-                        fontSize: AppType.small, color: _c(AppPalette.slate11))),
+            const SizedBox(height: 8),
+            _card(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      _iconLabel(Icons.calendar_today_outlined, '${today.month} 月月历',
+                          color: AppPalette.sand12, size: 14, weight: 600, gap: 7),
+                      const Spacer(),
+                      Text('周一起', style: _txt(12, 500, _c(AppPalette.sand11))),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  _MonthGrid(repo: repo, today: today),
+                ],
               ),
             ),
-          ...sessions.map((s) => _HistoryRow(session: s, onTap: () => onSession(s))),
-        ],
+            const SizedBox(height: 12),
+            Text('历史记录', style: _txt(12, 500, _c(AppPalette.sand11))),
+            const SizedBox(height: 2),
+            if (sessions.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: Text('还没有跑步记录',
+                      style: _txt(14, 500, _c(AppPalette.sand11))),
+                ),
+              ),
+            for (final s in sessions)
+              _HistoryRow(session: s, onTap: () => onSession(s)),
+          ],
+        ),
       ),
     );
   }
@@ -1158,90 +1317,55 @@ class _HistoryPage extends StatelessWidget {
 class _HistoryRow extends StatelessWidget {
   final WorkoutSession session;
   final VoidCallback onTap;
+
   const _HistoryRow({required this.session, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final km = session.distanceMeters / 1000;
-    final bandWidth = 52.0 + km * 6.2;
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        height: 44,
+      behavior: HitTestBehavior.opaque,
+      child: _card(
         margin: const EdgeInsets.only(top: 6),
-        decoration: BoxDecoration(
-          color: _c(AppPalette.orange2),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-              width: AppRules.hairline, color: _c(AppPalette.orange6)),
-        ),
-        child: Stack(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
           children: [
-            ClipPath(
-              clipper: const PolygonClipper(FieldCut.bandThin),
-              child: SizedBox(
-                width: bandWidth,
-                child: Opacity(
-                  opacity: 0.9,
-                  child: Container(decoration: BoxDecoration(gradient: fieldFlow)),
-                ),
+            SizedBox(
+              width: 54,
+              height: 46,
+              child: TerrainMap(
+                points: session.points,
+                view: const Rect.fromLTWH(50, 96, 220, 220),
+                radius: 8,
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            const SizedBox(width: 10),
+            Expanded(
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.baseline,
                     textBaseline: TextBaseline.alphabetic,
                     children: [
-                      Row(
-                        children: [
-                          Icon(Icons.calendar_today,
-                              size: 16, color: _c(AppPalette.slate12)),
-                          const SizedBox(width: 5),
-                          Text(_dateCn(session.startTime),
-                              style: TextStyle(
-                                  fontSize: AppType.small,
-                                  fontWeight: FontWeight.w600,
-                                  color: _c(AppPalette.slate12))),
-                        ],
+                      Expanded(
+                        child: Text(_dateCn(session.startTime),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: _txt(14, 600, _c(AppPalette.sand12))),
                       ),
                       Text('${km.toStringAsFixed(2)} km',
-                          style: TextStyle(
-                              fontSize: AppType.small,
-                              fontWeight: FontWeight.w700,
-                              color: _c(AppPalette.orange11),
-                              fontFeatures: const [FontFeature.tabularFigures()])),
+                          style: _num(14, 600, AppPalette.orange11)),
                     ],
                   ),
-                  Row(
-                    children: [
-                      Icon(Icons.schedule,
-                          size: 16, color: _c(AppPalette.slate11)),
-                      const SizedBox(width: 6),
-                      Text(_clock(session.elapsed),
-                          style: TextStyle(
-                              fontSize: AppType.tiny,
-                              color: _c(AppPalette.slate11),
-                              fontFeatures: const [FontFeature.tabularFigures()])),
-                      const SizedBox(width: 8),
-                      Icon(Icons.speed,
-                          size: 16, color: _c(AppPalette.slate11)),
-                      const SizedBox(width: 6),
-                      Text(session.averagePaceLabel,
-                          style: TextStyle(
-                              fontSize: AppType.tiny,
-                              color: _c(AppPalette.slate11),
-                              fontFeatures: const [FontFeature.tabularFigures()])),
-                    ],
-                  ),
+                  const SizedBox(height: 6),
+                  Text('${_clock(session.elapsed)}　${session.averagePaceLabel}',
+                      style: _num(12, 500, AppPalette.sand11)),
                 ],
               ),
             ),
+            Icon(Icons.chevron_right, size: 16, color: _c(AppPalette.sand11)),
           ],
         ),
       ),
@@ -1252,375 +1376,361 @@ class _HistoryRow extends StatelessWidget {
 class _MonthGrid extends StatelessWidget {
   final Repository repo;
   final DateTime today;
+
   const _MonthGrid({required this.repo, required this.today});
 
   @override
   Widget build(BuildContext context) {
     final first = DateTime(today.year, today.month, 1);
-    final leading = first.weekday - 1;
+    final lead = first.weekday - 1;
     final total = _daysInMonth(today);
-    final cells = <Widget>[];
-    for (int i = 0; i < leading; i++) {
-      cells.add(const SizedBox(height: 24));
+    final weeks = <List<int?>>[];
+    var week = <int?>[];
+    for (int i = 0; i < lead; i++) {
+      week.add(null);
     }
     for (int day = 1; day <= total; day++) {
-      final done = repo.hasCheckIn(DateTime(today.year, today.month, day));
-      final isToday = day == today.day;
-      cells.add(Container(
-        height: 24,
-        decoration: BoxDecoration(
-          color: isToday
-              ? _c(AppPalette.orange9)
-              : done
-                  ? _c(AppPalette.teal9)
-                  : _c(AppPalette.orange1),
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(
-            width: AppRules.hairline,
-            color: isToday
-                ? _c(AppPalette.orange9)
-                : done
-                    ? _c(AppPalette.teal9)
-                    : _c(AppPalette.slate6),
-          ),
-        ),
-        child: Center(
-          child: Text('$day',
-              style: TextStyle(
-                  fontSize: AppType.tiny,
-                  fontWeight: isToday || done
-                      ? FontWeight.w600
-                      : FontWeight.w500,
-                  color: isToday || done
-                      ? _c(AppPalette.orange1)
-                      : _c(AppPalette.slate11),
-                  fontFeatures: const [FontFeature.tabularFigures()])),
-        ),
-      ));
+      week.add(day);
+      if (week.length == 7) {
+        weeks.add(week);
+        week = <int?>[];
+      }
     }
+    while (week.isNotEmpty && week.length < 7) {
+      week.add(null);
+    }
+    if (week.isNotEmpty) weeks.add(week);
+
     return Column(
       children: [
         Row(
-          children: List.generate(
-            7,
-            (i) => Expanded(
-              child: Center(
-                child: Text(_weekCn[i],
-                    style: TextStyle(
-                        fontSize: AppType.tiny,
-                        color: _c(AppPalette.slate11))),
+          children: [
+            for (final w in _weekCn)
+              Expanded(
+                child: Center(
+                  child: Text(w, style: _txt(12, 500, _c(AppPalette.sand11))),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        for (final wk in weeks)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Row(
+              children: [
+                for (final day in wk)
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      child: _cell(day),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _cell(int? day) {
+    if (day == null) return const SizedBox(height: 26);
+    final date = DateTime(today.year, today.month, day);
+    final done = repo.hasCheckIn(date);
+    final isToday = day == today.day;
+    final int bg;
+    final int fg;
+    final int edge;
+    final int weight;
+    if (isToday) {
+      bg = AppPalette.sand1;
+      fg = AppPalette.orange11;
+      edge = AppPalette.orange11;
+      weight = 700;
+    } else if (done) {
+      bg = AppPalette.teal9;
+      fg = AppPalette.sand12;
+      edge = AppPalette.teal9;
+      weight = 600;
+    } else {
+      bg = AppPalette.sand2;
+      fg = AppPalette.sand11;
+      edge = AppPalette.sand6;
+      weight = 500;
+    }
+    return Container(
+      height: 26,
+      decoration: BoxDecoration(
+        color: _c(bg),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(width: AppRules.hairline, color: _c(edge)),
+      ),
+      child: Center(
+        child: Text('$day',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.values[weight ~/ 100],
+              color: _c(fg),
+              height: 1,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            )),
+      ),
+    );
+  }
+}
+
+/* ---------------- 分段配速柱 ---------------- */
+
+class _SplitBars extends StatelessWidget {
+  final List<double> seconds;
+
+  const _SplitBars({required this.seconds});
+
+  @override
+  Widget build(BuildContext context) {
+    if (seconds.isEmpty) {
+      return Text('这次没有分段数据',
+          style: _txt(12, 500, _c(AppPalette.sand11)));
+    }
+    final shown = seconds.take(6).toList();
+    var lo = shown.first;
+    var hi = shown.first;
+    for (final v in shown) {
+      if (v < lo) lo = v;
+      if (v > hi) hi = v;
+    }
+    final span = (hi - lo).abs() < 1 ? 1.0 : hi - lo;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        for (int i = 0; i < shown.length; i++)
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(_paceLabel(shown[i]),
+                      style: _num(12, 500, AppPalette.sand11)),
+                  const SizedBox(height: 4),
+                  Container(
+                    height: 22 + (shown[i] - lo) / span * 24,
+                    decoration: BoxDecoration(
+                      color: _c(AppPalette.sage7),
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(
+                          width: AppRules.hairline, color: _c(AppPalette.sage8)),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text('${i + 1} km', style: _txt(12, 400, _c(AppPalette.sand11))),
+                ],
               ),
             ),
           ),
-        ),
-        const SizedBox(height: 7),
-        GridView.count(
-          crossAxisCount: 7,
-          mainAxisSpacing: 3,
-          crossAxisSpacing: 3,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          children: cells,
-        ),
       ],
     );
   }
 }
 
-/* ---------------- 按钮 ---------------- */
-
-class _FieldButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool filled;
-  const _FieldButton({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-    required this.filled,
-  });
-
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Container(
-          height: 48,
-          decoration: BoxDecoration(
-            color: filled
-                ? _c(AppPalette.orange11)
-                : _c(AppPalette.orange2),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              width: AppRules.hairline,
-              color: filled
-                  ? _c(AppPalette.orange11)
-                  : _c(AppPalette.orange6),
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon,
-                  size: filled ? 20 : 16,
-                  color: filled
-                      ? _c(AppPalette.orange1)
-                      : _c(AppPalette.orange11)),
-              const SizedBox(width: 8),
-              Text(label,
-                  style: TextStyle(
-                      fontSize: filled ? AppType.body : AppType.small,
-                      fontWeight: FontWeight.w600,
-                      color: filled
-                          ? _c(AppPalette.orange1)
-                          : _c(AppPalette.orange11))),
-            ],
-          ),
-        ),
-      );
-}
-
 /* ---------------- 弹层 ---------------- */
 
-Widget _fieldSheet({
-  required String title,
-  required VoidCallback onClose,
-  required Widget child,
-}) =>
-    ClipRRect(
-      borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppRules.glassRadius)),
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+Widget _dialogShell(BuildContext context,
+    {required String title, required Widget child}) {
+  final maxH = MediaQuery.sizeOf(context).height * 0.88;
+  return Center(
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 440, maxHeight: maxH),
         child: Container(
-          width: double.infinity,
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: _c(AppPalette.slate1).withValues(alpha: 0.92),
-            borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(AppRules.glassRadius)),
-            border: Border.all(
-              width: AppRules.hairline,
-              color: _c(AppPalette.slate6),
-            ),
-          ),
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(title,
-                      style: TextStyle(
-                          fontSize: AppType.small,
-                          fontWeight: FontWeight.w700,
-                          color: _c(AppPalette.slate12))),
-                  GestureDetector(
-                    onTap: onClose,
-                    child: Text('关闭',
-                        style: TextStyle(
-                            fontSize: AppType.tiny,
-                            color: _c(AppPalette.slate11))),
-                  ),
-                ],
+            color: _c(AppPalette.sand1),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(width: AppRules.hairline, color: _c(AppPalette.sand6)),
+            boxShadow: [
+              BoxShadow(
+                color: _c(AppPalette.sand12).withValues(alpha: 0.22),
+                blurRadius: 48,
+                offset: const Offset(0, 18),
               ),
-              const SizedBox(height: 12),
-              child,
             ],
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(title, style: _txt(20, 600, _c(AppPalette.sand12))),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      behavior: HitTestBehavior.opaque,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                              width: AppRules.hairline,
+                              color: _c(AppPalette.sand6)),
+                        ),
+                        child: Text('关闭',
+                            style: _txt(12, 500, _c(AppPalette.sand11))),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                child,
+              ],
+            ),
           ),
         ),
       ),
-    );
+    ),
+  );
+}
 
-class _ResultSheet extends StatelessWidget {
+class _ResultDialog extends StatelessWidget {
   final WorkoutSession session;
-  final int streak;
   final bool autoCheckedIn;
   final VoidCallback onSave;
-  final Future<void> Function()? onManualCheckIn;
-  const _ResultSheet({
+  final VoidCallback? onManualCheckIn;
+
+  const _ResultDialog({
     required this.session,
-    required this.streak,
     required this.autoCheckedIn,
     required this.onSave,
     required this.onManualCheckIn,
   });
 
   @override
-  Widget build(BuildContext context) => _fieldSheet(
+  Widget build(BuildContext context) => _dialogShell(
+        context,
         title: '完成数据',
-        onClose: () => Navigator.pop(context),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _sheetMetric(Icons.straighten,
-                      '${(session.distanceMeters / 1000).toStringAsFixed(2)} km', '距离'),
-                  _sheetMetric(Icons.schedule, _clock(session.elapsed), '用时'),
-                  _sheetMetric(Icons.speed, session.averagePaceLabel, '配速'),
-                  _sheetMetric(Icons.local_fire_department,
-                      '${session.calories}', '消耗'),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Container(
-                height: 104,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                      width: AppRules.hairline, color: _c(AppPalette.slate6)),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: CustomPaint(
-                    painter: FieldTrackPainter(points: session.points),
-                    size: Size.fromHeight(104),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Icon(Icons.route, size: 16, color: _c(AppPalette.slate11)),
-                  const SizedBox(width: 6),
-                  Text('${session.points.length} 个轨迹点',
-                      style: TextStyle(
-                          fontSize: AppType.tiny,
-                          color: _c(AppPalette.slate11))),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text('${session.splits.length} 段分段配速',
-                  style: TextStyle(
-                      fontSize: AppType.tiny,
-                      fontWeight: FontWeight.w600,
-                      color: _c(AppPalette.slate12))),
-              const SizedBox(height: 8),
-              Row(
-                children: session.splits.take(5).map((sp) => Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 3),
-                        child: Text(sp.kmIndex.toString(),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                fontSize: AppType.tiny,
-                                color: _c(AppPalette.slate11),
-                                fontFeatures: const [FontFeature.tabularFigures()])),
-                      ),
-                    )).toList(),
-              ),
-              const SizedBox(height: 12),
-              _FieldButton(
-                  label: '保存记录图',
-                  icon: Icons.share,
-                  onTap: onSave,
-                  filled: true),
-              if (!autoCheckedIn && onManualCheckIn != null) ...[
-                const SizedBox(height: 8),
-                _FieldButton(
-                    label: '手动补卡',
-                    icon: Icons.check_circle_outline,
-                    onTap: () => onManualCheckIn!(),
-                    filled: false),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text('${(session.distanceMeters / 1000).toStringAsFixed(2)} km',
+                    style: _num(28, 600, AppPalette.sand12)),
+                const Spacer(),
+                Text(_clock(session.elapsed),
+                    style: _num(20, 600, AppPalette.sand12)),
               ],
+            ),
+            const SizedBox(height: 10),
+            SizedBox(height: 132, child: TerrainMap(points: session.points)),
+            const SizedBox(height: 12),
+            _StatBar(
+              card: false,
+              cells: [
+                _StatCell(
+                    icon: Icons.speed_outlined,
+                    label: '配速',
+                    value: session.averagePaceLabel),
+                _StatCell(
+                    icon: Icons.local_fire_department_outlined,
+                    label: '消耗',
+                    value: '${session.calories}'),
+                _StatCell(
+                    icon: Icons.route_outlined,
+                    label: '轨迹点',
+                    value: '${session.points.length}'),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text('分段配速', style: _txt(14, 600, _c(AppPalette.sand12))),
+                const Spacer(),
+                Text('每公里', style: _txt(12, 500, _c(AppPalette.sand11))),
+              ],
+            ),
+            const SizedBox(height: 10),
+            _SplitBars(seconds: [for (final s in session.splits) s.seconds]),
+            const SizedBox(height: 14),
+            _Pill(
+                label: '保存记录图',
+                icon: Icons.share_outlined,
+                filled: true,
+                onTap: onSave),
+            if (!autoCheckedIn && onManualCheckIn != null) ...[
+              const SizedBox(height: 8),
+              _Pill(
+                  label: '手动补卡',
+                  icon: Icons.check_circle_outline,
+                  filled: false,
+                  onTap: onManualCheckIn),
             ],
-          ),
+          ],
         ),
-      );
-
-  Widget _sheetMetric(IconData icon, String value, String label) => Column(
-        children: [
-          Icon(icon, size: 16, color: _c(AppPalette.slate11)),
-          const SizedBox(height: 4),
-          Text(value,
-              style: TextStyle(
-                  fontSize: AppType.tiny,
-                  fontWeight: FontWeight.w700,
-                  color: _c(AppPalette.slate12),
-                  fontFeatures: const [FontFeature.tabularFigures()])),
-          const SizedBox(height: 2),
-          Text(label,
-              style: TextStyle(
-                  fontSize: AppType.tiny, color: _c(AppPalette.slate11))),
-        ],
       );
 }
 
-class _SessionSheet extends StatelessWidget {
+class _SessionDialog extends StatelessWidget {
   final WorkoutSession session;
   final VoidCallback onCard;
-  const _SessionSheet({required this.session, required this.onCard});
+
+  const _SessionDialog({required this.session, required this.onCard});
 
   @override
-  Widget build(BuildContext context) => _fieldSheet(
-        title: _dateCn(session.startTime),
-        onClose: () => Navigator.pop(context),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                height: 150,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                      width: AppRules.hairline, color: _c(AppPalette.slate6)),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: CustomPaint(
-                    painter: FieldTrackPainter(points: session.points),
-                    size: Size.fromHeight(150),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _sheetMetric(Icons.straighten,
-                      '${(session.distanceMeters / 1000).toStringAsFixed(2)} km', '距离'),
-                  _sheetMetric(Icons.schedule, _clock(session.elapsed), '用时'),
-                  _sheetMetric(Icons.speed, session.averagePaceLabel, '配速'),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Center(
-                child: Text(
-                    '${session.points.length} 个轨迹点　${session.splits.length} 段配速',
-                    style: TextStyle(
-                        fontSize: AppType.tiny, color: _c(AppPalette.slate11))),
-              ),
-              const SizedBox(height: 16),
-              _FieldButton(
-                  label: '生成记录图', icon: Icons.share, onTap: onCard, filled: true),
-            ],
-          ),
+  Widget build(BuildContext context) => _dialogShell(
+        context,
+        title: '单次记录',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(_dateCn(session.startTime),
+                    style: _txt(14, 600, _c(AppPalette.sand12))),
+                _Tag(icon: Icons.check, label: '已完成'),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text('${(session.distanceMeters / 1000).toStringAsFixed(2)} km',
+                style: _num(28, 600, AppPalette.orange11)),
+            const SizedBox(height: 10),
+            SizedBox(height: 130, child: TerrainMap(points: session.points)),
+            const SizedBox(height: 12),
+            _StatBar(
+              card: false,
+              cells: [
+                _StatCell(
+                    icon: Icons.schedule,
+                    label: '用时',
+                    value: _clock(session.elapsed)),
+                _StatCell(
+                    icon: Icons.speed_outlined,
+                    label: '配速',
+                    value: session.averagePaceLabel),
+                _StatCell(
+                    icon: Icons.route_outlined,
+                    label: '轨迹点',
+                    value: '${session.points.length}'),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _SplitBars(seconds: [for (final s in session.splits) s.seconds]),
+            const SizedBox(height: 12),
+            _Pill(
+                label: '生成记录图',
+                icon: Icons.share_outlined,
+                filled: true,
+                onTap: onCard),
+          ],
         ),
-      );
-
-  Widget _sheetMetric(IconData icon, String value, String label) => Column(
-        children: [
-          Icon(icon, size: 16, color: _c(AppPalette.slate11)),
-          const SizedBox(height: 4),
-          Text(value,
-              style: TextStyle(
-                  fontSize: AppType.tiny,
-                  fontWeight: FontWeight.w700,
-                  color: _c(AppPalette.slate12),
-                  fontFeatures: const [FontFeature.tabularFigures()])),
-          const SizedBox(height: 2),
-          Text(label,
-              style: TextStyle(
-                  fontSize: AppType.tiny, color: _c(AppPalette.slate11))),
-        ],
       );
 }
 
@@ -1676,12 +1786,12 @@ class _CardScreenState extends State<_CardScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: _c(AppPalette.orange1),
+        backgroundColor: _c(AppPalette.sand2),
         appBar: AppBar(
-          backgroundColor: _c(AppPalette.orange1),
+          backgroundColor: _c(AppPalette.sand2),
+          surfaceTintColor: Colors.transparent,
           title: Text('运动记录图',
-              style: TextStyle(
-                  fontSize: AppType.body, fontWeight: FontWeight.w600)),
+              style: _txt(16, 600, _c(AppPalette.sand12))),
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(18),
@@ -1696,16 +1806,14 @@ class _CardScreenState extends State<_CardScreen> {
               ),
               if (_message != null) ...[
                 const SizedBox(height: 14),
-                Text(_message!,
-                    style: TextStyle(
-                        fontSize: AppType.tiny, color: _c(AppPalette.slate11))),
+                Text(_message!, style: _txt(12, 500, _c(AppPalette.sand11))),
               ],
               const SizedBox(height: 18),
-              _FieldButton(
+              _Pill(
                 label: _saving ? '正在生成图片' : '保存图片到手机',
-                icon: Icons.download,
-                onTap: _saving ? () {} : _save,
+                icon: Icons.download_outlined,
                 filled: true,
+                onTap: _saving ? null : _save,
               ),
             ],
           ),

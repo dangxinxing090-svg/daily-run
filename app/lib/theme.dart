@@ -15,6 +15,25 @@ class AppPalette {
   static const int slate7 = 0xFFCDCED6;
   static const int slate11 = 0xFF60646C;
   static const int slate12 = 0xFF1C2024;
+
+  // 色块地形版：Radix sand 灰阶做纸面与文字，sage 做地形色块，橙只给轨迹与主按钮。
+  static const int sand1 = 0xFFFDFDFC;
+  static const int sand2 = 0xFFF9F9F8;
+  static const int sand3 = 0xFFF1F0EF;
+  static const int sand4 = 0xFFE9E8E6;
+  static const int sand5 = 0xFFE2E0DE;
+  static const int sand6 = 0xFFDBD8D5;
+  static const int sand11 = 0xFF6F6A62;
+  static const int sand12 = 0xFF1F211F;
+  static const int sage3 = 0xFFEEF2EA;
+  static const int sage4 = 0xFFE4EBDF;
+  static const int sage5 = 0xFFD9E4D1;
+  static const int sage6 = 0xFFCDDBC0;
+  static const int sage7 = 0xFFBDCEAB;
+  static const int sage8 = 0xFFA7BD90;
+  static const int teal3 = 0xFFE0F8F3;
+  static const int teal6 = 0xFFA1DED2;
+  static const int teal12 = 0xFF0D3D38;
 }
 
 /// 字号比例。今日与跑中用大字号强化核心操作与结果，记录页用小字号承载密度。
