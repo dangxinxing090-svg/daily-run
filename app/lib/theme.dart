@@ -34,6 +34,10 @@ class AppPalette {
   static const int teal3 = 0xFFE0F8F3;
   static const int teal6 = 0xFFA1DED2;
   static const int teal12 = 0xFF0D3D38;
+  static const int red3 = 0xFFFEEBEC;
+  static const int red6 = 0xFFFDBDBE;
+  static const int red9 = 0xFFE5484D;
+  static const int red11 = 0xFFCE2C31;
 }
 
 /// 字号比例。今日与跑中用大字号强化核心操作与结果，记录页用小字号承载密度。
@@ -61,6 +65,17 @@ class AppRules {
   static const double hairline = 0.5;
   static const double iconStroke = 1.5;
   static const int motionMs = 250;
+
+  // 色块地形：卡片要特别圆，圆角随容器层级递减。
+  static const double cardRadius = 24;
+  static const double mapRadius = 22;
+  static const double thumbRadius = 16;
+  static const double cellRadius = 10;
+  static const double dialogRadius = 28;
+  static const double fieldRadius = 16;
+
+  // 只有「开跑」两个字用的展示字体，子集化后约 2 KB。
+  static const String displayFont = 'RunDisplay';
 
   // 玻璃拟态
   static const double glassRadius = 28;

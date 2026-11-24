@@ -102,17 +102,14 @@ class _AppShellState extends State<AppShell> {
     } catch (_) {
       // 存储不可用时退回内存，界面仍可操作，只是不跨重启。
     }
-    final empty = _repo.plans.isEmpty &&
-        _repo.sessions.isEmpty &&
-        _repo.checkIns.isEmpty;
-    if (empty) await _seedDemo();
+    await _migrateOnce();
     _plan = _repo.planFor(_today) ??
         Plan(
           id: 'p-${_today.year}${_today.month}${_today.day}',
           date: _today,
           startMinutes: 19 * 60 + 30,
           type: '轻松跑',
-          targetMeters: 5000,
+          targetMeters: 3000,
           reminderOffsetMinutes: 15,
         );
     if (_repo.planFor(_today) == null) await _repo.savePlan(_plan);
@@ -120,33 +117,20 @@ class _AppShellState extends State<AppShell> {
     setState(() => _ready = true);
   }
 
-  Future<void> _seedDemo() async {
-    await _repo.savePlan(Plan(
-      id: 'p-${_today.year}${_today.month}${_today.day}',
-      date: _today,
-      startMinutes: 19 * 60 + 30,
-      type: '轻松跑',
-      targetMeters: 5000,
-      reminderOffsetMinutes: 15,
-    ));
-    for (int i = 1; i <= 5; i++) {
-      await _repo.saveCheckIn(
-          _checkIn.manual(_today.subtract(Duration(days: i))));
+  /// 旧版本会写入两条示例跑步和几天打卡，这里只清一次；
+  /// 顺带把当时写死的 5 公里目标归一到 3 公里。存在真实跑步时整段跳过。
+  Future<void> _migrateOnce() async {
+    try {
+      if (await _repo.readMeta('data_version') == '2') return;
+      await _repo.purgeDemoData();
+      final plan = _repo.planFor(_today);
+      if (plan != null && (plan.targetMeters - 5000).abs() < 1) {
+        await _repo.savePlan(plan.copyWith(targetMeters: 3000));
+      }
+      await _repo.writeMeta('data_version', '2');
+    } catch (_) {
+      // 迁移失败不影响启动，下次再试。
     }
-    await _repo.saveSession(WorkoutSession(
-      id: 's-demo-1',
-      startTime: _today.subtract(const Duration(days: 3, hours: 1)),
-      elapsed: const Duration(minutes: 37, seconds: 12),
-      distanceMeters: 6300,
-      calories: 410,
-    ));
-    await _repo.saveSession(WorkoutSession(
-      id: 's-demo-2',
-      startTime: _today.subtract(const Duration(days: 6, hours: 1)),
-      elapsed: const Duration(minutes: 30, seconds: 8),
-      distanceMeters: 5020,
-      calories: 326,
-    ));
   }
 
   @override
@@ -318,6 +302,41 @@ class _AppShellState extends State<AppShell> {
     setState(() {});
   }
 
+  Future<void> _deleteSession(BuildContext context, WorkoutSession s) async {
+    final ok = await showDialog<bool>(
+          context: context,
+          barrierColor: _c(AppPalette.sand12).withValues(alpha: 0.28),
+          builder: (_) => const _ConfirmDialog(
+            title: '删除这条记录',
+            body: '这次跑步的轨迹和数据会一起删掉，不能恢复。',
+            confirmLabel: '删除',
+          ),
+        ) ??
+        false;
+    if (!ok) return;
+    await _repo.deleteSession(s.id);
+    if (!mounted) return;
+    setState(() {
+      if (_finished?.id == s.id) {
+        _finished = null;
+        _tracker = null;
+      }
+    });
+  }
+
+  Future<void> _editTarget(BuildContext context) async {
+    final km = await showDialog<double>(
+      context: context,
+      barrierColor: _c(AppPalette.sand12).withValues(alpha: 0.28),
+      builder: (_) => _TargetDialog(initialKm: _plan.targetMeters / 1000),
+    );
+    if (km == null) return;
+    final updated = _plan.copyWith(targetMeters: km * 1000);
+    await _repo.savePlan(updated);
+    if (!mounted) return;
+    setState(() => _plan = updated);
+  }
+
   void _showResult(BuildContext context) {
     final s = _finished;
     if (s == null) return;
@@ -362,6 +381,10 @@ class _AppShellState extends State<AppShell> {
           Navigator.pop(dialogContext);
           _openCard(context, s);
         },
+        onDelete: () {
+          Navigator.pop(dialogContext);
+          _deleteSession(context, s);
+        },
       ),
     );
   }
@@ -385,6 +408,7 @@ class _AppShellState extends State<AppShell> {
         lastSession: _latestSession,
         onRun: _start,
         onLastSession: (s) => _showSession(context, s),
+        onEditTarget: () => _editTarget(context),
       ),
       _RunningPage(
         session: _finished,
@@ -400,6 +424,7 @@ class _AppShellState extends State<AppShell> {
         today: _today,
         planType: _plan.type,
         targetKm: _plan.targetMeters / 1000,
+        onEditTarget: () => _editTarget(context),
         onStart: _start,
         onPause: _togglePause,
         onFinish: _finish,
@@ -411,6 +436,7 @@ class _AppShellState extends State<AppShell> {
         monthKm: _monthKm,
         monthCount: _monthCount,
         onSession: (s) => _showSession(context, s),
+        onDelete: (s) => _deleteSession(context, s),
       ),
     ];
 
@@ -436,6 +462,7 @@ TextStyle _txt(double size, int weight, Color color) => TextStyle(
       fontWeight: FontWeight.values[weight ~/ 100],
       color: color,
       height: 1.2,
+      decoration: TextDecoration.none,
     );
 
 /// 数字统一等宽，字号大到 28 以上才收紧字距，避免小字挤在一起。
@@ -446,6 +473,7 @@ TextStyle _num(double size, int weight, int color) => TextStyle(
       height: 1.05,
       letterSpacing: size >= 28 ? -size * 0.02 : 0,
       fontFeatures: const [FontFeature.tabularFigures()],
+      decoration: TextDecoration.none,
     );
 
 String _dateShort(DateTime d) => '${d.month}月${d.day}日';
@@ -486,7 +514,7 @@ Widget _card({
       padding: padding,
       decoration: BoxDecoration(
         color: _c(AppPalette.sand1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRules.cardRadius),
         border: Border.all(width: AppRules.hairline, color: _c(AppPalette.sand6)),
         boxShadow: shadow
             ? [
@@ -589,46 +617,62 @@ class _StatCell extends StatelessWidget {
 
 class _Pill extends StatelessWidget {
   final String label;
-  final IconData icon;
+  final IconData? icon;
   final bool filled;
+  final bool danger;
   final VoidCallback? onTap;
   final double fontSize;
 
   const _Pill({
     required this.label,
-    required this.icon,
+    this.icon,
     required this.filled,
     required this.onTap,
+    this.danger = false,
     this.fontSize = 14,
   });
 
   @override
   Widget build(BuildContext context) {
-    final fg = filled ? _c(AppPalette.sand1) : _c(AppPalette.sand12);
+    final int fg;
+    final int bg;
+    final int edge;
+    if (danger && filled) {
+      fg = AppPalette.sand1;
+      bg = AppPalette.red11;
+      edge = AppPalette.red11;
+    } else if (danger) {
+      fg = AppPalette.red11;
+      bg = AppPalette.sand1;
+      edge = AppPalette.red6;
+    } else {
+      fg = filled ? AppPalette.sand1 : AppPalette.sand12;
+      bg = filled ? AppPalette.orange11 : AppPalette.sand1;
+      edge = filled ? AppPalette.orange11 : AppPalette.sand6;
+    }
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
         height: 44,
         decoration: BoxDecoration(
-          color: filled ? _c(AppPalette.orange11) : _c(AppPalette.sand1),
+          color: _c(bg),
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            width: AppRules.hairline,
-            color: filled ? _c(AppPalette.orange11) : _c(AppPalette.sand6),
-          ),
+          border: Border.all(width: AppRules.hairline, color: _c(edge)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 16, color: fg),
-            const SizedBox(width: 8),
+            if (icon != null) ...[
+              Icon(icon, size: 16, color: _c(fg)),
+              const SizedBox(width: 8),
+            ],
             Flexible(
               child: Text(
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: _txt(fontSize, 600, fg),
+                style: _txt(fontSize, 600, _c(fg)),
               ),
             ),
           ],
@@ -638,45 +682,120 @@ class _Pill extends StatelessWidget {
   }
 }
 
-/// 地形上的开跑钮：104 实心圆套一圈 0.5px 光环，落在地图中央偏上。
-class _StartButton extends StatelessWidget {
+/// 地形上的开跑钮：按下缩到 0.92，松手后一圈橙色脉冲扩散再进入跑中。
+class _StartButton extends StatefulWidget {
   final VoidCallback onTap;
 
   const _StartButton({required this.onTap});
 
   @override
+  State<_StartButton> createState() => _StartButtonState();
+}
+
+class _StartButtonState extends State<_StartButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 520),
+  );
+  bool _down = false;
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  void _fire() {
+    _pulse.forward(from: 0);
+    // 先让脉冲跑起来再切页，否则动效刚起就被新页面盖掉。
+    Future<void>.delayed(const Duration(milliseconds: 200), () {
+      if (mounted) widget.onTap();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
         behavior: HitTestBehavior.opaque,
-        child: Container(
-          width: 132,
-          height: 132,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              width: AppRules.hairline,
-              color: _c(AppPalette.sand1).withValues(alpha: 0.9),
-            ),
-          ),
-          child: Center(
-            child: Container(
-              width: 104,
-              height: 104,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _c(AppPalette.orange11),
-                border: Border.all(
-                    width: AppRules.hairline, color: _c(AppPalette.orange11)),
+        onTapDown: (_) => setState(() => _down = true),
+        onTapUp: (_) => setState(() => _down = false),
+        onTapCancel: () => setState(() => _down = false),
+        onTap: _fire,
+        child: SizedBox(
+          width: 164,
+          height: 164,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              AnimatedBuilder(
+                animation: _pulse,
+                builder: (context, _) {
+                  if (_pulse.value == 0) return const SizedBox.shrink();
+                  final t = Curves.easeOutCubic.transform(_pulse.value);
+                  return Container(
+                    width: 108 + t * 50,
+                    height: 108 + t * 50,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        width: 2,
+                        color: _c(AppPalette.orange9)
+                            .withValues(alpha: (1 - t) * 0.7),
+                      ),
+                    ),
+                  );
+                },
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.play_arrow, size: 22, color: _c(AppPalette.sand1)),
-                  const SizedBox(height: 3),
-                  Text('开跑', style: _txt(12, 600, _c(AppPalette.sand1))),
-                ],
+              Container(
+                width: 138,
+                height: 138,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    width: AppRules.hairline,
+                    color: _c(AppPalette.sand1).withValues(alpha: 0.95),
+                  ),
+                ),
               ),
-            ),
+              AnimatedScale(
+                scale: _down ? 0.92 : 1,
+                duration: const Duration(milliseconds: 160),
+                curve: Curves.easeOut,
+                child: Container(
+                  width: 108,
+                  height: 108,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _c(AppPalette.orange11),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _c(AppPalette.orange9).withValues(alpha: 0.35),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.play_arrow_rounded,
+                          size: 26, color: _c(AppPalette.sand1)),
+                      const SizedBox(height: 2),
+                      Text(
+                        '开跑',
+                        style: TextStyle(
+                          fontFamily: AppRules.displayFont,
+                          fontSize: 22,
+                          height: 1.05,
+                          letterSpacing: 2,
+                          color: _c(AppPalette.sand1),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       );
@@ -786,6 +905,7 @@ class _TodayPage extends StatelessWidget {
   final WorkoutSession? lastSession;
   final VoidCallback onRun;
   final ValueChanged<WorkoutSession>? onLastSession;
+  final VoidCallback onEditTarget;
 
   const _TodayPage({
     required this.today,
@@ -798,6 +918,7 @@ class _TodayPage extends StatelessWidget {
     required this.lastSession,
     required this.onRun,
     required this.onLastSession,
+    required this.onEditTarget,
   });
 
   @override
@@ -832,7 +953,7 @@ class _TodayPage extends StatelessWidget {
                   Positioned(
                     left: 0,
                     right: 0,
-                    top: mapH * 0.46 - 66,
+                    top: mapH * 0.46 - 82,
                     height: 132,
                     child: Center(child: _StartButton(onTap: onRun)),
                   ),
@@ -862,17 +983,7 @@ class _TodayPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: _gap),
-            _card(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: Row(
-                children: [
-                  _iconLabel(Icons.track_changes, '今日目标'),
-                  const Spacer(),
-                  Text('${targetKm.toStringAsFixed(2)} km',
-                      style: _num(20, 600, AppPalette.sand12)),
-                ],
-              ),
-            ),
+            _targetCard(targetKm, onEditTarget),
             const SizedBox(height: _gap),
             _lastRun(),
           ]);
@@ -896,7 +1007,7 @@ class _TodayPage extends StatelessWidget {
               child: TerrainMap(
                 points: last?.points ?? const <TrackPoint>[],
                 view: const Rect.fromLTWH(56, 96, 200, 200),
-                radius: 8,
+                radius: AppRules.thumbRadius,
               ),
             ),
             const SizedBox(width: 10),
@@ -926,6 +1037,25 @@ class _TodayPage extends StatelessWidget {
   }
 }
 
+/// 目标卡：点一下就能改，右侧铅笔提示可编辑。
+Widget _targetCard(double targetKm, VoidCallback onEdit) => GestureDetector(
+      onTap: onEdit,
+      behavior: HitTestBehavior.opaque,
+      child: _card(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            _iconLabel(Icons.track_changes, '今日目标'),
+            const Spacer(),
+            Text('${targetKm.toStringAsFixed(2)} km',
+                style: _num(20, 600, AppPalette.sand12)),
+            const SizedBox(width: 8),
+            Icon(Icons.edit_outlined, size: 16, color: _c(AppPalette.sand11)),
+          ],
+        ),
+      ),
+    );
+
 /* ---------------- 跑中 ---------------- */
 
 class _RunningPage extends StatelessWidget {
@@ -942,6 +1072,7 @@ class _RunningPage extends StatelessWidget {
   final DateTime today;
   final String planType;
   final double targetKm;
+  final VoidCallback onEditTarget;
   final VoidCallback onStart;
   final VoidCallback onPause;
   final Future<void> Function() onFinish;
@@ -961,6 +1092,7 @@ class _RunningPage extends StatelessWidget {
     required this.today,
     required this.planType,
     required this.targetKm,
+    required this.onEditTarget,
     required this.onStart,
     required this.onPause,
     required this.onFinish,
@@ -998,7 +1130,7 @@ class _RunningPage extends StatelessWidget {
                   Positioned(
                     left: 0,
                     right: 0,
-                    top: mapH * 0.46 - 66,
+                    top: mapH * 0.46 - 82,
                     height: 132,
                     child: Center(child: _StartButton(onTap: onStart)),
                   ),
@@ -1008,17 +1140,7 @@ class _RunningPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: _gap),
-        _card(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
-            children: [
-              _iconLabel(Icons.track_changes, '今日目标'),
-              const Spacer(),
-              Text('${targetKm.toStringAsFixed(2)} km',
-                  style: _num(20, 600, AppPalette.sand12)),
-            ],
-          ),
-        ),
+        _targetCard(targetKm, onEditTarget),
       ]);
 
   Widget _live() {
@@ -1241,6 +1363,7 @@ class _HistoryPage extends StatelessWidget {
   final double monthKm;
   final int monthCount;
   final ValueChanged<WorkoutSession> onSession;
+  final ValueChanged<WorkoutSession> onDelete;
 
   const _HistoryPage({
     required this.repo,
@@ -1248,6 +1371,7 @@ class _HistoryPage extends StatelessWidget {
     required this.monthKm,
     required this.monthCount,
     required this.onSession,
+    required this.onDelete,
   });
 
   @override
@@ -1306,7 +1430,11 @@ class _HistoryPage extends StatelessWidget {
                 ),
               ),
             for (final s in sessions)
-              _HistoryRow(session: s, onTap: () => onSession(s)),
+              _HistoryRow(
+                session: s,
+                onTap: () => onSession(s),
+                onDelete: () => onDelete(s),
+              ),
           ],
         ),
       ),
@@ -1317,8 +1445,13 @@ class _HistoryPage extends StatelessWidget {
 class _HistoryRow extends StatelessWidget {
   final WorkoutSession session;
   final VoidCallback onTap;
+  final VoidCallback onDelete;
 
-  const _HistoryRow({required this.session, required this.onTap});
+  const _HistoryRow({
+    required this.session,
+    required this.onTap,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1337,7 +1470,7 @@ class _HistoryRow extends StatelessWidget {
               child: TerrainMap(
                 points: session.points,
                 view: const Rect.fromLTWH(50, 96, 220, 220),
-                radius: 8,
+                radius: AppRules.thumbRadius,
               ),
             ),
             const SizedBox(width: 10),
@@ -1366,6 +1499,15 @@ class _HistoryRow extends StatelessWidget {
               ),
             ),
             Icon(Icons.chevron_right, size: 16, color: _c(AppPalette.sand11)),
+            GestureDetector(
+              onTap: onDelete,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 10, 2, 10),
+                child: Icon(Icons.delete_outline,
+                    size: 16, color: _c(AppPalette.sand11)),
+              ),
+            ),
           ],
         ),
       ),
@@ -1462,7 +1604,7 @@ class _MonthGrid extends StatelessWidget {
       height: 26,
       decoration: BoxDecoration(
         color: _c(bg),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(AppRules.cellRadius),
         border: Border.all(width: AppRules.hairline, color: _c(edge)),
       ),
       child: Center(
@@ -1517,7 +1659,7 @@ class _SplitBars extends StatelessWidget {
                     height: 22 + (shown[i] - lo) / span * 24,
                     decoration: BoxDecoration(
                       color: _c(AppPalette.sage7),
-                      borderRadius: BorderRadius.circular(5),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                           width: AppRules.hairline, color: _c(AppPalette.sage8)),
                     ),
@@ -1547,7 +1689,7 @@ Widget _dialogShell(BuildContext context,
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: _c(AppPalette.sand1),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppRules.dialogRadius),
             border: Border.all(width: AppRules.hairline, color: _c(AppPalette.sand6)),
             boxShadow: [
               BoxShadow(
@@ -1593,6 +1735,241 @@ Widget _dialogShell(BuildContext context,
       ),
     ),
   );
+}
+
+/// 通用确认浮卡，破坏性操作统一走它。
+class _ConfirmDialog extends StatelessWidget {
+  final String title;
+  final String body;
+  final String confirmLabel;
+
+  const _ConfirmDialog({
+    required this.title,
+    required this.body,
+    required this.confirmLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) => Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 340),
+            child: Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: _c(AppPalette.sand1),
+                borderRadius: BorderRadius.circular(AppRules.dialogRadius),
+                border:
+                    Border.all(width: AppRules.hairline, color: _c(AppPalette.sand6)),
+                boxShadow: [
+                  BoxShadow(
+                    color: _c(AppPalette.sand12).withValues(alpha: 0.22),
+                    blurRadius: 48,
+                    offset: const Offset(0, 18),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(title, style: _txt(18, 600, _c(AppPalette.sand12))),
+                  const SizedBox(height: 6),
+                  Text(body,
+                      style: _txt(13, 400, _c(AppPalette.sand11))
+                          .copyWith(height: 1.5)),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _Pill(
+                          label: '取消',
+                          filled: false,
+                          onTap: () => Navigator.pop(context, false),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _Pill(
+                          label: confirmLabel,
+                          filled: true,
+                          danger: true,
+                          onTap: () => Navigator.pop(context, true),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+}
+
+/// 改每日目标：直接输入公里数，也可以点 3 / 5 / 10 快速填。
+class _TargetDialog extends StatefulWidget {
+  final double initialKm;
+
+  const _TargetDialog({required this.initialKm});
+
+  @override
+  State<_TargetDialog> createState() => _TargetDialogState();
+}
+
+class _TargetDialogState extends State<_TargetDialog> {
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initialKm == widget.initialKm.roundToDouble()
+        ? widget.initialKm.toStringAsFixed(0)
+        : widget.initialKm.toStringAsFixed(1),
+  );
+  String? _error;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  double? _value() {
+    final v = double.tryParse(_controller.text.trim());
+    if (v == null || v < 0.5 || v > 100) return null;
+    return v;
+  }
+
+  void _save() {
+    final v = _value();
+    if (v == null) {
+      setState(() => _error = '请输入 0.5 到 100 之间的公里数');
+      return;
+    }
+    Navigator.pop(context, v);
+  }
+
+  @override
+  Widget build(BuildContext context) => Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 340),
+            child: Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: _c(AppPalette.sand1),
+                borderRadius: BorderRadius.circular(AppRules.dialogRadius),
+                border:
+                    Border.all(width: AppRules.hairline, color: _c(AppPalette.sand6)),
+                boxShadow: [
+                  BoxShadow(
+                    color: _c(AppPalette.sand12).withValues(alpha: 0.22),
+                    blurRadius: 48,
+                    offset: const Offset(0, 18),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text('每日目标', style: _txt(18, 600, _c(AppPalette.sand12))),
+                  const SizedBox(height: 4),
+                  Text('跑满目标的 80% 会自动打卡',
+                      style: _txt(12, 500, _c(AppPalette.sand11))),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: _controller,
+                    autofocus: true,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _save(),
+                    onChanged: (_) {
+                      if (_error != null) setState(() => _error = null);
+                    },
+                    style: _num(28, 600, AppPalette.sand12),
+                    decoration: InputDecoration(
+                      suffixText: 'km',
+                      suffixStyle: _txt(14, 500, _c(AppPalette.sand11)),
+                      filled: true,
+                      fillColor: _c(AppPalette.sand2),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(AppRules.fieldRadius),
+                        borderSide: BorderSide(
+                            width: AppRules.hairline,
+                            color: _c(AppPalette.sand6)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(AppRules.fieldRadius),
+                        borderSide: BorderSide(
+                            width: 1, color: _c(AppPalette.orange11)),
+                      ),
+                    ),
+                  ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 6),
+                    Text(_error!,
+                        style: _txt(12, 500, _c(AppPalette.red11))),
+                  ],
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      for (final km in const [3.0, 5.0, 10.0])
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: GestureDetector(
+                            onTap: () {
+                              _controller.text = km.toStringAsFixed(0);
+                              setState(() => _error = null);
+                            },
+                            behavior: HitTestBehavior.opaque,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: _c(AppPalette.sand2),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
+                                    width: AppRules.hairline,
+                                    color: _c(AppPalette.sand6)),
+                              ),
+                              child: Text('${km.toStringAsFixed(0)} km',
+                                  style: _num(12, 600, AppPalette.sand11)),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _Pill(
+                          label: '取消',
+                          filled: false,
+                          onTap: () => Navigator.pop(context),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _Pill(
+                          label: '保存',
+                          filled: true,
+                          onTap: _save,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
 }
 
 class _ResultDialog extends StatelessWidget {
@@ -1680,8 +2057,13 @@ class _ResultDialog extends StatelessWidget {
 class _SessionDialog extends StatelessWidget {
   final WorkoutSession session;
   final VoidCallback onCard;
+  final VoidCallback onDelete;
 
-  const _SessionDialog({required this.session, required this.onCard});
+  const _SessionDialog({
+    required this.session,
+    required this.onCard,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) => _dialogShell(
@@ -1729,6 +2111,13 @@ class _SessionDialog extends StatelessWidget {
                 icon: Icons.share_outlined,
                 filled: true,
                 onTap: onCard),
+            const SizedBox(height: 8),
+            _Pill(
+                label: '删除这条记录',
+                icon: Icons.delete_outline,
+                filled: false,
+                danger: true,
+                onTap: onDelete),
           ],
         ),
       );

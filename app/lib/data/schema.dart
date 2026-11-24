@@ -1,6 +1,14 @@
 import 'package:sqflite/sqflite.dart';
 
-/// 三张表的唯一定义。生产库与测试共用，避免两边 SQL 不一致。
+/// meta 只放存储版本这类标记，不放业务数据。
+const String metaStatement = '''
+  CREATE TABLE meta (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  )
+  ''';
+
+/// 数据表的唯一定义。生产库与测试共用，避免两边 SQL 不一致。
 const List<String> tableStatements = <String>[
   '''
   CREATE TABLE plans (
@@ -28,6 +36,7 @@ const List<String> tableStatements = <String>[
     paused_ms TEXT NOT NULL
   )
   ''',
+  metaStatement,
   '''
   CREATE TABLE check_ins (
     id TEXT PRIMARY KEY,
@@ -43,4 +52,9 @@ Future<void> createTables(Database database) async {
   for (final statement in tableStatements) {
     await database.execute(statement);
   }
+}
+
+/// 只建 meta，供 1 → 2 升级使用。
+Future<void> createMetaTable(Database database) async {
+  await database.execute(metaStatement);
 }

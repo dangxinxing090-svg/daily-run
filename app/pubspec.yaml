@@ -23,3 +23,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/fonts/OFL.txt
+  fonts:
+    - family: RunDisplay
+      fonts:
+        - asset: assets/fonts/RunDisplay.ttf

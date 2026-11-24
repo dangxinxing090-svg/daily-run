@@ -209,7 +209,7 @@ class TerrainMap extends StatelessWidget {
     this.points = const <TrackPoint>[],
     this.view = const Rect.fromLTWH(0, 0, 320, 360),
     this.track = true,
-    this.radius = 12,
+    this.radius = AppRules.mapRadius,
   });
 
   @override

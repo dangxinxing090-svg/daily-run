@@ -11,6 +11,15 @@ abstract class Repository {
   Future<void> saveSession(WorkoutSession session);
   Future<void> saveCheckIn(CheckIn checkIn);
 
+  /// 删掉一次跑步，连同引用它的打卡。记录页与详情弹层都用它。
+  Future<void> deleteSession(String id);
+
+  /// 旧版本内置的示例数据只清一次，靠存储里的版本标记判断。
+  Future<void> purgeDemoData();
+
+  Future<String?> readMeta(String key);
+  Future<void> writeMeta(String key, String value);
+
   Plan? planFor(DateTime day);
   bool hasCheckIn(DateTime day);
   List<Plan> get plans;
@@ -23,6 +32,7 @@ class InMemoryRepository implements Repository {
   final List<Plan> _plans = <Plan>[];
   final List<WorkoutSession> _sessions = <WorkoutSession>[];
   final List<CheckIn> _checkIns = <CheckIn>[];
+  final Map<String, String> _meta = <String, String>{};
 
   @override
   Future<void> init() async {}
@@ -83,6 +93,30 @@ class InMemoryRepository implements Repository {
       _checkIns.add(checkIn);
     }
   }
+
+  @override
+  Future<void> deleteSession(String id) async {
+    _sessions.removeWhere((s) => s.id == id);
+    _checkIns.removeWhere((c) => c.sessionId == id);
+  }
+
+  @override
+  Future<void> purgeDemoData() async {
+    // 只有在「所有会话都是内置示例、所有打卡都不挂真实会话」时才清，
+    // 一旦存在真实跑步就整段跳过，绝不误删用户数据。
+    final demoOnly =
+        _sessions.every((s) => s.id.startsWith('s-demo-')) &&
+            _checkIns.every((c) => c.sessionId == null);
+    if (!demoOnly) return;
+    _sessions.clear();
+    _checkIns.clear();
+  }
+
+  @override
+  Future<String?> readMeta(String key) async => _meta[key];
+
+  @override
+  Future<void> writeMeta(String key, String value) async => _meta[key] = value;
 
   @override
   Plan? planFor(DateTime day) {
@@ -151,4 +185,37 @@ class PersistentRepository implements Repository {
     await _memory.saveCheckIn(checkIn);
     await _store.upsertCheckIn(CheckInCodec.toMap(checkIn));
   }
+
+  @override
+  Future<void> deleteSession(String id) async {
+    final doomed = _memory.checkIns
+        .where((c) => c.sessionId == id)
+        .map((c) => c.id)
+        .toList();
+    await _memory.deleteSession(id);
+    await _store.deleteSession(id);
+    if (doomed.isNotEmpty) await _store.deleteCheckIns(doomed);
+  }
+
+  @override
+  Future<void> purgeDemoData() async {
+    final demoOnly =
+        _memory.sessions.every((s) => s.id.startsWith('s-demo-')) &&
+            _memory.checkIns.every((c) => c.sessionId == null);
+    if (!demoOnly) return;
+    final sessionIds = _memory.sessions.map((s) => s.id).toList();
+    final checkInIds = _memory.checkIns.map((c) => c.id).toList();
+    _memory.replaceAll(plans: _memory.plans, sessions: const [], checkIns: const []);
+    for (final id in sessionIds) {
+      await _store.deleteSession(id);
+    }
+    if (checkInIds.isNotEmpty) await _store.deleteCheckIns(checkInIds);
+  }
+
+  @override
+  Future<String?> readMeta(String key) => _store.readMeta(key);
+
+  @override
+  Future<void> writeMeta(String key, String value) =>
+      _store.writeMeta(key, value);
 }

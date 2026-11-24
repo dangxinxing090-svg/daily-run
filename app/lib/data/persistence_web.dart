@@ -7,6 +7,7 @@ class MemoryPersistenceStore implements PersistenceStore {
   final Map<String, Map<String, dynamic>> _plans = {};
   final Map<String, Map<String, dynamic>> _sessions = {};
   final Map<String, Map<String, dynamic>> _checkIns = {};
+  final Map<String, String> _meta = {};
 
   @override
   Future<void> init() async {}
@@ -29,6 +30,22 @@ class MemoryPersistenceStore implements PersistenceStore {
   @override
   Future<void> upsertCheckIn(Map<String, dynamic> row) async =>
       _checkIns[row['id'] as String] = Map<String, dynamic>.from(row);
+
+  @override
+  Future<void> deleteSession(String id) async => _sessions.remove(id);
+
+  @override
+  Future<void> deleteCheckIns(List<String> ids) async {
+    for (final id in ids) {
+      _checkIns.remove(id);
+    }
+  }
+
+  @override
+  Future<String?> readMeta(String key) async => _meta[key];
+
+  @override
+  Future<void> writeMeta(String key, String value) async => _meta[key] = value;
 }
 
 PersistenceStore createPersistenceStore() => MemoryPersistenceStore();
