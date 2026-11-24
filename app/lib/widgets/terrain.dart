@@ -74,7 +74,15 @@ class TerrainPainter extends CustomPainter {
   final Rect view;
   final bool track;
 
-  TerrainPainter({required this.points, required this.view, required this.track});
+  /// 轨迹画入进度，0 到 1。结果页用它做「一笔画出来」的入场。
+  final double progress;
+
+  TerrainPainter({
+    required this.points,
+    required this.view,
+    required this.track,
+    this.progress = 1,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -138,8 +146,17 @@ class TerrainPainter extends CustomPainter {
       }
       final stroke = (3.6 * s).clamp(2.4, 4.6);
       final cap = StrokeCap.round;
+      var drawn = path;
+      if (progress < 1) {
+        final metrics = path.computeMetrics().toList();
+        if (metrics.isNotEmpty) {
+          final metric = metrics.first;
+          drawn = metric.extractPath(
+              0, metric.length * progress.clamp(0.0, 1.0));
+        }
+      }
       canvas.drawPath(
-        path,
+        drawn,
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = stroke * 1.8
@@ -148,7 +165,7 @@ class TerrainPainter extends CustomPainter {
           ..color = _c(AppPalette.sand1).withValues(alpha: 0.95),
       );
       canvas.drawPath(
-        path,
+        drawn,
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = stroke
@@ -160,7 +177,9 @@ class TerrainPainter extends CustomPainter {
 
     final dot = (4.6 * s).clamp(2.6, 5.2);
     final origin = projection.isValid ? projection.points.first : null;
-    final end = projection.isValid ? projection.points.last : null;
+    final end = projection.isValid && progress >= 1
+        ? projection.points.last
+        : null;
     if (origin != null) {
       final c = Offset(origin.dx + origin0.dx, origin.dy + origin0.dy);
       canvas.drawCircle(c, dot, Paint()..color = _c(AppPalette.orange9));
@@ -192,6 +211,7 @@ class TerrainPainter extends CustomPainter {
       old.points.length != points.length ||
       old.track != track ||
       old.view != view ||
+      (old.progress - progress).abs() > 0.001 ||
       (points.isNotEmpty &&
           old.points.isNotEmpty &&
           old.points.last.ts != points.last.ts);
@@ -203,6 +223,7 @@ class TerrainMap extends StatelessWidget {
   final Rect view;
   final bool track;
   final double radius;
+  final double progress;
 
   const TerrainMap({
     super.key,
@@ -210,6 +231,7 @@ class TerrainMap extends StatelessWidget {
     this.view = const Rect.fromLTWH(0, 0, 320, 360),
     this.track = true,
     this.radius = AppRules.mapRadius,
+    this.progress = 1,
   });
 
   @override
@@ -222,7 +244,12 @@ class TerrainMap extends StatelessWidget {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(radius),
           child: CustomPaint(
-            painter: TerrainPainter(points: points, view: view, track: track),
+            painter: TerrainPainter(
+              points: points,
+              view: view,
+              track: track,
+              progress: progress,
+            ),
             child: const SizedBox.expand(),
           ),
         ),
@@ -299,19 +326,15 @@ class PaceProfilePainter extends CustomPainter {
       return;
     }
     final vs = values;
-    double min = vs.first;
-    double max = vs.first;
+    double sum = 0;
     for (final v in vs) {
-      min = math.min(min, v);
-      max = math.max(max, v);
+      sum += v;
     }
-    // 至少铺开 20 秒，避免几秒的差距被拉成一条明显的斜坡。
-    if (max - min < 20) {
-      final mid = (max + min) / 2;
-      min = mid - 10;
-      max = mid + 10;
-    }
-    final span = max - min;
+    // 固定 ±15 秒窗口：配速平稳时曲线走中线，
+    // 不会因为几秒起伏被拉成斜坡，也不会糊成一块色块。
+    final mid = sum / vs.length;
+    final min = mid - 15;
+    final span = 30.0;
     final pad = size.height * 0.14;
     final step = size.width / (vs.length - 1);
     final ys = <double>[
@@ -325,7 +348,7 @@ class PaceProfilePainter extends CustomPainter {
       ..lineTo(size.width, size.height)
       ..lineTo(0, size.height)
       ..close();
-    canvas.drawPath(area, Paint()..color = _c(AppPalette.orange3).withValues(alpha: 0.9));
+    canvas.drawPath(area, Paint()..color = _c(AppPalette.orange3).withValues(alpha: 0.42));
     canvas.drawPath(
       line,
       Paint()

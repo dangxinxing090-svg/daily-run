@@ -12,6 +12,7 @@ import 'platform/gallery.dart';
 import 'platform/location_source.dart';
 import 'theme.dart';
 import 'widgets/run_share_card.dart';
+import 'ui/motion.dart';
 import 'widgets/terrain.dart';
 
 Color _c(int v) => Color(v);
@@ -89,6 +90,7 @@ class _AppShellState extends State<AppShell> {
   CheckIn? _todayCheckIn;
   bool _paused = false;
   int _tab = 0;
+  String? _deletingId;
 
   @override
   void initState() {
@@ -102,6 +104,7 @@ class _AppShellState extends State<AppShell> {
     } catch (_) {
       // 存储不可用时退回内存，界面仍可操作，只是不跨重启。
     }
+    await SoundService.instance.init();
     await _migrateOnce();
     _plan = _repo.planFor(_today) ??
         Plan(
@@ -142,6 +145,11 @@ class _AppShellState extends State<AppShell> {
   }
 
   int get _streak => _checkIn.streak(_repo.checkIns, _today);
+  double get _todayKm => _repo.sessions
+          .where((s) => dateOnly(s.startTime) == _today)
+          .fold<double>(0, (sum, s) => sum + s.distanceMeters) /
+      1000;
+
   double get _monthKm =>
       _checkIn.monthDistance(_repo.sessions, _today.year, _today.month) / 1000;
   int get _monthCount =>
@@ -240,6 +248,8 @@ class _AppShellState extends State<AppShell> {
       _addSimulatedPoint();
     }
     _attachStreams();
+    Haptics.medium();
+    SoundService.instance.play(AppSound.start);
     setState(() {
       _elapsed = Duration.zero;
       _pace = 0;
@@ -249,6 +259,8 @@ class _AppShellState extends State<AppShell> {
 
   void _togglePause() {
     if (_tracker == null || _finished != null) return;
+    Haptics.light();
+    SoundService.instance.play(AppSound.tap, volume: 0.7);
     if (_paused) {
       _tracker!.resume(_trackerNow);
       _attachStreams();
@@ -285,6 +297,8 @@ class _AppShellState extends State<AppShell> {
       await _repo.saveCheckIn(_todayCheckIn!);
     }
     if (!mounted) return;
+    Haptics.heavy();
+    SoundService.instance.play(AppSound.finish);
     // 结束后留在跑中页原地展示结果，不跳转。
     setState(() {
       _finished = session;
@@ -303,10 +317,9 @@ class _AppShellState extends State<AppShell> {
   }
 
   Future<void> _deleteSession(BuildContext context, WorkoutSession s) async {
-    final ok = await showDialog<bool>(
-          context: context,
-          barrierColor: _c(AppPalette.sand12).withValues(alpha: 0.28),
-          builder: (_) => const _ConfirmDialog(
+    final ok = await showAppDialog<bool>(
+          context,
+          (_) => const _ConfirmDialog(
             title: '删除这条记录',
             body: '这次跑步的轨迹和数据会一起删掉，不能恢复。',
             confirmLabel: '删除',
@@ -314,9 +327,14 @@ class _AppShellState extends State<AppShell> {
         ) ??
         false;
     if (!ok) return;
+    Haptics.medium();
+    SoundService.instance.play(AppSound.tap, volume: 0.8);
+    setState(() => _deletingId = s.id);
+    await Future<void>.delayed(AppMotion.base);
     await _repo.deleteSession(s.id);
     if (!mounted) return;
     setState(() {
+      _deletingId = null;
       if (_finished?.id == s.id) {
         _finished = null;
         _tracker = null;
@@ -325,13 +343,14 @@ class _AppShellState extends State<AppShell> {
   }
 
   Future<void> _editTarget(BuildContext context) async {
-    final km = await showDialog<double>(
-      context: context,
-      barrierColor: _c(AppPalette.sand12).withValues(alpha: 0.28),
-      builder: (_) => _TargetDialog(initialKm: _plan.targetMeters / 1000),
+    final km = await showAppDialog<double>(
+      context,
+      (_) => _TargetDialog(initialKm: _plan.targetMeters / 1000),
     );
     if (km == null) return;
     final updated = _plan.copyWith(targetMeters: km * 1000);
+    Haptics.select();
+    SoundService.instance.play(AppSound.tap, volume: 0.6);
     await _repo.savePlan(updated);
     if (!mounted) return;
     setState(() => _plan = updated);
@@ -340,10 +359,9 @@ class _AppShellState extends State<AppShell> {
   void _showResult(BuildContext context) {
     final s = _finished;
     if (s == null) return;
-    showDialog<void>(
-      context: context,
-      barrierColor: _c(AppPalette.sand12).withValues(alpha: 0.28),
-      builder: (dialogContext) => _ResultDialog(
+    showAppDialog<void>(
+      context,
+      (dialogContext) => _ResultDialog(
         session: s,
         autoCheckedIn: _todayCheckIn != null,
         onSave: () {
@@ -372,10 +390,9 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _showSession(BuildContext context, WorkoutSession s) {
-    showDialog<void>(
-      context: context,
-      barrierColor: _c(AppPalette.sand12).withValues(alpha: 0.28),
-      builder: (dialogContext) => _SessionDialog(
+    showAppDialog<void>(
+      context,
+      (dialogContext) => _SessionDialog(
         session: s,
         onCard: () {
           Navigator.pop(dialogContext);
@@ -392,9 +409,7 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     if (!_ready) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: _BootLoader());
     }
     final pages = <Widget>[
       _TodayPage(
@@ -403,6 +418,7 @@ class _AppShellState extends State<AppShell> {
         monthKm: _monthKm,
         monthCount: _monthCount,
         targetKm: _plan.targetMeters / 1000,
+        todayKm: _todayKm,
         planType: _plan.type,
         planLabel: _plan.startLabel,
         lastSession: _latestSession,
@@ -437,12 +453,49 @@ class _AppShellState extends State<AppShell> {
         monthCount: _monthCount,
         onSession: (s) => _showSession(context, s),
         onDelete: (s) => _deleteSession(context, s),
+        deletingId: _deletingId,
       ),
     ];
 
-    return Scaffold(
-      body: SafeArea(child: pages[_tab]),
+    final running = _tracker != null && _finished == null;
+    return PopScope(
+      canPop: !running,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        Haptics.light();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('跑步还在进行中，结束或退出跑中页再返回',
+                style: TextStyle(fontSize: 14)),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      },
+      child: Scaffold(
+      body: SafeArea(
+        child: AnimatedSwitcher(
+          duration: AppMotion.base,
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeIn,
+          transitionBuilder: (child, animation) {
+            final curved =
+                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+            return FadeTransition(
+              opacity: curved,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 0.02),
+                  end: Offset.zero,
+                ).animate(curved),
+                child: child,
+              ),
+            );
+          },
+          child: KeyedSubtree(key: ValueKey<int>(_tab), child: pages[_tab]),
+        ),
+      ),
       bottomNavigationBar: _TabBar(selected: _tab, onChanged: (i) => setState(() => _tab = i)),
+      ),
     );
   }
 }
@@ -650,9 +703,8 @@ class _Pill extends StatelessWidget {
       bg = filled ? AppPalette.orange11 : AppPalette.sand1;
       edge = filled ? AppPalette.orange11 : AppPalette.sand6;
     }
-    return GestureDetector(
+    return Pressable(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
       child: Container(
         height: 44,
         decoration: BoxDecoration(
@@ -879,6 +931,111 @@ Widget _liveDot(double size, int color) => Container(
       decoration: BoxDecoration(shape: BoxShape.circle, color: _c(color)),
     );
 
+/// 启动时的呼吸图标，替代转圈。
+class _BootLoader extends StatefulWidget {
+  const _BootLoader();
+
+  @override
+  State<_BootLoader> createState() => _BootLoaderState();
+}
+
+class _BootLoaderState extends State<_BootLoader>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _breathe = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _breathe.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedBuilder(
+              animation: _breathe,
+              builder: (context, _) {
+                final t = Curves.easeInOut.transform(_breathe.value);
+                return Opacity(
+                  opacity: 0.35 + 0.65 * t,
+                  child: SizedBox(
+                    width: 56,
+                    height: 56,
+                    child: CustomPaint(
+                      painter: const _RunnerPainter(color: AppPalette.orange11),
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 14),
+            Text('每日跑步', style: _txt(12, 500, _c(AppPalette.sand11))),
+          ],
+        ),
+      );
+}
+
+/// 记录中的呼吸点，告诉用户轨迹还在采。
+class _PulseDot extends StatefulWidget {
+  final double size;
+
+  const _PulseDot({this.size = 7});
+
+  @override
+  State<_PulseDot> createState() => _PulseDotState();
+}
+
+class _PulseDotState extends State<_PulseDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1100),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _pulse,
+        builder: (context, _) {
+          final t = Curves.easeInOut.transform(_pulse.value);
+          return Container(
+            width: widget.size,
+            height: widget.size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _c(AppPalette.orange9).withValues(alpha: 0.45 + 0.55 * t),
+            ),
+          );
+        },
+      );
+}
+
+/// 结果页整体淡入，配合数字滚动与轨迹画入。
+class _EnterFade extends StatelessWidget {
+  final Widget child;
+
+  const _EnterFade({required this.child});
+
+  @override
+  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
+        tween: Tween<double>(begin: 0, end: 1),
+        duration: AppMotion.slow,
+        curve: Curves.easeOut,
+        builder: (context, value, child) => Opacity(opacity: value, child: child),
+        child: child,
+      );
+}
+
 class _TabBar extends StatelessWidget {
   final int selected;
   final ValueChanged<int> onChanged;
@@ -897,12 +1054,35 @@ class _TabBar extends StatelessWidget {
           top: false,
           child: SizedBox(
             height: 52,
-            child: Row(
-              children: [
-                _item(0, Icons.calendar_today_outlined, '今日'),
-                _item(1, Icons.route_outlined, '跑中'),
-                _item(2, Icons.list_outlined, '记录'),
-              ],
+            child: LayoutBuilder(
+              builder: (context, box) {
+                final w = box.maxWidth / 3;
+                return Stack(
+                  children: [
+                    AnimatedPositioned(
+                      duration: AppMotion.base,
+                      curve: Curves.easeOutCubic,
+                      left: w * selected + 20,
+                      width: w - 40,
+                      top: 7,
+                      height: 38,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: _c(AppPalette.sand3),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        _item(0, Icons.calendar_today_outlined, '今日'),
+                        _item(1, Icons.route_outlined, '跑中'),
+                        _item(2, Icons.list_outlined, '记录'),
+                      ],
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -912,18 +1092,26 @@ class _TabBar extends StatelessWidget {
     final on = selected == index;
     return Expanded(
       child: GestureDetector(
-        onTap: () => onChanged(index),
+        onTap: () {
+          if (selected == index) return;
+          Haptics.select();
+          onChanged(index);
+        },
         behavior: HitTestBehavior.opaque,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon,
-                size: 20,
+                size: on ? 21 : 20,
                 color: _c(on ? AppPalette.orange11 : AppPalette.sand11)),
             const SizedBox(height: 3),
-            Text(label,
-                style: _txt(
-                    12, on ? 600 : 400, _c(on ? AppPalette.orange11 : AppPalette.sand11))),
+            AnimatedDefaultTextStyle(
+              duration: AppMotion.fast,
+              curve: Curves.easeOut,
+              style: _txt(12, on ? 600 : 400,
+                  _c(on ? AppPalette.orange11 : AppPalette.sand11)),
+              child: Text(label),
+            ),
           ],
         ),
       ),
@@ -939,6 +1127,7 @@ class _TodayPage extends StatelessWidget {
   final double monthKm;
   final int monthCount;
   final double targetKm;
+  final double todayKm;
   final String planType;
   final String planLabel;
   final WorkoutSession? lastSession;
@@ -952,6 +1141,7 @@ class _TodayPage extends StatelessWidget {
     required this.monthKm,
     required this.monthCount,
     required this.targetKm,
+    required this.todayKm,
     required this.planType,
     required this.planLabel,
     required this.lastSession,
@@ -1022,7 +1212,7 @@ class _TodayPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: _gap),
-            _targetCard(targetKm, onEditTarget),
+            _targetCard(targetKm, onEditTarget, todayKm: todayKm),
             const SizedBox(height: _gap),
             _lastRun(),
           ]);
@@ -1031,11 +1221,11 @@ class _TodayPage extends StatelessWidget {
 
   Widget _lastRun() {
     final last = lastSession;
-    return GestureDetector(
+    return Pressable(
       onTap: last != null && onLastSession != null
           ? () => onLastSession!(last)
           : null,
-      behavior: HitTestBehavior.opaque,
+      scale: 0.98,
       child: _card(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
@@ -1068,7 +1258,8 @@ class _TodayPage extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, size: 16, color: _c(AppPalette.sand11)),
+            if (last != null)
+              Icon(Icons.chevron_right, size: 16, color: _c(AppPalette.sand11)),
           ],
         ),
       ),
@@ -1077,23 +1268,71 @@ class _TodayPage extends StatelessWidget {
 }
 
 /// 目标卡：点一下就能改，右侧铅笔提示可编辑。
-Widget _targetCard(double targetKm, VoidCallback onEdit) => GestureDetector(
-      onTap: onEdit,
-      behavior: HitTestBehavior.opaque,
-      child: _card(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Row(
-          children: [
-            _iconLabel(Icons.track_changes, '今日目标'),
-            const Spacer(),
-            Text('${targetKm.toStringAsFixed(2)} km',
-                style: _num(20, 600, AppPalette.sand12)),
-            const SizedBox(width: 8),
-            Icon(Icons.edit_outlined, size: 16, color: _c(AppPalette.sand11)),
+Widget _targetCard(
+  double targetKm,
+  VoidCallback onEdit, {
+  double? todayKm,
+}) {
+  final done = todayKm ?? 0;
+  final ratio = targetKm <= 0 ? 0.0 : (done / targetKm).clamp(0.0, 1.0);
+  final reached = ratio >= 1;
+  return Pressable(
+    onTap: onEdit,
+    scale: 0.98,
+    child: _card(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              _iconLabel(Icons.track_changes, '今日目标'),
+              const Spacer(),
+              Text('${targetKm.toStringAsFixed(2)} km',
+                  style: _num(20, 600, AppPalette.sand12)),
+              const SizedBox(width: 8),
+              Icon(Icons.edit_outlined, size: 16, color: _c(AppPalette.sand11)),
+            ],
+          ),
+          if (todayKm != null) ...[
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0, end: ratio),
+                duration: const Duration(milliseconds: 520),
+                curve: Curves.easeOutCubic,
+                builder: (context, value, child) => Stack(
+                  children: [
+                    Container(height: 5, color: _c(AppPalette.sand4)),
+                    FractionallySizedBox(
+                      widthFactor: value,
+                      child: Container(
+                        height: 5,
+                        color: _c(reached
+                            ? AppPalette.teal9
+                            : AppPalette.orange9),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Text('今日已跑', style: _txt(12, 500, _c(AppPalette.sand11))),
+                const Spacer(),
+                Text('${done.toStringAsFixed(2)} km',
+                    style: _num(12, 600, AppPalette.sand11)),
+              ],
+            ),
           ],
-        ),
+        ],
       ),
-    );
+    ),
+  );
+}
 
 /* ---------------- 跑中 ---------------- */
 
@@ -1201,7 +1440,9 @@ class _RunningPage extends StatelessWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _liveDot(7, AppPalette.orange9),
+            paused
+                ? _liveDot(7, AppPalette.sand11)
+                : const _PulseDot(size: 7),
             const SizedBox(width: 7),
             _pageTitle(paused ? '已暂停' : '运动中'),
           ],
@@ -1229,13 +1470,22 @@ class _RunningPage extends StatelessWidget {
               right: 10,
               top: 10,
               child: _mapChip(
-                accent: true,
+                accent: !paused,
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _liveDot(6, AppPalette.orange9),
+                    if (paused)
+                      _liveDot(6, AppPalette.sand11)
+                    else
+                      const _PulseDot(size: 6),
                     const SizedBox(width: 6),
-                    Text('记录中', style: _txt(12, 600, _c(AppPalette.orange11))),
+                    Text(
+                      paused ? '已暂停' : '记录中',
+                      style: _txt(
+                          12,
+                          600,
+                          _c(paused ? AppPalette.sand11 : AppPalette.orange11)),
+                    ),
                   ],
                 ),
               ),
@@ -1287,7 +1537,8 @@ class _RunningPage extends StatelessWidget {
   Widget _result(WorkoutSession s) => LayoutBuilder(
         builder: (context, box) {
           final splits = [for (final sp in s.splits) sp.seconds];
-          return _page([
+          return _EnterFade(
+            child: _page([
             _header(
               _pageTitle('完成'),
               _Tag(
@@ -1300,7 +1551,13 @@ class _RunningPage extends StatelessWidget {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: TerrainMap(points: s.points),
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween<double>(begin: 0, end: 1),
+                      duration: const Duration(milliseconds: 760),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, value, child) =>
+                          TerrainMap(points: s.points, progress: value),
+                    ),
                   ),
                   Positioned(
                     right: 10,
@@ -1321,9 +1578,14 @@ class _RunningPage extends StatelessWidget {
                 children: [
                   Text('本次距离', style: _txt(12, 500, _c(AppPalette.sand11))),
                   const SizedBox(height: 4),
-                  Text(
-                    '${(s.distanceMeters / 1000).toStringAsFixed(2)} km',
-                    style: _num(48, 700, AppPalette.sand12),
+                  TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0, end: s.distanceMeters / 1000),
+                    duration: AppMotion.result,
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, child) => Text(
+                      '${value.toStringAsFixed(2)} km',
+                      style: _num(48, 700, AppPalette.sand12),
+                    ),
                   ),
                   const SizedBox(height: 10),
                   FittedBox(
@@ -1362,7 +1624,7 @@ class _RunningPage extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  PaceProfile(values: splits, height: 36),
+                  PaceProfile(values: splits, height: 44),
                 ],
               ),
             ),
@@ -1381,7 +1643,7 @@ class _RunningPage extends StatelessWidget {
                 Expanded(
                   child: _Pill(
                     label: '再跑一次',
-                    icon: Icons.play_arrow_outlined,
+                    icon: Icons.replay,
                     filled: false,
                     onTap: onStart,
                     fontSize: 12,
@@ -1389,7 +1651,8 @@ class _RunningPage extends StatelessWidget {
                 ),
               ],
             ),
-          ]);
+          ]),
+          );
         },
       );
 }
@@ -1403,6 +1666,7 @@ class _HistoryPage extends StatelessWidget {
   final int monthCount;
   final ValueChanged<WorkoutSession> onSession;
   final ValueChanged<WorkoutSession> onDelete;
+  final String? deletingId;
 
   const _HistoryPage({
     required this.repo,
@@ -1411,6 +1675,7 @@ class _HistoryPage extends StatelessWidget {
     required this.monthCount,
     required this.onSession,
     required this.onDelete,
+    required this.deletingId,
   });
 
   @override
@@ -1460,17 +1725,11 @@ class _HistoryPage extends StatelessWidget {
             const SizedBox(height: 12),
             Text('历史记录', style: _txt(12, 500, _c(AppPalette.sand11))),
             const SizedBox(height: 2),
-            if (sessions.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 24),
-                child: Center(
-                  child: Text('还没有跑步记录',
-                      style: _txt(14, 500, _c(AppPalette.sand11))),
-                ),
-              ),
+            if (sessions.isEmpty) _emptyState(),
             for (final s in sessions)
               _HistoryRow(
                 session: s,
+                removing: s.id == deletingId,
                 onTap: () => onSession(s),
                 onDelete: () => onDelete(s),
               ),
@@ -1481,13 +1740,38 @@ class _HistoryPage extends StatelessWidget {
   }
 }
 
+/// 没有记录时给一个安静的空状态，不留一句干巴巴的提示。
+Widget _emptyState() => Padding(
+      padding: const EdgeInsets.only(top: 44, bottom: 36),
+      child: Column(
+        children: [
+          SizedBox(
+            width: 64,
+            height: 64,
+            child: CustomPaint(
+              painter: const _RunnerPainter(color: AppPalette.sage8),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text('还没有跑步记录',
+              style: _txt(14, 600, _c(AppPalette.sand11))),
+          const SizedBox(height: 4),
+          Text('回今日页点一下开跑，第一条记录就出现在这里',
+              textAlign: TextAlign.center,
+              style: _txt(12, 400, _c(AppPalette.sand11))),
+        ],
+      ),
+    );
+
 class _HistoryRow extends StatelessWidget {
   final WorkoutSession session;
+  final bool removing;
   final VoidCallback onTap;
   final VoidCallback onDelete;
 
   const _HistoryRow({
     required this.session,
+    required this.removing,
     required this.onTap,
     required this.onDelete,
   });
@@ -1495,10 +1779,19 @@ class _HistoryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final km = session.distanceMeters / 1000;
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: _card(
+    return AnimatedOpacity(
+      opacity: removing ? 0 : 1,
+      duration: AppMotion.base,
+      curve: Curves.easeOut,
+      child: AnimatedScale(
+        scale: removing ? 0.96 : 1,
+        duration: AppMotion.base,
+        curve: Curves.easeOut,
+        child: Pressable(
+          onTap: onTap,
+          haptic: false,
+          scale: 0.985,
+          child: _card(
         margin: const EdgeInsets.only(top: 6),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
@@ -1538,9 +1831,8 @@ class _HistoryRow extends StatelessWidget {
               ),
             ),
             Icon(Icons.chevron_right, size: 16, color: _c(AppPalette.sand11)),
-            GestureDetector(
+            Pressable(
               onTap: onDelete,
-              behavior: HitTestBehavior.opaque,
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(10, 10, 2, 10),
                 child: Icon(Icons.delete_outline,
@@ -1548,6 +1840,8 @@ class _HistoryRow extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
         ),
       ),
     );
@@ -1960,12 +2254,11 @@ class _TargetDialogState extends State<_TargetDialog> {
                       for (final km in const [3.0, 5.0, 10.0])
                         Padding(
                           padding: const EdgeInsets.only(right: 8),
-                          child: GestureDetector(
+                          child: Pressable(
                             onTap: () {
                               _controller.text = km.toStringAsFixed(0);
                               setState(() => _error = null);
                             },
-                            behavior: HitTestBehavior.opaque,
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 14, vertical: 8),
