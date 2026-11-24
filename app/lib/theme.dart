@@ -5,12 +5,14 @@ class AppPalette {
   static const int orange2 = 0xFFFFF7ED;
   static const int orange3 = 0xFFFFEFD6;
   static const int orange5 = 0xFFFFD19A;
+  static const int orange6 = 0xFFFFC182;
   static const int orange9 = 0xFFF76B15;
   static const int orange10 = 0xFFEF5F00;
   static const int orange11 = 0xFFCC4E00;
   static const int teal9 = 0xFF12A594;
   static const int slate1 = 0xFFFCFCFD;
   static const int slate6 = 0xFFD9D9E0;
+  static const int slate7 = 0xFFCDCED6;
   static const int slate11 = 0xFF60646C;
   static const int slate12 = 0xFF1C2024;
 }
