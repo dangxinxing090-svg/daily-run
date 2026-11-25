@@ -1,14 +1,6 @@
 // 前端设计规范定稿色板与排版常量，纯 Dart，Flutter 侧用 Color(0xFFxxxxxx) 取值
 
 class AppPalette {
-  static const int orange1 = 0xFFFEFCFB;
-  static const int orange2 = 0xFFFFF7ED;
-  static const int orange3 = 0xFFFFEFD6;
-  static const int orange5 = 0xFFFFD19A;
-  static const int orange6 = 0xFFFFC182;
-  static const int orange9 = 0xFFF76B15;
-  static const int orange10 = 0xFFEF5F00;
-  static const int orange11 = 0xFFCC4E00;
   static const int teal9 = 0xFF12A594;
   static const int slate1 = 0xFFFCFCFD;
   static const int slate6 = 0xFFD9D9E0;
@@ -16,7 +8,13 @@ class AppPalette {
   static const int slate11 = 0xFF60646C;
   static const int slate12 = 0xFF1C2024;
 
-  // 色块地形版：Radix sand 灰阶做纸面与文字，sage 做地形色块，橙只给轨迹与主按钮。
+  // 主色：青瓷。换配色只改这四行：实色填充、轨迹强调、浅底、描边。
+  static const int accent = 0xFF008573;
+  static const int accentStrong = 0xFF12A594;
+  static const int accentSoft = 0xFFE0F8F3;
+  static const int accentEdge = 0xFFA1DED2;
+
+  // 色块地形版：Radix sand 灰阶做纸面与文字，sage 做地形色块，主色只给轨迹与主按钮。
   static const int sand1 = 0xFFFDFDFC;
   static const int sand2 = 0xFFF9F9F8;
   static const int sand3 = 0xFFF1F0EF;

@@ -67,7 +67,7 @@ class _CardPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Offset.zero & size, Paint()..color = _c(AppPalette.orange1));
+    canvas.drawRect(Offset.zero & size, Paint()..color = _c(AppPalette.sand1));
 
     // 顶部斜切橙带
     final band = Path()
@@ -76,14 +76,14 @@ class _CardPainter extends CustomPainter {
       ..lineTo(size.width, 250)
       ..lineTo(0, 330)
       ..close();
-    canvas.drawPath(band, Paint()..color = _c(AppPalette.orange9));
+    canvas.drawPath(band, Paint()..color = _c(AppPalette.accentStrong));
 
     // 轨迹区
     final mapTop = 380.0;
     final mapRect = Rect.fromLTWH(48, mapTop, size.width - 96, 330);
     canvas.drawRRect(
       RRect.fromRectAndRadius(mapRect, const Radius.circular(18)),
-      Paint()..color = _c(AppPalette.orange2),
+      Paint()..color = _c(AppPalette.sand2),
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(mapRect, const Radius.circular(18)),
@@ -117,14 +117,14 @@ class _CardPainter extends CustomPainter {
       canvas.drawPath(
         path,
         Paint()
-          ..color = _c(AppPalette.orange9)
+          ..color = _c(AppPalette.accentStrong)
           ..strokeWidth = 9
           ..style = PaintingStyle.stroke
           ..strokeCap = StrokeCap.round
           ..strokeJoin = StrokeJoin.round,
       );
       if (proj.end != null) {
-        canvas.drawCircle(proj.end!, 12, Paint()..color = _c(AppPalette.orange9));
+        canvas.drawCircle(proj.end!, 12, Paint()..color = _c(AppPalette.accentStrong));
         canvas.drawCircle(proj.end!, 6, Paint()..color = _c(AppPalette.slate1));
       }
       canvas.restore();
@@ -163,7 +163,7 @@ class _CardPainter extends CustomPainter {
         canvas.drawRRect(
           RRect.fromRectAndRadius(
               Rect.fromLTWH(barX, y + 3, barW, 10), const Radius.circular(5)),
-          Paint()..color = _c(AppPalette.orange5),
+          Paint()..color = _c(AppPalette.accentEdge),
         );
         _text(canvas, s.paceLabel, Offset(640, y), 18, _c(AppPalette.slate12),
             weight: FontWeight.w600);
@@ -189,7 +189,7 @@ class _CardPainter extends CustomPainter {
 
   void _stat(Canvas canvas, double x, double y, String label, String value) {
     _text(canvas, label, Offset(x, y), 20, _c(AppPalette.slate11));
-    _text(canvas, value, Offset(x, y + 30), 30, _c(AppPalette.orange11),
+    _text(canvas, value, Offset(x, y + 30), 30, _c(AppPalette.accent),
         weight: FontWeight.w600);
   }
 

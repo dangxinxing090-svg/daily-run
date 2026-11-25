@@ -51,7 +51,7 @@ class RunApp extends StatelessWidget {
         useMaterial3: true,
         brightness: Brightness.light,
         scaffoldBackgroundColor: _c(AppPalette.sand2),
-        colorScheme: ColorScheme.light(primary: _c(AppPalette.orange11)),
+        colorScheme: ColorScheme.light(primary: _c(AppPalette.accent)),
         splashFactory: NoSplash.splashFactory,
         highlightColor: Colors.transparent,
       ),
@@ -754,8 +754,8 @@ class _Pill extends StatelessWidget {
       edge = AppPalette.red6;
     } else {
       fg = filled ? AppPalette.sand1 : AppPalette.sand12;
-      bg = filled ? AppPalette.orange11 : AppPalette.sand1;
-      edge = filled ? AppPalette.orange11 : AppPalette.sand6;
+      bg = filled ? AppPalette.accent : AppPalette.sand1;
+      edge = filled ? AppPalette.accent : AppPalette.sand6;
     }
     return Pressable(
       onTap: onTap,
@@ -902,7 +902,7 @@ class _StartButtonState extends State<_StartButton>
                       shape: BoxShape.circle,
                       border: Border.all(
                         width: 2,
-                        color: _c(AppPalette.orange9)
+                        color: _c(AppPalette.accentStrong)
                             .withValues(alpha: (1 - t) * 0.7),
                       ),
                     ),
@@ -929,10 +929,10 @@ class _StartButtonState extends State<_StartButton>
                   height: widget.size * 0.69,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _c(AppPalette.orange11),
+                    color: _c(AppPalette.accent),
                     boxShadow: [
                       BoxShadow(
-                        color: _c(AppPalette.orange9).withValues(alpha: 0.35),
+                        color: _c(AppPalette.accentStrong).withValues(alpha: 0.35),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -983,7 +983,7 @@ Widget _mapChip(Widget child, {bool accent = false}) => Container(
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
           width: AppRules.hairline,
-          color: _c(accent ? AppPalette.orange6 : AppPalette.sand6),
+          color: _c(accent ? AppPalette.accentEdge : AppPalette.sand6),
         ),
       ),
       child: child,
@@ -1038,7 +1038,7 @@ class _BootLoaderState extends State<_BootLoader>
                     width: 56,
                     height: 56,
                     child: CustomPaint(
-                      painter: const _RunnerPainter(color: AppPalette.orange11),
+                      painter: const _RunnerPainter(color: AppPalette.accent),
                     ),
                   ),
                 );
@@ -1190,7 +1190,7 @@ class _PulseDotState extends State<_PulseDot>
             height: widget.size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: _c(AppPalette.orange9).withValues(alpha: 0.45 + 0.55 * t),
+              color: _c(AppPalette.accentStrong).withValues(alpha: 0.45 + 0.55 * t),
             ),
           );
         },
@@ -1271,14 +1271,14 @@ class _TabBar extends StatelessWidget {
           children: [
             _TintIcon(
               icon: icon,
-              color: on ? AppPalette.orange11 : AppPalette.sand11,
+              color: on ? AppPalette.accent : AppPalette.sand11,
             ),
             const SizedBox(height: 3),
             AnimatedDefaultTextStyle(
               duration: AppMotion.press,
               curve: Curves.easeOut,
               style: _txt(12, on ? 600 : 400,
-                  _c(on ? AppPalette.orange11 : AppPalette.sand11)),
+                  _c(on ? AppPalette.accent : AppPalette.sand11)),
               child: Text(label),
             ),
           ],
@@ -1495,7 +1495,7 @@ Widget _targetCard(
                       child: Container(
                         height: 5,
                         color:
-                            _c(reached ? AppPalette.teal9 : AppPalette.orange9),
+                            _c(reached ? AppPalette.teal9 : AppPalette.accentStrong),
                       ),
                     ),
                   ],
@@ -1695,7 +1695,7 @@ class _RunningPage extends StatelessWidget {
                     Text(
                       paused ? '已暂停' : '记录中',
                       style: _txt(12, 600,
-                          _c(paused ? AppPalette.sand11 : AppPalette.orange11)),
+                          _c(paused ? AppPalette.sand11 : AppPalette.accent)),
                     ),
                   ],
                 ),
@@ -2054,7 +2054,7 @@ class _HistoryRow extends StatelessWidget {
                                   style: _txt(14, 600, _c(AppPalette.sand12))),
                             ),
                             Text('${km.toStringAsFixed(2)} km',
-                                style: _num(14, 600, AppPalette.orange11)),
+                                style: _num(14, 600, AppPalette.accent)),
                           ],
                         ),
                         const SizedBox(height: 6),
@@ -2154,8 +2154,8 @@ class _MonthGrid extends StatelessWidget {
     final int weight;
     if (isToday) {
       bg = AppPalette.sand1;
-      fg = AppPalette.orange11;
-      edge = AppPalette.orange11;
+      fg = AppPalette.accent;
+      edge = AppPalette.accent;
       weight = 700;
     } else if (done) {
       bg = AppPalette.teal9;
@@ -2227,11 +2227,11 @@ class _SplitBars extends StatelessWidget {
                   Container(
                     height: 22 + (shown[i] - lo) / span * 24,
                     decoration: BoxDecoration(
-                      color: _c(AppPalette.sage7),
+                      color: _c(AppPalette.accentSoft),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                           width: AppRules.hairline,
-                          color: _c(AppPalette.sage8)),
+                          color: _c(AppPalette.accentEdge)),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -2478,7 +2478,7 @@ class _TargetDialogState extends State<_TargetDialog> {
                         borderRadius:
                             BorderRadius.circular(AppRules.fieldRadius),
                         borderSide: BorderSide(
-                            width: 1, color: _c(AppPalette.orange11)),
+                            width: 1, color: _c(AppPalette.accent)),
                       ),
                     ),
                   ),
@@ -2642,7 +2642,7 @@ class _SessionDialog extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text('${(session.distanceMeters / 1000).toStringAsFixed(2)} km',
-                style: _num(28, 600, AppPalette.orange11)),
+                style: _num(28, 600, AppPalette.accent)),
             const SizedBox(height: 10),
             SizedBox(height: 130, child: TerrainMap(points: session.points)),
             const SizedBox(height: 12),

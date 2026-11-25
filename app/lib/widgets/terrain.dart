@@ -196,7 +196,7 @@ class TerrainPainter extends CustomPainter {
           ..strokeWidth = stroke
           ..strokeCap = cap
           ..strokeJoin = StrokeJoin.round
-          ..color = _c(AppPalette.orange9),
+          ..color = _c(AppPalette.accentStrong),
       );
     }
 
@@ -207,7 +207,7 @@ class TerrainPainter extends CustomPainter {
         : null;
     if (origin != null) {
       final c = Offset(origin.dx + origin0.dx, origin.dy + origin0.dy);
-      canvas.drawCircle(c, dot, Paint()..color = _c(AppPalette.orange9));
+      canvas.drawCircle(c, dot, Paint()..color = _c(AppPalette.accentStrong));
       canvas.drawCircle(
         c,
         dot,
@@ -224,7 +224,7 @@ class TerrainPainter extends CustomPainter {
         c,
         dot,
         Paint()
-          ..color = _c(AppPalette.orange9)
+          ..color = _c(AppPalette.accentStrong)
           ..strokeWidth = 2
           ..style = PaintingStyle.stroke,
       );
@@ -335,7 +335,7 @@ class PaceProfilePainter extends CustomPainter {
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.2
-          ..color = _c(AppPalette.orange9).withValues(alpha: 0.35),
+          ..color = _c(AppPalette.accentStrong).withValues(alpha: 0.35),
       );
       return;
     }
@@ -349,10 +349,10 @@ class PaceProfilePainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.7
           ..strokeCap = StrokeCap.round
-          ..color = _c(AppPalette.orange9),
+          ..color = _c(AppPalette.accentStrong),
       );
       canvas.drawCircle(Offset(size.width - 4, y), 3,
-          Paint()..color = _c(AppPalette.orange9));
+          Paint()..color = _c(AppPalette.accentStrong));
       return;
     }
     final vs = values;
@@ -379,21 +379,21 @@ class PaceProfilePainter extends CustomPainter {
       ..lineTo(0, size.height)
       ..close();
     canvas.drawPath(
-        area, Paint()..color = _c(AppPalette.orange3).withValues(alpha: 0.42));
+        area, Paint()..color = _c(AppPalette.accentSoft).withValues(alpha: 0.42));
     canvas.drawPath(
       line,
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.7
         ..strokeJoin = StrokeJoin.round
-        ..color = _c(AppPalette.orange9),
+        ..color = _c(AppPalette.accentStrong),
     );
     int fastest = 0;
     for (int i = 1; i < vs.length; i++) {
       if (vs[i] < vs[fastest]) fastest = i;
     }
     final c = Offset(fastest * step, ys[fastest]);
-    canvas.drawCircle(c, 3.6, Paint()..color = _c(AppPalette.orange9));
+    canvas.drawCircle(c, 3.6, Paint()..color = _c(AppPalette.accentStrong));
     canvas.drawCircle(
       c,
       3.6,

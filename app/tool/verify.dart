@@ -157,7 +157,8 @@ Future<void> main() async {
   check('会话可存可取', repo.sessions.length == 1);
 
   check('色板与排版常量齐备',
-      AppPalette.orange9 == 0xFFF76B15 &&
+      AppPalette.accent == 0xFF008573 &&
+          AppPalette.accentStrong == 0xFF12A594 &&
           AppType.display == 76 &&
           AppRules.hairline == 0.5 &&
           AppCut.skewX < 0);
