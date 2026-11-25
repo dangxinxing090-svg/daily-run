@@ -319,15 +319,10 @@ class _AppShellState extends State<AppShell> {
       _elapsed = session.elapsed;
       _pace = session.averagePaceSecPerKm;
     });
-  }
-
-  Future<void> _manualCheckIn() async {
-    if (_finished == null) return;
-    final ci = _checkIn.manual(_trackerNow);
-    await _repo.saveCheckIn(ci);
-    _todayCheckIn = ci;
-    if (!mounted) return;
-    setState(() {});
+    // 跑完直接把记录弹出来，保存记录图不用再点一次。
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _showResult(context);
+    });
   }
 
   Future<void> _deleteSession(BuildContext context, WorkoutSession s) async {
@@ -382,12 +377,6 @@ class _AppShellState extends State<AppShell> {
           Navigator.pop(dialogContext);
           _openCard(context, s);
         },
-        onManualCheckIn: _todayCheckIn == null
-            ? () {
-                Navigator.pop(dialogContext);
-                _manualCheckIn();
-              }
-            : null,
       ),
     );
   }
@@ -534,7 +523,7 @@ class _AppShellState extends State<AppShell> {
 
 /* ---------------- 色块地形页面骨架 ---------------- */
 
-const double _gap = 10;
+const double _gap = 15;
 const double _pagePad = 14;
 
 const List<String> _monthCn = [
@@ -552,8 +541,11 @@ const List<String> _monthCn = [
   '十二月',
 ];
 
+/// 全 App 字号在这里统一放大，改一处即可整体调档。
+const double _typeScale = 1.08;
+
 TextStyle _txt(double size, int weight, Color color) => TextStyle(
-      fontSize: size,
+      fontSize: size * _typeScale,
       fontWeight: FontWeight.values[weight ~/ 100],
       color: color,
       height: 1.2,
@@ -562,7 +554,7 @@ TextStyle _txt(double size, int weight, Color color) => TextStyle(
 
 /// 数字统一等宽，字号大到 28 以上才收紧字距，避免小字挤在一起。
 TextStyle _num(double size, int weight, int color) => TextStyle(
-      fontSize: size,
+      fontSize: size * _typeScale,
       fontWeight: FontWeight.values[weight ~/ 100],
       color: _c(color),
       height: 1.05,
@@ -738,7 +730,6 @@ class _Pill extends StatelessWidget {
   final bool filled;
   final bool danger;
   final VoidCallback? onTap;
-  final double fontSize;
 
   const _Pill({
     required this.label,
@@ -746,7 +737,6 @@ class _Pill extends StatelessWidget {
     required this.filled,
     required this.onTap,
     this.danger = false,
-    this.fontSize = 14,
   });
 
   @override
@@ -788,7 +778,7 @@ class _Pill extends StatelessWidget {
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: _txt(fontSize, 600, _c(fg)),
+                style: _txt(14, 600, _c(fg)),
               ),
             ),
           ],
@@ -852,7 +842,10 @@ class _RunnerPainter extends CustomPainter {
 class _StartButton extends StatefulWidget {
   final VoidCallback onTap;
 
-  const _StartButton({required this.onTap});
+  /// 外框边长。小屏地图矮时按比例收，避免顶出地图边界。
+  final double size;
+
+  const _StartButton({required this.onTap, this.size = 212});
 
   @override
   State<_StartButton> createState() => _StartButtonState();
@@ -892,8 +885,8 @@ class _StartButtonState extends State<_StartButton>
         onTapCancel: () => setState(() => _down = false),
         onTap: _fire,
         child: SizedBox(
-          width: 164,
-          height: 164,
+          width: widget.size,
+          height: widget.size,
           child: Stack(
             alignment: Alignment.center,
             children: [
@@ -903,8 +896,8 @@ class _StartButtonState extends State<_StartButton>
                   if (_pulse.value == 0) return const SizedBox.shrink();
                   final t = Curves.easeOutCubic.transform(_pulse.value);
                   return Container(
-                    width: 108 + t * 50,
-                    height: 108 + t * 50,
+                    width: widget.size * 0.69 + t * widget.size * 0.27,
+                    height: widget.size * 0.69 + t * widget.size * 0.27,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
@@ -917,8 +910,8 @@ class _StartButtonState extends State<_StartButton>
                 },
               ),
               Container(
-                width: 138,
-                height: 138,
+                width: widget.size * 0.88,
+                height: widget.size * 0.88,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
@@ -932,8 +925,8 @@ class _StartButtonState extends State<_StartButton>
                 duration: AppMotion.press,
                 curve: AppMotion.standard,
                 child: Container(
-                  width: 108,
-                  height: 108,
+                  width: widget.size * 0.69,
+                  height: widget.size * 0.69,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: _c(AppPalette.orange11),
@@ -945,11 +938,11 @@ class _StartButtonState extends State<_StartButton>
                       ),
                     ],
                   ),
-                  child: const Center(
+                  child: Center(
                     child: SizedBox(
-                      width: 58,
-                      height: 58,
-                      child: CustomPaint(
+                      width: widget.size * 0.41,
+                      height: widget.size * 0.41,
+                      child: const CustomPaint(
                         painter: _RunnerPainter(color: AppPalette.sand1),
                       ),
                     ),
@@ -1329,7 +1322,8 @@ class _TodayPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, box) {
-          final mapH = (box.maxHeight - 300).clamp(200.0, 560.0);
+          final mapH = (box.maxHeight - 315).clamp(200.0, 560.0);
+          final btn = (mapH * 0.55).clamp(150.0, 212.0);
           return _page([
             _header(
               _pageTitle('今日'),
@@ -1359,9 +1353,9 @@ class _TodayPage extends StatelessWidget {
                   Positioned(
                     left: 0,
                     right: 0,
-                    top: mapH * 0.46 - 82,
-                    height: 132,
-                    child: Center(child: _StartButton(onTap: onRun)),
+                    top: mapH * 0.46 - btn / 2,
+                    height: btn,
+                    child: Center(child: _StartButton(onTap: onRun, size: btn)),
                   ),
                   Positioned(
                     left: 8,
@@ -1608,6 +1602,7 @@ class _RunningPage extends StatelessWidget {
           child: LayoutBuilder(
             builder: (context, box) {
               final mapH = box.maxHeight.clamp(240.0, 900.0);
+              final btn = (mapH * 0.55).clamp(150.0, 212.0);
               return Stack(
                 children: [
                   Positioned(
@@ -1625,9 +1620,9 @@ class _RunningPage extends StatelessWidget {
                   Positioned(
                     left: 0,
                     right: 0,
-                    top: mapH * 0.46 - 82,
-                    height: 132,
-                    child: Center(child: _StartButton(onTap: onStart)),
+                    top: mapH * 0.46 - btn / 2,
+                    height: btn,
+                    child: Center(child: _StartButton(onTap: onStart, size: btn)),
                   ),
                 ],
               );
@@ -1863,17 +1858,6 @@ class _RunningPage extends StatelessWidget {
                     icon: Icons.route_outlined,
                     filled: true,
                     onTap: onResult,
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(width: _gap),
-                Expanded(
-                  child: _Pill(
-                    label: '再跑一次',
-                    icon: Icons.replay,
-                    filled: false,
-                    onTap: onStart,
-                    fontSize: 12,
                   ),
                 ),
               ],
@@ -2562,13 +2546,11 @@ class _ResultDialog extends StatelessWidget {
   final WorkoutSession session;
   final bool autoCheckedIn;
   final VoidCallback onSave;
-  final VoidCallback? onManualCheckIn;
 
   const _ResultDialog({
     required this.session,
     required this.autoCheckedIn,
     required this.onSave,
-    required this.onManualCheckIn,
   });
 
   @override
@@ -2627,14 +2609,6 @@ class _ResultDialog extends StatelessWidget {
                 icon: Icons.share_outlined,
                 filled: true,
                 onTap: onSave),
-            if (!autoCheckedIn && onManualCheckIn != null) ...[
-              const SizedBox(height: 8),
-              _Pill(
-                  label: '手动补卡',
-                  icon: Icons.check_circle_outline,
-                  filled: false,
-                  onTap: onManualCheckIn),
-            ],
           ],
         ),
       );
