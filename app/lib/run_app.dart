@@ -1323,7 +1323,7 @@ class _TodayPage extends StatelessWidget {
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, box) {
           final mapH = (box.maxHeight - 315).clamp(200.0, 560.0);
-          final btn = (mapH * 0.55).clamp(150.0, 212.0);
+          final btn = (mapH * 0.55).clamp(120.0, 212.0);
           return _page([
             _header(
               _pageTitle('今日'),
@@ -1353,7 +1353,7 @@ class _TodayPage extends StatelessWidget {
                   Positioned(
                     left: 0,
                     right: 0,
-                    top: mapH * 0.46 - btn / 2,
+                    top: math.max(mapH * 0.46 - btn / 2, 44.0),
                     height: btn,
                     child: Center(child: _StartButton(onTap: onRun, size: btn)),
                   ),
@@ -1602,7 +1602,7 @@ class _RunningPage extends StatelessWidget {
           child: LayoutBuilder(
             builder: (context, box) {
               final mapH = box.maxHeight.clamp(240.0, 900.0);
-              final btn = (mapH * 0.55).clamp(150.0, 212.0);
+              final btn = (mapH * 0.55).clamp(120.0, 212.0);
               return Stack(
                 children: [
                   Positioned(
@@ -1620,7 +1620,7 @@ class _RunningPage extends StatelessWidget {
                   Positioned(
                     left: 0,
                     right: 0,
-                    top: mapH * 0.46 - btn / 2,
+                    top: math.max(mapH * 0.46 - btn / 2, 44.0),
                     height: btn,
                     child: Center(child: _StartButton(onTap: onStart, size: btn)),
                   ),
