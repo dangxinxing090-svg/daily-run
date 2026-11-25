@@ -8,11 +8,18 @@ class AppPalette {
   static const int slate11 = 0xFF60646C;
   static const int slate12 = 0xFF1C2024;
 
-  // 主色：青瓷。换配色只改这四行：实色填充、轨迹强调、浅底、描边。
-  static const int accent = 0xFF008573;
-  static const int accentStrong = 0xFF12A594;
-  static const int accentSoft = 0xFFE0F8F3;
-  static const int accentEdge = 0xFFA1DED2;
+  // 主色：湖蓝。换配色只改这四行：实色填充、轨迹强调、浅底、描边。
+  static const int accent = 0xFF0D74CE;
+  static const int accentStrong = 0xFF0090FF;
+  static const int accentSoft = 0xFFE6F4FE;
+  static const int accentEdge = 0xFFACD8FC;
+
+  // 第二色：青瓷。只给「成绩类」信息用，配速曲线、分段柱、打卡与连续天数，
+  // 和主色的路线/按钮分开，界面才有层次，不会一片蓝。
+  static const int perform = 0xFF008573;
+  static const int performStrong = 0xFF12A594;
+  static const int performSoft = 0xFFE0F8F3;
+  static const int performEdge = 0xFFA1DED2;
 
   // 色块地形版：Radix sand 灰阶做纸面与文字，sage 做地形色块，主色只给轨迹与主按钮。
   static const int sand1 = 0xFFFDFDFC;

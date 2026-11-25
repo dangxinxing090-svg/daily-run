@@ -516,7 +516,7 @@ class _AppShellState extends State<AppShell> {
 /* ---------------- 色块地形页面骨架 ---------------- */
 
 const double _gap = 15;
-const double _pagePad = 14;
+const double _pagePad = 21;
 
 const List<String> _monthCn = [
   '一月',
@@ -680,6 +680,7 @@ class _StatCell extends StatelessWidget {
   final String value;
   final double? number;
   final String Function(double value)? format;
+  final int? tint;
 
   const _StatCell({
     required this.icon,
@@ -687,6 +688,7 @@ class _StatCell extends StatelessWidget {
     required this.value,
     this.number,
     this.format,
+    this.tint,
   });
 
   @override
@@ -698,7 +700,7 @@ class _StatCell extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _iconLabel(icon, label),
+          _iconLabel(icon, label, color: tint ?? AppPalette.sand11),
           const SizedBox(height: 4),
           FittedBox(
             fit: BoxFit.scaleDown,
@@ -1356,6 +1358,7 @@ class _TodayPage extends StatelessWidget {
                       cells: [
                         _StatCell(
                           icon: Icons.check_circle_outline,
+                          tint: AppPalette.accent,
                           label: '连续',
                           value: '$streak 天',
                           number: streak.toDouble(),
@@ -1363,6 +1366,7 @@ class _TodayPage extends StatelessWidget {
                         ),
                         _StatCell(
                           icon: Icons.straighten,
+                          tint: AppPalette.perform,
                           label: '本月',
                           value: '${monthKm.toStringAsFixed(1)} km',
                           number: monthKm,
@@ -1370,6 +1374,7 @@ class _TodayPage extends StatelessWidget {
                         ),
                         _StatCell(
                           icon: Icons.calendar_month_outlined,
+                          tint: AppPalette.perform,
                           label: '打卡',
                           value: '$monthCount 次',
                           number: monthCount.toDouble(),
@@ -1836,7 +1841,7 @@ class _HistoryPage extends StatelessWidget {
     return Container(
       color: _c(AppPalette.sand2),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(_pagePad, _pagePad, _pagePad, 24),
+        padding: const EdgeInsets.fromLTRB(_pagePad, _pagePad, _pagePad, 28),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -1846,6 +1851,7 @@ class _HistoryPage extends StatelessWidget {
               cells: [
                 _StatCell(
                   icon: Icons.straighten,
+                  tint: AppPalette.perform,
                   label: '本月里程',
                   value: '${monthKm.toStringAsFixed(1)} km',
                   number: monthKm,
@@ -1853,6 +1859,7 @@ class _HistoryPage extends StatelessWidget {
                 ),
                 _StatCell(
                   icon: Icons.calendar_month_outlined,
+                  tint: AppPalette.perform,
                   label: '打卡次数',
                   value: '$monthCount 次',
                   number: monthCount.toDouble(),
@@ -2168,11 +2175,11 @@ class _SplitBars extends StatelessWidget {
                   Container(
                     height: 22 + (shown[i] - lo) / span * 24,
                     decoration: BoxDecoration(
-                      color: _c(AppPalette.accentSoft),
+                      color: _c(AppPalette.performEdge),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                           width: AppRules.hairline,
-                          color: _c(AppPalette.accentEdge)),
+                          color: _c(AppPalette.performEdge)),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -2191,14 +2198,15 @@ class _SplitBars extends StatelessWidget {
 
 Widget _dialogShell(BuildContext context,
     {required String title, required Widget child}) {
-  final maxH = MediaQuery.sizeOf(context).height * 0.88;
+  final screenH = MediaQuery.sizeOf(context).height;
+  final maxH = screenH * 0.92;
   return Center(
     child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 440, maxHeight: maxH),
         child: Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
           decoration: BoxDecoration(
             color: _c(AppPalette.sand1),
             borderRadius: BorderRadius.circular(AppRules.dialogRadius),
@@ -2239,7 +2247,7 @@ Widget _dialogShell(BuildContext context,
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 18),
                 child,
               ],
             ),
@@ -2512,9 +2520,12 @@ class _ResultDialog extends StatelessWidget {
                     style: _num(20, 600, AppPalette.sand12)),
               ],
             ),
-            const SizedBox(height: 10),
-            SizedBox(height: 132, child: TerrainMap(points: session.points)),
-            const SizedBox(height: 12),
+            const SizedBox(height: 18),
+            SizedBox(
+              height: MediaQuery.sizeOf(context).height < 700 ? 112 : 148,
+              child: TerrainMap(points: session.points),
+            ),
+            const SizedBox(height: 18),
             _StatBar(
               card: false,
               cells: [
@@ -2532,7 +2543,7 @@ class _ResultDialog extends StatelessWidget {
                     value: '${session.points.length}'),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
             Row(
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
@@ -2542,9 +2553,9 @@ class _ResultDialog extends StatelessWidget {
                 Text('每公里', style: _txt(12, 500, _c(AppPalette.sand11))),
               ],
             ),
-            const SizedBox(height: 10),
-            _SplitBars(seconds: [for (final s in session.splits) s.seconds]),
             const SizedBox(height: 14),
+            _SplitBars(seconds: [for (final s in session.splits) s.seconds]),
+            const SizedBox(height: 20),
             _Pill(
                 label: '保存记录图',
                 icon: Icons.share_outlined,
@@ -2584,9 +2595,12 @@ class _SessionDialog extends StatelessWidget {
             const SizedBox(height: 6),
             Text('${(session.distanceMeters / 1000).toStringAsFixed(2)} km',
                 style: _num(28, 600, AppPalette.accent)),
-            const SizedBox(height: 10),
-            SizedBox(height: 130, child: TerrainMap(points: session.points)),
-            const SizedBox(height: 12),
+            const SizedBox(height: 18),
+            SizedBox(
+              height: MediaQuery.sizeOf(context).height < 700 ? 112 : 148,
+              child: TerrainMap(points: session.points),
+            ),
+            const SizedBox(height: 18),
             _StatBar(
               card: false,
               cells: [
@@ -2604,9 +2618,9 @@ class _SessionDialog extends StatelessWidget {
                     value: '${session.points.length}'),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             _SplitBars(seconds: [for (final s in session.splits) s.seconds]),
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
             _Pill(
                 label: '生成记录图',
                 icon: Icons.share_outlined,
