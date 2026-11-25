@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1600px; height: 1100px; padding: 40px 44px;
+    background: #f9f9f8; color: #1f211f;
+    font-family: -apple-system, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+  }
+  h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
+  p.sub { font-size: 13px; color: #6f6a62; margin-top: 8px; }
+
+  .grid {
+    margin-top: 26px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px 24px;
+  }
+  .cell { display: flex; gap: 16px; }
+
+  /* ---------- 手机壳 ---------- */
+  .phone {
+    width: 220px; height: 440px; flex: 0 0 auto;
+    border-radius: 26px; overflow: hidden; position: relative;
+    border: 0.5px solid #dbd8d5; background: #f9f9f8;
+  }
+  .screen {
+    position: absolute; top: 0; left: 0;
+    width: 320px; height: 640px;
+    transform: scale(0.6875); transform-origin: top left;
+    background: #f9f9f8; padding: 14px; display: flex; flex-direction: column; gap: 15px;
+    font-family: inherit;
+  }
+  .hdr { display: flex; align-items: baseline; justify-content: space-between; height: 28px; }
+  .hdr .h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.2px; }
+  .hdr .meta { font-size: 12px; font-weight: 500; color: #6f6a62; }
+
+  .map { position: relative; height: 300px; border-radius: 22px; overflow: hidden;
+         border: 0.5px solid #dbd8d5; }
+  .map svg.terrain { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .chip {
+    position: absolute; left: 12px; top: 12px;
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #fdfdfc; border: 0.5px solid #dbd8d5; border-radius: 999px;
+    padding: 5px 11px; font-size: 12px; font-weight: 600; color: #1f211f;
+  }
+  .start {
+    position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%);
+    width: 146px; height: 146px; border-radius: 50%;
+    background: var(--a11);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 10px 26px color-mix(in srgb, var(--a9) 35%, transparent);
+  }
+  .start .ring {
+    position: absolute; width: 186px; height: 186px; border-radius: 50%;
+    border: 0.5px solid rgba(253,253,252,0.9);
+  }
+
+  .stats {
+    display: flex; background: #fdfdfc; border: 0.5px solid #dbd8d5; border-radius: 24px;
+    margin: -26px 8px 0; position: relative; z-index: 2;
+    box-shadow: 0 10px 28px rgba(31,33,31,0.08);
+  }
+  .cellstat { flex: 1; padding: 10px 2px; text-align: center; }
+  .cellstat + .cellstat { border-left: 0.5px solid #dbd8d5; }
+  .cellstat .lb { font-size: 12px; color: #6f6a62; font-weight: 500; }
+  .cellstat .vl { font-size: 20px; font-weight: 600; margin-top: 4px; }
+
+  .card2 { background: #fdfdfc; border: 0.5px solid #dbd8d5; border-radius: 24px; }
+  .target { padding: 12px 14px; }
+  .target .row { display: flex; align-items: baseline; justify-content: space-between; }
+  .target .lb { font-size: 12px; color: #6f6a62; font-weight: 500; }
+  .target .vl { font-size: 20px; font-weight: 600; }
+  .bar { height: 5px; border-radius: 999px; background: #e9e8e6; margin-top: 10px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 40%; background: var(--a9); }
+  .target .foot { display: flex; justify-content: space-between; margin-top: 6px; font-size: 12px; color: #6f6a62; }
+  .target .foot b { font-weight: 600; }
+
+  .last { padding: 8px 12px; display: flex; align-items: center; gap: 10px; }
+  .thumb { width: 56px; height: 50px; border-radius: 16px; overflow: hidden; position: relative; border: 0.5px solid #dbd8d5; }
+  .last .txt { flex: 1; }
+  .last .t1 { font-size: 12px; color: #6f6a62; }
+  .last .t2 { font-size: 14px; font-weight: 600; margin-top: 4px; }
+
+  .tabs {
+    margin-top: auto; display: flex; background: #fdfdfc; border-top: 0.5px solid #dbd8d5;
+    height: 52px; margin-left: -14px; margin-right: -14px; margin-bottom: -14px;
+  }
+  .tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+         font-size: 12px; color: #6f6a62; position: relative; }
+  .tab.on { color: var(--a11); font-weight: 600; }
+  .tab.on::before {
+    content: ''; position: absolute; left: 20px; right: 20px; top: 7px; height: 38px;
+    border-radius: 999px; background: var(--a3); z-index: -1;
+  }
+  .tab svg { width: 20px; height: 20px; }
+
+  /* ---------- 右侧信息 ---------- */
+  .info { flex: 1; padding-top: 2px; }
+  .no { font-size: 12px; font-weight: 600; color: var(--a11); }
+  .name { font-size: 20px; font-weight: 600; margin-top: 4px; letter-spacing: -0.2px; }
+  .note { font-size: 12px; color: #6f6a62; line-height: 1.65; margin-top: 8px; }
+  .sw { display: flex; gap: 6px; margin-top: 14px; }
+  .sw i { display: block; flex: 1; height: 26px; border-radius: 8px; border: 0.5px solid rgba(31,33,31,0.08); }
+  .swlabels { display: flex; gap: 6px; margin-top: 5px; }
+  .swlabels span { flex: 1; font-size: 10px; color: #6f6a62; text-align: center; }
+  .track { margin-top: 14px; height: 3px; border-radius: 2px; background: var(--a9); }
+  .tracklb { font-size: 10px; color: #6f6a62; margin-top: 5px; }
+</style>
+</head>
+<body>
+<h1>六套配色　同一屏只换主色</h1>
+<p class="sub">地形与灰阶不动，只换按钮、轨迹与强调色。按 0.68 倍显示的今日页。</p>
+<div class="grid" id="grid"></div>
+
+<script>
+function blob(cx, cy, rx, ry, seed) {
+  const N = 11, pts = [];
+  for (let i = 0; i < N; i++) {
+    const a = (i / N) * Math.PI * 2;
+    const wob = 1 + 0.13 * Math.sin(3 * a + seed) + 0.07 * Math.cos(5 * a - seed * 0.7) + 0.04 * Math.sin(2 * a + seed * 0.45);
+    pts.push([cx + rx * wob * Math.cos(a), cy + ry * wob * Math.sin(a)]);
+  }
+  const mids = pts.map((p, i) => [(p[0] + pts[(i + 1) % N][0]) / 2, (p[1] + pts[(i + 1) % N][1]) / 2]);
+  let d = 'M' + mids[N - 1][0].toFixed(1) + ' ' + mids[N - 1][1].toFixed(1);
+  for (let i = 0; i < N; i++) d += ' Q ' + pts[i][0].toFixed(1) + ' ' + pts[i][1].toFixed(1) + ' ' + mids[i][0].toFixed(1) + ' ' + mids[i][1].toFixed(1);
+  return d + ' Z';
+}
+const terrain = `
+  <svg class="terrain" viewBox="0 0 320 300" preserveAspectRatio="xMidYMid slice">
+    <rect x="-40" y="-40" width="400" height="380" fill="#eef2ea"/>
+    <path d="${blob(132, 150, 166, 150, 0.7)}" fill="#e4ebdf"/>
+    <path d="${blob(126, 146, 120, 110, 1.4)}" fill="#d9e4d1"/>
+    <path d="${blob(132, 140, 78, 72, 2.1)}" fill="#c9d8bd"/>
+    <path d="${blob(128, 144, 50, 46, 2.8)}" fill="#e9e8e6"/>
+  </svg>`;
+
+function runner(size) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 44 44" fill="none"
+    stroke="#fdfdfc" stroke-width="4.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="28" cy="8.4" r="4.4" fill="#fdfdfc" stroke="none"/>
+    <path d="M25.4 13.6 L19 26"/><path d="M19 26 L27.6 30.4 L26.2 39"/>
+    <path d="M19 26 L11.6 29.8 L5 27.2"/><path d="M23.8 16.4 L31.4 18.6 L34.4 12.6"/>
+    <path d="M22.8 17.4 L14.6 20.2 L11.6 26.6"/>
+  </svg>`;
+}
+
+const ICON = {
+  cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>',
+  route: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8 16.5c4-1 1-6 5-7s2.5 3 5-1"/></svg>',
+  list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h10"/></svg>',
+};
+
+const palettes = [
+  { no:'01', name:'青瓷', cls:'p1',
+    css:{'--a3':'#e0f8f3','--a6':'#a1ded2','--a9':'#12a594','--a11':'#008573'},
+    note:'和地形同族，只是更深。安静，像纸质笔记上的标记。' },
+  { no:'02', name:'靛蓝', cls:'p2',
+    css:{'--a3':'#edf2fe','--a6':'#c1d0ff','--a9':'#3e63dd','--a11':'#3a5bc7'},
+    note:'冷、克制，工具感最强。数据多的时候最不吵。' },
+  { no:'03', name:'湖蓝', cls:'p3',
+    css:{'--a3':'#e6f4fe','--a6':'#acd8fc','--a9':'#0090ff','--a11':'#0d74ce'},
+    note:'明亮清爽，夏天感，适合白天跑步。' },
+  { no:'04', name:'苔绿', cls:'p4',
+    css:{'--a3':'#e9f6e9','--a6':'#b2ddb5','--a9':'#46a758','--a11':'#2a7e3b'},
+    note:'最贴跑步本身，像越野地图上的标记。和地形最近，需要靠明度拉开。' },
+  { no:'05', name:'石墨', cls:'p5',
+    css:{'--a3':'#f0f0f3','--a6':'#d9d9e0','--a9':'#60646c','--a11':'#1f211f'},
+    note:'去掉彩色，只留结构和字。最冷静，也最像系统原生 App。' },
+  { no:'06', name:'酒红', cls:'p6',
+    css:{'--a3':'#feebec','--a6':'#fdbdbe','--a9':'#e5484d','--a11':'#ce2c31'},
+    note:'强对比，终点线和秒表的感觉。最抓眼，也最容易看累。' },
+];
+
+document.getElementById('grid').innerHTML = palettes.map(p => `
+  <div class="cell">
+    <div class="phone">
+      <div class="screen" style="${Object.entries(p.css).map(([k,v]) => `${k}:${v}`).join(';')}">
+        <div class="hdr"><span class="h1">今日</span><span class="meta">11月25日 周三</span></div>
+        <div class="map">
+          ${terrain}
+          <div class="chip">◷ 轻松跑 19:30</div>
+          <div class="start"><div class="ring"></div>${runner(87)}</div>
+        </div>
+        <div class="stats">
+          <div class="cellstat"><div class="lb">连续</div><div class="vl">6 天</div></div>
+          <div class="cellstat"><div class="lb">本月</div><div class="vl">11.3 km</div></div>
+          <div class="cellstat"><div class="lb">打卡</div><div class="vl">5 次</div></div>
+        </div>
+        <div class="card2 target">
+          <div class="row"><span class="lb">今日目标</span><span class="vl">3.00 km</span></div>
+          <div class="bar"><i></i></div>
+          <div class="foot"><span>今日已跑</span><b>1.20 km</b></div>
+        </div>
+        <div class="card2 last">
+          <div class="thumb">${terrain}</div>
+          <div class="txt"><div class="t1">上次跑步　11月23日</div><div class="t2">6.30 km　37:12</div></div>
+        </div>
+        <div class="tabs">
+          <div class="tab on">${ICON.cal}今日</div>
+          <div class="tab">${ICON.route}跑中</div>
+          <div class="tab">${ICON.list}记录</div>
+        </div>
+      </div>
+    </div>
+    <div class="info" style="${Object.entries(p.css).map(([k,v]) => `${k}:${v}`).join(';')}">
+      <div class="no">${p.no}</div>
+      <div class="name">${p.name}</div>
+      <div class="note">${p.note}</div>
+      <div class="sw"><i style="background:var(--a11)"></i><i style="background:var(--a9)"></i><i style="background:var(--a6)"></i><i style="background:var(--a3)"></i></div>
+      <div class="swlabels"><span>主色</span><span>轨迹</span><span>强调</span><span>浅底</span></div>
+      <div class="track"></div>
+      <div class="tracklb">轨迹线用第二档，压在沙绿地形上仍能读出来</div>
+    </div>
+  </div>`).join('');
+</script>
+</body>
+</html>
