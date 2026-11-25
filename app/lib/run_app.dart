@@ -168,12 +168,6 @@ class _AppShellState extends State<AppShell> {
   int get _monthCount =>
       _checkIn.monthCheckInCount(_repo.checkIns, _today.year, _today.month);
 
-  WorkoutSession? get _latestSession {
-    final list = List<WorkoutSession>.from(_repo.sessions)
-      ..sort((a, b) => b.startTime.compareTo(a.startTime));
-    return list.isEmpty ? null : list.first;
-  }
-
   void _addSimulatedPoint() {
     _tick++;
     _simulated = _simulated.add(const Duration(seconds: 60));
@@ -424,9 +418,7 @@ class _AppShellState extends State<AppShell> {
         todayKm: _todayKm,
         planType: _plan.type,
         planLabel: _plan.startLabel,
-        lastSession: _latestSession,
         onRun: _start,
-        onLastSession: (s) => _showSession(context, s),
         onEditTarget: () => _editTarget(context),
       ),
       _RunningPage(
@@ -932,7 +924,8 @@ class _StartButtonState extends State<_StartButton>
                     color: _c(AppPalette.accent),
                     boxShadow: [
                       BoxShadow(
-                        color: _c(AppPalette.accentStrong).withValues(alpha: 0.35),
+                        color:
+                            _c(AppPalette.accentStrong).withValues(alpha: 0.35),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -1190,7 +1183,8 @@ class _PulseDotState extends State<_PulseDot>
             height: widget.size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: _c(AppPalette.accentStrong).withValues(alpha: 0.45 + 0.55 * t),
+              color: _c(AppPalette.accentStrong)
+                  .withValues(alpha: 0.45 + 0.55 * t),
             ),
           );
         },
@@ -1299,9 +1293,7 @@ class _TodayPage extends StatelessWidget {
   final double todayKm;
   final String planType;
   final String planLabel;
-  final WorkoutSession? lastSession;
   final VoidCallback onRun;
-  final ValueChanged<WorkoutSession>? onLastSession;
   final VoidCallback onEditTarget;
 
   const _TodayPage({
@@ -1313,16 +1305,14 @@ class _TodayPage extends StatelessWidget {
     required this.todayKm,
     required this.planType,
     required this.planLabel,
-    required this.lastSession,
     required this.onRun,
-    required this.onLastSession,
     required this.onEditTarget,
   });
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, box) {
-          final mapH = (box.maxHeight - 315).clamp(200.0, 560.0);
+          final mapH = (box.maxHeight - 250).clamp(200.0, 620.0);
           final btn = (mapH * 0.55).clamp(120.0, 212.0);
           return _page([
             _header(
@@ -1393,60 +1383,9 @@ class _TodayPage extends StatelessWidget {
             ),
             const SizedBox(height: _gap),
             _targetCard(targetKm, onEditTarget, todayKm: todayKm),
-            const SizedBox(height: _gap),
-            _lastRun(),
           ]);
         },
       );
-
-  Widget _lastRun() {
-    final last = lastSession;
-    return Pressable(
-      onTap: last != null && onLastSession != null
-          ? () => onLastSession!(last)
-          : null,
-      scale: 0.98,
-      child: _card(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 56,
-              height: 50,
-              child: TerrainMap(
-                points: last?.points ?? const <TrackPoint>[],
-                view: const Rect.fromLTWH(56, 96, 200, 200),
-                radius: AppRules.thumbRadius,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    last == null
-                        ? '还没有跑步记录'
-                        : '上次跑步　${_dateShort(last.startTime)}',
-                    style: _txt(12, 500, _c(AppPalette.sand11)),
-                  ),
-                  if (last != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      '${(last.distanceMeters / 1000).toStringAsFixed(2)} km　${_clock(last.elapsed)}',
-                      style: _num(14, 600, AppPalette.sand12),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            if (last != null)
-              Icon(Icons.chevron_right, size: 16, color: _c(AppPalette.sand11)),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 /// 目标卡：点一下就能改，右侧铅笔提示可编辑。
@@ -1494,8 +1433,9 @@ Widget _targetCard(
                       widthFactor: value,
                       child: Container(
                         height: 5,
-                        color:
-                            _c(reached ? AppPalette.teal9 : AppPalette.accentStrong),
+                        color: _c(reached
+                            ? AppPalette.teal9
+                            : AppPalette.accentStrong),
                       ),
                     ),
                   ],
@@ -1622,7 +1562,8 @@ class _RunningPage extends StatelessWidget {
                     right: 0,
                     top: math.max(mapH * 0.46 - btn / 2, 44.0),
                     height: btn,
-                    child: Center(child: _StartButton(onTap: onStart, size: btn)),
+                    child:
+                        Center(child: _StartButton(onTap: onStart, size: btn)),
                   ),
                 ],
               );
@@ -2477,8 +2418,8 @@ class _TargetDialogState extends State<_TargetDialog> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius:
                             BorderRadius.circular(AppRules.fieldRadius),
-                        borderSide: BorderSide(
-                            width: 1, color: _c(AppPalette.accent)),
+                        borderSide:
+                            BorderSide(width: 1, color: _c(AppPalette.accent)),
                       ),
                     ),
                   ),
