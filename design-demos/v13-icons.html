@@ -1,0 +1,42 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}body{width:1280px;height:760px;padding:40px;background:#f9f9f8;color:#1f211f;font-family:-apple-system,"PingFang SC",Arial,sans-serif}
+h1{font-size:28px;font-weight:600}p{margin-top:8px;font-size:13px;color:#6f6a62}.grid{margin-top:32px;display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.card{background:#fdfdfc;border:.5px solid #dbd8d5;border-radius:28px;padding:24px;display:flex;flex-direction:column;align-items:center}
+.no{font-size:12px;font-weight:600;color:#0d74ce;align-self:flex-start}.name{font-size:21px;font-weight:600;margin-top:4px;align-self:flex-start}
+.app{width:180px;height:180px;border-radius:46px;background:#0d74ce;display:flex;align-items:center;justify-content:center;margin-top:28px;box-shadow:0 16px 34px rgba(13,116,206,.24)}
+.btn{width:160px;height:160px;border-radius:50%;background:#0d74ce;display:flex;align-items:center;justify-content:center;margin-top:22px;box-shadow:0 12px 28px rgba(13,116,206,.28)}
+.lb{font-size:12px;color:#6f6a62;margin-top:12px}.note{font-size:12px;color:#6f6a62;line-height:1.7;margin-top:18px;align-self:flex-start}
+</style></head><body><h1>跑者图标　三个版本</h1><p>同一枚图标，开跑按钮与 App 桌面图标共用。下面按实际使用尺寸展示。</p><div class="grid" id="g"></div>
+<script>
+const icons = {
+  a: `<svg viewBox="0 0 44 44" width="92" height="92" fill="none" stroke="#fdfdfc" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="28" cy="8.5" r="4.3" fill="#fdfdfc" stroke="none"/>
+    <path d="M25.5 13.5 L19.5 25"/>
+    <path d="M19.5 25 L27.5 29 L26 38"/>
+    <path d="M19.5 25 L12 28.8 L5.5 26.5"/>
+    <path d="M23.8 16.2 L31.2 18.4 L34.2 12.4"/>
+    <path d="M22.8 17.2 L14.5 20 L11.5 26.4"/>
+  </svg>`,
+  b: `<svg viewBox="0 0 44 44" width="92" height="92" fill="none" stroke="#fdfdfc" stroke-width="5.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="31" cy="8" r="5" fill="#fdfdfc" stroke="none"/>
+    <path d="M27.5 13 L18 23"/>
+    <path d="M18 23 L30 24.5 L36 33"/>
+    <path d="M18 23 L10.5 31 L4 34"/>
+    <path d="M25.5 16.5 L34 12 L38 6.5"/>
+    <path d="M24 18 L14 16 L9.5 22.5"/>
+  </svg>`,
+  c: `<svg viewBox="0 0 44 44" width="92" height="92" fill="none" stroke="#fdfdfc" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 38 C13 38 13 26 21 25 C29 24 28 14 35 12" stroke-width="4.4"/>
+    <circle cx="35" cy="8" r="4.2" fill="#fdfdfc" stroke="none"/>
+    <path d="M21 25 L14 19" stroke-width="3.7"/>
+    <path d="M21 25 L15 34" stroke-width="3.7"/>
+    <circle cx="4" cy="38" r="2.5" fill="#fdfdfc" stroke="none" opacity=".75"/>
+  </svg>`,
+};
+const data=[
+ {no:'01',name:'流线跑者',key:'a',note:'四肢舒展，线条较细。最像传统跑步符号，稳、清楚，缩到小尺寸也不糊。'},
+ {no:'02',name:'冲刺跑者',key:'b',note:'躯干更前倾，手臂上扬，笔画加粗。动势最强，在桌面图标里最有力量。'},
+ {no:'03',name:'轨迹跑者',key:'c',note:'身体由一段轨迹线构成，带起点圆点。最贴「记录轨迹」的产品语义，辨识度最高。'},
+];
+document.getElementById('g').innerHTML=data.map(d=>`<div class="card"><div class="no">${d.no}</div><div class="name">${d.name}</div><div class="app">${icons[d.key]}</div><div class="lb">App 图标</div><div class="btn">${icons[d.key]}</div><div class="lb">开跑按钮</div><div class="note">${d.note}</div></div>`).join('');
+</script></body></html>
