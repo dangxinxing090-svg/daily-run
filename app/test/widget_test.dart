@@ -70,6 +70,30 @@ void main() {
   });
 
   group('运动状态机', () {
+    test('城市定位精度也能累计距离', () {
+      final m = TrackingManager(sessionId: 'accuracy');
+      m.start(t0);
+      expect(
+        m.addPoint(
+          lat: 39.9,
+          lng: 116.3,
+          ts: t0,
+          accuracyMeters: 60,
+        ),
+        isTrue,
+      );
+      expect(
+        m.addPoint(
+          lat: 39.9009,
+          lng: 116.3,
+          ts: t0.add(const Duration(seconds: 35)),
+          accuracyMeters: 60,
+        ),
+        isTrue,
+      );
+      expect(m.distanceMeters, greaterThan(80));
+    });
+
     test('暂停时长不计入，异常点被丢弃', () {
       final m = TrackingManager(sessionId: 's1');
       m.start(t0);

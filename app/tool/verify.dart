@@ -66,6 +66,25 @@ Future<void> main() async {
         ts: t0.add(const Duration(seconds: 140)),
         accuracyMeters: 100,
       ));
+  final mAcc = TrackingManager(sessionId: 's-acc');
+  mAcc.start(t0);
+  check(
+      '60 米精度点被接受',
+      mAcc.addPoint(
+        lat: 39.9,
+        lng: 116.3,
+        ts: t0,
+        accuracyMeters: 60,
+      ));
+  mAcc.addPoint(
+    lat: 39.9009,
+    lng: 116.3,
+    ts: t0.add(const Duration(seconds: 35)),
+    accuracyMeters: 60,
+  );
+  check('城市定位仍能累计距离', mAcc.distanceMeters > 80,
+      '${mAcc.distanceMeters.toStringAsFixed(1)} m');
+
   check(
       '瞬移点被丢弃',
       !m.addPoint(

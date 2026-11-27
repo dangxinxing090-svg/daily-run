@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'location_types.dart';
 
@@ -13,6 +15,8 @@ class DeviceLocationSource implements LocationSource {
   bool get isSimulated => false;
 
   LocationSettings get _settings => AndroidSettings(
+        // 国内机型常没有可用的 Google Play 服务，直接走系统 LocationManager 更稳。
+        forceLocationManager: true,
         accuracy: LocationAccuracy.high,
         distanceFilter: 3,
         intervalDuration: Duration(seconds: 2),
@@ -26,6 +30,16 @@ class DeviceLocationSource implements LocationSource {
 
   @override
   Future<bool> ensurePermission() async {
+    // Android 13+ 前台定位服务的常驻通知需要单独授权；
+    // 没授权不应阻止开跑，单次定位仍可作为兜底。
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      try {
+        final status = await Permission.notification.status;
+        if (status.isDenied) await Permission.notification.request();
+        final loc = await Permission.locationWhenInUse.status;
+        if (loc.isDenied) await Permission.locationWhenInUse.request();
+      } catch (_) {}
+    }
     if (!await Geolocator.isLocationServiceEnabled()) return false;
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {

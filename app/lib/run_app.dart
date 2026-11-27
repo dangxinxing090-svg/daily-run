@@ -87,7 +87,13 @@ class _AppShellState extends State<AppShell> {
   Timer? _timer;
   Duration _elapsed = Duration.zero;
   double _pace = 0;
+  double? _speedKmh;
   int _heartRate = 0;
+  DateTime? _lastFixAt;
+  int _fixCount = 0;
+  int _rejectedFixCount = 0;
+  String? _locationIssue;
+  bool _checkingLocation = false;
   int _tick = 0;
   DateTime _simulated = DateTime.now().subtract(const Duration(minutes: 31));
   WorkoutSession? _finished;
@@ -170,13 +176,14 @@ class _AppShellState extends State<AppShell> {
 
   void _addSimulatedPoint() {
     _tick++;
-    _simulated = _simulated.add(const Duration(seconds: 60));
-    _tracker!.addPoint(
+    final ts = _simulated.add(const Duration(seconds: 60));
+    _applyFix(TrackFix(
       lat: 39.9 + _tick * 0.0018,
       lng: 116.3 + math.sin(_tick * 0.55) * 0.0016,
-      ts: _simulated,
+      ts: ts,
       accuracyMeters: 6,
-    );
+    ));
+    _simulated = ts;
   }
 
   DateTime get _trackerNow =>
@@ -184,8 +191,8 @@ class _AppShellState extends State<AppShell> {
 
   void _applyFix(TrackFix fix) {
     if (_tracker == null || _finished != null) return;
-    _simulated = fix.ts;
-    _tracker!.addPoint(
+    _lastFixAt = DateTime.now();
+    final accepted = _tracker!.addPoint(
       lat: fix.lat,
       lng: fix.lng,
       ts: fix.ts,
@@ -193,9 +200,50 @@ class _AppShellState extends State<AppShell> {
       speedMps: fix.speedMps,
       heartRateBpm: fix.heartRateBpm,
     );
+    if (!accepted) {
+      // 单点抖动不打断跑步，但要在界面上说明为什么距离还没涨。
+      _rejectedFixCount++;
+      if (_fixCount == 0) {
+        _locationIssue = '$_rejectedFixCount 个定位点精度不足，正在重新采样';
+      }
+      return;
+    }
+    if (_location.isSimulated) _simulated = fix.ts;
+    _fixCount++;
+    _locationIssue = null;
+    if (fix.speedMps != null && fix.speedMps! > 0) {
+      _speedKmh = fix.speedMps! * 3.6;
+    } else {
+      // 有些手机定位不给速度字段，用最近两点的位移自己算。
+      final pts = _tracker!.points;
+      if (pts.length >= 2) {
+        final a = pts[pts.length - 2];
+        final b = pts.last;
+        final dt = b.ts.difference(a.ts).inMilliseconds / 1000.0;
+        final d = haversineMeters(a.lat, a.lng, b.lat, b.lng);
+        if (dt > 0 && d > 0) _speedKmh = d / dt * 3.6;
+      }
+    }
     if (fix.heartRateBpm != null) _heartRate = fix.heartRateBpm!;
-    _elapsed = _tracker!.elapsed(fix.ts);
+    _elapsed = _tracker!.elapsed(_trackerNow);
     _pace = _tracker!.currentPaceSecPerKm();
+  }
+
+  /// 定位流没有按时给点时，用单次定位兜底，避免真机上只有时间在走。
+  Future<void> _probeLocation() async {
+    final tracker = _tracker;
+    if (tracker == null || _finished != null || _paused || _checkingLocation) {
+      return;
+    }
+    _checkingLocation = true;
+    final fix = await _location.current();
+    _checkingLocation = false;
+    if (!mounted || !identical(_tracker, tracker) || _finished != null) return;
+    if (fix == null) {
+      setState(() => _locationIssue = '暂时拿不到定位，请到空旷处或检查 GPS');
+      return;
+    }
+    setState(() => _applyFix(fix));
   }
 
   void _attachStreams() {
@@ -216,11 +264,18 @@ class _AppShellState extends State<AppShell> {
           if (!mounted || _finished != null) return;
           setState(() => _applyFix(fix));
         },
-        onError: (_) {},
+        onError: (Object error) {
+          if (!mounted) return;
+          setState(() => _locationIssue = '定位流中断，正在用单次定位兜底');
+        },
       );
       _timer = Timer.periodic(const Duration(seconds: 1), (_) {
         if (!mounted || _tracker == null) return;
         setState(() => _elapsed = _tracker!.elapsed(_trackerNow));
+        final last = _lastFixAt;
+        if (last == null || DateTime.now().difference(last).inSeconds >= 3) {
+          _probeLocation();
+        }
       });
     }
   }
@@ -250,11 +305,17 @@ class _AppShellState extends State<AppShell> {
     _paused = false;
     _heartRate = 0;
     _tick = 0;
+    _speedKmh = null;
+    _lastFixAt = null;
+    _fixCount = 0;
+    _rejectedFixCount = 0;
+    _locationIssue = null;
     if (_location.isSimulated) {
       _simulated = DateTime.now().subtract(const Duration(minutes: 31));
       _addSimulatedPoint();
     }
     _attachStreams();
+    if (!_location.isSimulated) _probeLocation();
     Haptics.medium();
     SoundService.instance.play(AppSound.start);
     setState(() {
@@ -278,6 +339,7 @@ class _AppShellState extends State<AppShell> {
       _fixSub?.cancel();
       _location.stop();
       _tracker!.pause(_trackerNow);
+      _lastFixAt = null;
       setState(() => _paused = true);
     }
   }
@@ -428,6 +490,9 @@ class _AppShellState extends State<AppShell> {
         elapsed: _elapsed,
         distance: (_tracker?.distanceMeters ?? 0) / 1000,
         pace: _paceLabel(_pace),
+        speedKmh: _speedKmh,
+        fixCount: _fixCount,
+        locationIssue: _locationIssue,
         heartRate: _heartRate > 0 ? _heartRate : null,
         kcal: ((_tracker?.distanceMeters ?? 0) / 1000 * 65).round(),
         paused: _paused,
@@ -1314,77 +1379,46 @@ class _TodayPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, box) {
-          final mapH = (box.maxHeight - 250).clamp(200.0, 620.0);
-          final btn = (mapH * 0.55).clamp(120.0, 212.0);
+          final btn = (box.maxHeight * 0.32).clamp(150.0, 224.0);
           return _page([
             _header(
               _pageTitle('今日'),
               _pageMeta(
-                  '${today.month}月${today.day}日 周${_weekCn[today.weekday - 1]}'),
+                  '${today.month}月${today.day}日 周${_weekCn[today.weekday - 1]}  $planType $planLabel'),
             ),
             const SizedBox(height: _gap),
-            SizedBox(
-              height: mapH + 40,
-              child: Stack(
-                children: [
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: 0,
-                    height: mapH,
-                    child: TerrainMap(track: false),
-                  ),
-                  Positioned(
-                    left: 12,
-                    top: 12,
-                    child: _mapChip(
-                      _iconLabel(Icons.schedule, '$planType $planLabel',
-                          color: AppPalette.sand12, weight: 600, gap: 5),
-                    ),
-                  ),
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: math.max(mapH * 0.46 - btn / 2, 44.0),
-                    height: btn,
-                    child: Center(child: _StartButton(onTap: onRun, size: btn)),
-                  ),
-                  Positioned(
-                    left: 8,
-                    right: 8,
-                    bottom: 0,
-                    child: _StatBar(
-                      height: 64,
-                      cells: [
-                        _StatCell(
-                          icon: Icons.check_circle_outline,
-                          tint: AppPalette.accent,
-                          label: '连续',
-                          value: '$streak 天',
-                          number: streak.toDouble(),
-                          format: (v) => '${v.round()} 天',
-                        ),
-                        _StatCell(
-                          icon: Icons.straighten,
-                          tint: AppPalette.perform,
-                          label: '本月',
-                          value: '${monthKm.toStringAsFixed(1)} km',
-                          number: monthKm,
-                          format: (v) => '${v.toStringAsFixed(1)} km',
-                        ),
-                        _StatCell(
-                          icon: Icons.calendar_month_outlined,
-                          tint: AppPalette.perform,
-                          label: '打卡',
-                          value: '$monthCount 次',
-                          number: monthCount.toDouble(),
-                          format: (v) => '${v.round()} 次',
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+            Expanded(
+              child: Center(child: _StartButton(onTap: onRun, size: btn)),
+            ),
+            const SizedBox(height: _gap),
+            _StatBar(
+              height: 64,
+              cells: [
+                _StatCell(
+                  icon: Icons.check_circle_outline,
+                  tint: AppPalette.accent,
+                  label: '连续',
+                  value: '$streak 天',
+                  number: streak.toDouble(),
+                  format: (v) => '${v.round()} 天',
+                ),
+                _StatCell(
+                  icon: Icons.straighten,
+                  tint: AppPalette.perform,
+                  label: '本月',
+                  value: '${monthKm.toStringAsFixed(1)} km',
+                  number: monthKm,
+                  format: (v) => '${v.toStringAsFixed(1)} km',
+                ),
+                _StatCell(
+                  icon: Icons.calendar_month_outlined,
+                  tint: AppPalette.perform,
+                  label: '打卡',
+                  value: '$monthCount 次',
+                  number: monthCount.toDouble(),
+                  format: (v) => '${v.round()} 次',
+                ),
+              ],
             ),
             const SizedBox(height: _gap),
             _targetCard(targetKm, onEditTarget, todayKm: todayKm),
@@ -1472,6 +1506,9 @@ class _RunningPage extends StatelessWidget {
   final Duration elapsed;
   final double distance;
   final String pace;
+  final double? speedKmh;
+  final int fixCount;
+  final String? locationIssue;
   final int? heartRate;
   final int kcal;
   final bool paused;
@@ -1492,6 +1529,9 @@ class _RunningPage extends StatelessWidget {
     required this.elapsed,
     required this.distance,
     required this.pace,
+    required this.speedKmh,
+    required this.fixCount,
+    required this.locationIssue,
     required this.heartRate,
     required this.kcal,
     required this.paused,
@@ -1586,14 +1626,21 @@ class _RunningPage extends StatelessWidget {
           icon: Icons.straighten,
           label: '距离',
           value: '${distance.toStringAsFixed(2)} km'),
-      _StatCell(icon: Icons.speed_outlined, label: '配速', value: pace),
+      if (speedKmh != null)
+        _StatCell(
+          icon: Icons.speed_outlined,
+          label: 'km/h',
+          value: speedKmh!.toStringAsFixed(1),
+        ),
+      _StatCell(icon: Icons.timer_outlined, label: '配速', value: pace),
       if (heartRate != null)
         _StatCell(
-            icon: Icons.favorite_outline, label: '心率', value: '$heartRate'),
-      _StatCell(
-          icon: Icons.local_fire_department_outlined,
-          label: '消耗',
-          value: '$kcal'),
+            icon: Icons.favorite_outline, label: '心率', value: '$heartRate')
+      else
+        _StatCell(
+            icon: Icons.local_fire_department_outlined,
+            label: '消耗',
+            value: '$kcal'),
     ];
     return _page([
       _header(
@@ -1618,6 +1665,16 @@ class _RunningPage extends StatelessWidget {
           ),
           const SizedBox(height: 5),
           _iconLabel(Icons.schedule, '已用时间'),
+          const SizedBox(height: 4),
+          _iconLabel(
+            Icons.location_on_outlined,
+            locationIssue ??
+                (fixCount > 0 ? '已收到 $fixCount 个定位点' : '等待定位数据…'),
+            color: locationIssue == null
+                ? AppPalette.sand11
+                : AppPalette.red11,
+            size: 12,
+          ),
         ],
       ),
       const SizedBox(height: _gap),

@@ -18,7 +18,7 @@ double haversineMeters(double lat1, double lon1, double lat2, double lon2) {
 
 /// 运动状态机。页面不直接订阅定位流，只每秒读取 elapsed 与 distanceMeters。
 class TrackingManager {
-  static const double maxAccuracyMeters = 35.0;
+  static const double maxAccuracyMeters = 80.0;
   static const double maxPlausibleSpeedMps = 12.0;
   static const int paceWindowMeters = 500;
 
