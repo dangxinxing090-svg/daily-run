@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1600px; min-height: 1240px; padding: 42px 48px;
+    background: #f9f9f8; color: #1f211f;
+    font-family: -apple-system, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+  }
+  h1 { font-size: 28px; font-weight: 600; letter-spacing: -.4px; }
+  .sub { margin-top: 8px; font-size: 13px; color: #6f6a62; }
+  .board { margin-top: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .col { background: #fdfdfc; border: .5px solid #dbd8d5; border-radius: 28px; padding: 18px; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; }
+  .no { font-size: 12px; font-weight: 600; color: #0d74ce; }
+  .name { font-size: 20px; font-weight: 600; letter-spacing: -.3px; }
+  .note { margin-top: 7px; font-size: 12px; color: #6f6a62; line-height: 1.6; min-height: 38px; }
+
+  .phoneWrap { margin-top: 14px; display: flex; justify-content: center; }
+  .phone { width: 416px; height: 832px; border-radius: 34px; overflow: hidden; border: .5px solid #dbd8d5; background: #f9f9f8; position: relative; box-shadow: 0 18px 40px rgba(31,33,31,.08); }
+  .screen { width: 320px; height: 640px; transform: scale(1.3); transform-origin: top left; background: #f9f9f8; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .header { height: 28px; display: flex; align-items: baseline; justify-content: space-between; }
+  .title { font-size: 20px; font-weight: 600; }
+  .meta { font-size: 12px; color: #6f6a62; }
+  .card { background: #fdfdfc; border: .5px solid #dbd8d5; border-radius: 24px; }
+  .goal { padding: 12px 14px; }
+  .row { display: flex; align-items: baseline; justify-content: space-between; }
+  .label { font-size: 12px; color: #6f6a62; }
+  .value { font-size: 20px; font-weight: 600; }
+  .bar { height: 5px; margin-top: 10px; border-radius: 999px; background: #e9e8e6; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 40%; background: #0d74ce; }
+  .foot { display: flex; justify-content: space-between; margin-top: 6px; font-size: 12px; color: #6f6a62; }
+  .foot b { font-weight: 600; color: #1f211f; }
+
+  .hero { flex: 1; display: flex; align-items: center; justify-content: center; }
+  .btn { width: 168px; height: 168px; border-radius: 50%; background: #0d74ce; display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 30px rgba(13,116,206,.30), 0 0 0 22px rgba(13,116,206,.055); }
+
+  .statbar { display: flex; height: 64px; border-radius: 24px; overflow: hidden; }
+  .stat { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+  .stat + .stat { border-left: .5px solid #dbd8d5; }
+  .stat .lb { font-size: 12px; color: #6f6a62; display: flex; align-items: center; gap: 3px; }
+  .stat .vl { font-size: 20px; font-weight: 600; }
+  .tabs { height: 52px; display: flex; margin: auto -16px -16px; background: #fdfdfc; border-top: .5px solid #dbd8d5; }
+  .tab { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 12px; color: #6f6a62; }
+  .tab.on { color: #0d74ce; font-weight: 600; }
+  .tab.on::before { content: ''; position: absolute; width: 84px; height: 38px; left: 50%; top: 7px; transform: translateX(-50%); border-radius: 999px; background: #e6f4fe; z-index: -1; }
+
+  .icons { margin-top: 16px; padding-top: 16px; border-top: .5px solid #dbd8d5; display: flex; align-items: center; gap: 18px; }
+  .appIcon { width: 74px; height: 74px; border-radius: 20px; background: #0d74ce; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; box-shadow: 0 8px 18px rgba(13,116,206,.20); }
+  .smallBtn { width: 74px; height: 74px; border-radius: 50%; background: #0d74ce; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; box-shadow: 0 8px 18px rgba(13,116,206,.20); }
+  .iconLabels { font-size: 12px; color: #6f6a62; line-height: 1.7; }
+  .iconLabels b { color: #1f211f; font-weight: 600; }
+</style>
+</head>
+<body>
+<h1>简笔图标　再创作三套</h1>
+<p class="sub">06 疾行跑者保留为基准。下面三套是新增的 07 至 09，均为简笔线稿，每套都按开跑按钮与 App 图标两种尺寸展示。今日页中间仍只留按钮。</p>
+<div class="board" id="board"></div>
+
+<script>
+const icons = {
+  g: `<svg viewBox="0 0 48 48" width="88" height="88" fill="none" stroke="#fdfdfc" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="32" cy="10" r="4.6" fill="#fdfdfc" stroke="none"/>
+    <path d="M29 14.5 L20 24" stroke-width="4.2"/>
+    <path d="M20 24 L29 27.5 L27 38" stroke-width="4.2"/>
+    <path d="M20 24 L12 30.5 L6 29.5" stroke-width="4.2"/>
+    <path d="M24.5 17.5 L34 16 L38 11" stroke-width="4.2"/>
+    <path d="M24 19 L14.5 18 L10 23.5" stroke-width="4.2"/>
+    <path d="M36 12 L40 16 L36 20" stroke-width="3.0"/>
+  </svg>`,
+  h: `<svg viewBox="0 0 48 48" width="88" height="88" fill="none" stroke="#fdfdfc" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 38 A20 20 0 1 1 40 32" stroke-width="2.8" opacity=".85"/>
+    <circle cx="29" cy="10" r="4.6" fill="#fdfdfc" stroke="none"/>
+    <path d="M27 15 L20 25" stroke-width="4.2"/>
+    <path d="M20 25 L28.5 28.5 L27 38" stroke-width="4.2"/>
+    <path d="M20 25 L12.5 31 L6.5 30" stroke-width="4.2"/>
+    <path d="M24 18 L33 20 L36 15" stroke-width="4.2"/>
+    <path d="M23 19 L14 18 L10 24" stroke-width="4.2"/>
+  </svg>`,
+  i: `<svg viewBox="0 0 48 48" width="88" height="88" fill="none" stroke="#fdfdfc" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 35 H10 L14 30 L18 38 L23 27 L28 32" stroke-width="2.4" opacity=".72"/>
+    <circle cx="31" cy="9" r="4.5" fill="#fdfdfc" stroke="none"/>
+    <path d="M28 14 L20 24" stroke-width="4.2"/>
+    <path d="M20 24 L29 28 L27 38" stroke-width="4.2"/>
+    <path d="M20 24 L12 30 L6 29" stroke-width="4.2"/>
+    <path d="M24.5 17 L33 19 L36 14" stroke-width="4.2"/>
+    <path d="M24 19 L14 18 L10 23.5" stroke-width="4.2"/>
+  </svg>`
+};
+
+const tabs = `
+  <div class="tab on"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>今日</div>
+  <div class="tab"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8 16.5c4-1 1-6 5-7s2.5 3 5-1"/></svg>跑中</div>
+  <div class="tab"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h10"/></svg>记录</div>`;
+
+const statbar = `
+  <div class="statbar card">
+    <div class="stat"><div class="lb"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0d74ce" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>连续</div><div class="vl">0 天</div></div>
+    <div class="stat"><div class="lb"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#008573" stroke-width="1.8"><path d="M4 8h16M4 12h16M4 16h10"/></svg>本月</div><div class="vl">0.0 km</div></div>
+    <div class="stat"><div class="lb"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#008573" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>打卡</div><div class="vl">0 次</div></div>
+  </div>`;
+
+const screen = (key) => `
+  <div class="screen">
+    <div class="header"><div class="title">今日</div><div class="meta">11月27日 周五</div></div>
+    <div class="goal card">
+      <div class="row"><div class="label">今日目标</div><div class="value">3.00 km ✎</div></div>
+      <div class="bar"><i></i></div>
+      <div class="foot"><span>今日已跑</span><b>1.20 km</b></div>
+    </div>
+    <div class="hero"><div class="btn">${icons[key]}</div></div>
+    ${statbar}
+    <div class="tabs">${tabs}</div>
+  </div>`;
+
+const items = [
+  { no:'07', key:'g', name:'箭头跑者', note:'前臂末端收成箭头，不用额外速度线也能看出方向。最利落，也最有「向前」的力量。' },
+  { no:'08', key:'h', name:'跑道跑者', note:'人物外侧加一圈不闭合的跑道线。最贴「每日一圈」和打卡语义，图形也更完整。' },
+  { no:'09', key:'i', name:'脉冲跑者', note:'跑者身后是一条心跳线。把速度和心率合进一个图标，概念最新，也最需要小尺寸确认。' },
+];
+
+document.getElementById('board').innerHTML = items.map(i => `
+  <div class="col">
+    <div class="head"><div class="no">${i.no}</div><div class="name">${i.name}</div></div>
+    <div class="note">${i.note}</div>
+    <div class="phoneWrap"><div class="phone">${screen(i.key)}</div></div>
+    <div class="icons">
+      <div class="appIcon">${icons[i.key]}</div>
+      <div class="smallBtn">${icons[i.key]}</div>
+      <div class="iconLabels"><b>同一枚图标</b><br>左：App 图标<br>右：开跑按钮</div>
+    </div>
+  </div>`).join('');
+</script>
+</body>
+</html>
