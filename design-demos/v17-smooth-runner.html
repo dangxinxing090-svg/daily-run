@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1600px; min-height: 1240px; padding: 40px 48px;
+    background: #f9f9f8; color: #1f211f;
+    font-family: -apple-system, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+  }
+  h1 { font-size: 28px; font-weight: 600; letter-spacing: -.4px; }
+  .sub { margin-top: 8px; font-size: 13px; color: #6f6a62; }
+  .sectionLabel { margin-top: 26px; font-size: 12px; font-weight: 600; color: #0d74ce; }
+  .top { margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .bottom { margin-top: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .card {
+    background: #fdfdfc; border: .5px solid #dbd8d5; border-radius: 28px;
+    padding: 20px; box-shadow: 0 10px 26px rgba(31,33,31,.04);
+  }
+  .head { display: flex; align-items: baseline; justify-content: space-between; }
+  .no { font-size: 12px; font-weight: 600; color: #0d74ce; }
+  .name { font-size: 20px; font-weight: 600; letter-spacing: -.3px; }
+  .stage { margin-top: 18px; display: flex; align-items: center; justify-content: center; gap: 26px; }
+  .btn {
+    width: 178px; height: 178px; border-radius: 50%; background: #0d74ce;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 14px 32px rgba(13,116,206,.28), 0 0 0 18px rgba(13,116,206,.05);
+  }
+  .app {
+    width: 104px; height: 104px; border-radius: 28px; background: #0d74ce;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 10px 22px rgba(13,116,206,.22);
+  }
+  .small { width: 44px; height: 44px; border-radius: 12px; background: #0d74ce; display: flex; align-items: center; justify-content: center; }
+  .labels { display: flex; gap: 20px; justify-content: center; margin-top: 10px; font-size: 12px; color: #6f6a62; }
+  .note { margin-top: 16px; font-size: 12px; line-height: 1.7; color: #6f6a62; }
+  .tag { display: inline-block; padding: 4px 10px; border-radius: 999px; background: #e6f4fe; color: #0d74ce; font-size: 12px; font-weight: 600; }
+  .bottom .btn { width: 160px; height: 160px; }
+  .bottom .app { width: 88px; height: 88px; border-radius: 24px; }
+  .bottom .stage { gap: 20px; }
+</style>
+</head>
+<body>
+<h1>疾行跑者　轮廓平滑与三套新解</h1>
+<p class="sub">先把当前 06 的折角改成连续曲线，得到 06S 平滑版；再基于它做三套差异化跑者。全部按开跑按钮与 App 图标尺寸展示。</p>
+
+<div class="sectionLabel">轮廓平滑前后</div>
+<div class="top" id="top"></div>
+
+<div class="sectionLabel">三套差异化版本</div>
+<div class="bottom" id="bottom"></div>
+
+<script>
+const I = {
+  current: `<svg viewBox="0 0 48 48" width="112" height="112" fill="none" stroke="#fdfdfc" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 14 H13" stroke-width="3.2" opacity=".65"/>
+    <path d="M4 20 H10" stroke-width="3.2" opacity=".65"/>
+    <circle cx="30" cy="9" r="4.8" fill="#fdfdfc" stroke="none"/>
+    <g stroke-width="4.2">
+      <path d="M27 14 L19.5 25"/>
+      <path d="M19.5 25 L28 28 L26 38"/>
+      <path d="M19.5 25 L12 31 L6 30"/>
+      <path d="M24.5 17.5 L33 19 L36 14"/>
+      <path d="M23.5 19 L14.5 18 L10.5 23.5"/>
+    </g>
+  </svg>`,
+
+  smooth: `<svg viewBox="0 0 48 48" width="112" height="112" fill="none" stroke="#fdfdfc" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 14 C8 13.7 11 13.8 13 14" stroke-width="3.0" opacity=".62"/>
+    <path d="M4 20 C6.5 19.7 8.5 19.8 10 20" stroke-width="3.0" opacity=".62"/>
+    <circle cx="30" cy="9" r="4.8" fill="#fdfdfc" stroke="none"/>
+    <g stroke-width="4.2">
+      <path d="M27.2 14.2 C25.4 17.1 22.4 21.2 19.6 24.8"/>
+      <path d="M19.6 24.8 C23.2 25.6 26.1 26.9 28 28.3 C28.3 31.5 27.5 35.1 26.2 38"/>
+      <path d="M19.6 24.8 C17.3 27.1 14.5 29.4 12 30.7 C9.8 31 7.7 30.6 6 29.9"/>
+      <path d="M24.5 17.4 C27.7 17.6 30.6 18.2 33.1 19.1 C34.6 17.7 35.7 15.9 36.2 14.2"/>
+      <path d="M23.6 19 C21 18.2 18 18 14.7 18.2 C13.1 19.6 11.8 21.3 10.6 23.4"/>
+    </g>
+  </svg>`,
+
+  flow: `<svg viewBox="0 0 48 48" width="104" height="104" fill="none" stroke="#fdfdfc" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 15 C7 14.2 11 14.2 14 15.2" stroke-width="2.6" opacity=".55"/>
+    <circle cx="31" cy="8.5" r="4.2" fill="#fdfdfc" stroke="none"/>
+    <g stroke-width="3.4">
+      <path d="M28.5 13.6 C25.7 17.2 21.9 21.7 18.8 25.6"/>
+      <path d="M18.8 25.6 C23.8 25.9 28.4 27.1 31.8 29.1 C32.6 32.4 31.3 35.7 29.6 38.5"/>
+      <path d="M18.8 25.6 C15 28 10.6 30.4 5.8 31.6"/>
+      <path d="M25.4 16.7 C29.2 17 32.8 18 35.8 19.7 C37.3 18.4 38.4 16.6 38.9 14.6"/>
+      <path d="M24.6 18.6 C20 18 15.5 18.7 10.8 21"/>
+    </g>
+  </svg>`,
+
+  leap: `<svg viewBox="0 0 48 48" width="104" height="104" fill="none" stroke="#fdfdfc" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 11 C7.2 10.4 9.4 10.5 11.2 11.2" stroke-width="3.0" opacity=".58"/>
+    <circle cx="25.5" cy="8.8" r="5.2" fill="#fdfdfc" stroke="none"/>
+    <g stroke-width="4.8">
+      <path d="M24.6 14.4 C23.4 18.2 21.4 21.9 19.2 25.2"/>
+      <path d="M19.2 25.2 C23.6 25.3 27.4 26.5 30.2 28.6 C31.5 31.9 31 35.4 29.8 38.5"/>
+      <path d="M19.2 25.2 C16.2 27.1 14.2 30.1 13.6 34"/>
+      <path d="M23.5 17.2 C28.2 16.2 32.6 16.6 36.4 18.5"/>
+      <path d="M22.8 19 C19.3 18.8 15.8 20.3 12.4 23.4"/>
+    </g>
+  </svg>`,
+
+  sprint: `<svg viewBox="0 0 48 48" width="104" height="104" fill="none" stroke="#fdfdfc" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="33" cy="10.5" r="4.6" fill="#fdfdfc" stroke="none"/>
+    <g stroke-width="4.4">
+      <path d="M29.6 14.4 C26.3 17.5 22.5 20.5 18.5 23"/>
+      <path d="M18.5 23 C23.1 24.1 27 25.7 30.2 28.1 C31.8 31 31.6 34.5 30.4 38"/>
+      <path d="M18.5 23 C14.4 25.4 10 27.9 5.4 29.4"/>
+      <path d="M26.5 17.8 C30.6 18.5 34.3 20 37.3 22.2"/>
+      <path d="M24.4 19.4 C20.3 18.8 16.1 19.5 11.7 21.5"/>
+    </g>
+  </svg>`
+};
+
+const topItems = [
+  { no:'当前', name:'06 疾行跑者', key:'current', note:'直线段加圆角连接。动作清楚，但肩、髋和肘的折点偏硬，速度线也略显生硬。' },
+  { no:'06S', name:'平滑疾行', key:'smooth', tag:'建议作为基准', note:'把同一跑姿改成连续曲线：肩、髋、肘和膝过渡更顺；速度线变成轻微弧线，保留动势但更细腻。' },
+];
+
+const bottomItems = [
+  { no:'13', name:'流线长步', key:'flow', note:'笔画收细，步幅拉长，身体更舒展。最轻、最流畅，适合想要优雅感的方向。' },
+  { no:'14', name:'高抬腿', key:'leap', note:'笔画加粗，前腿抬高，身体更直。动作张力最强，小尺寸最有力量。' },
+  { no:'15', name:'冲刺前倾', key:'sprint', note:'躯干压得更低，双臂前后拉开，像冲过终点。最有速度感，也最区别于当前 06。' },
+];
+
+function stage(key, big = true) {
+  const scale = big ? 1 : .78;
+  return `<div class="stage">
+    <div class="btn" style="width:${178*scale}px;height:${178*scale}px">${I[key]}</div>
+    <div class="app" style="width:${104*scale}px;height:${104*scale}px;border-radius:${28*scale}px">${I[key]}</div>
+    <div class="small">${I[key]}</div>
+  </div>`;
+}
+
+document.getElementById('top').innerHTML = topItems.map(i => `
+  <div class="card">
+    <div class="head"><div class="no">${i.no}</div><div class="name">${i.name}</div></div>
+    ${stage(i.key)}
+    <div class="labels"><span>开跑按钮</span><span>App 图标</span><span>小尺寸</span></div>
+    ${i.tag ? `<div style="margin-top:14px"><span class="tag">${i.tag}</span></div>` : ''}
+    <div class="note">${i.note}</div>
+  </div>`).join('');
+
+document.getElementById('bottom').innerHTML = bottomItems.map(i => `
+  <div class="card">
+    <div class="head"><div class="no">${i.no}</div><div class="name">${i.name}</div></div>
+    ${stage(i.key, false)}
+    <div class="labels"><span>开跑按钮</span><span>App 图标</span><span>小尺寸</span></div>
+    <div class="note">${i.note}</div>
+  </div>`).join('');
+</script>
+</body>
+</html>
