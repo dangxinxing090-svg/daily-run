@@ -28,13 +28,11 @@ String _paceText(double secPerKm) {
 class RunShareCard extends StatelessWidget {
   final WorkoutSession session;
   final String dateLabel;
-  final bool autoCheckedIn;
 
   const RunShareCard({
     super.key,
     required this.session,
     required this.dateLabel,
-    required this.autoCheckedIn,
   });
 
   @override
@@ -43,11 +41,7 @@ class RunShareCard extends StatelessWidget {
       width: 750,
       height: 1000,
       child: CustomPaint(
-        painter: _CardPainter(
-          session: session,
-          dateLabel: dateLabel,
-          autoCheckedIn: autoCheckedIn,
-        ),
+        painter: _CardPainter(session: session, dateLabel: dateLabel),
         size: const Size(750, 1000),
       ),
     );
@@ -57,13 +51,8 @@ class RunShareCard extends StatelessWidget {
 class _CardPainter extends CustomPainter {
   final WorkoutSession session;
   final String dateLabel;
-  final bool autoCheckedIn;
 
-  _CardPainter({
-    required this.session,
-    required this.dateLabel,
-    required this.autoCheckedIn,
-  });
+  _CardPainter({required this.session, required this.dateLabel});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -170,14 +159,13 @@ class _CardPainter extends CustomPainter {
       }
     }
 
-    // 打卡状态
+    // 记录状态
     final pill = RRect.fromRectAndRadius(
         const Rect.fromLTWH(48, 916, 654, 56), const Radius.circular(28));
-    canvas.drawRRect(
-        pill, Paint()..color = _c(autoCheckedIn ? AppPalette.teal9 : AppPalette.slate6));
+    canvas.drawRRect(pill, Paint()..color = _c(AppPalette.accent));
     _text(
       canvas,
-      autoCheckedIn ? '已自动打卡' : '已记录本次跑步',
+      '已记录本次跑步',
       const Offset(375, 932),
       24,
       _c(AppPalette.slate1),
@@ -222,24 +210,18 @@ class _CardPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _CardPainter oldDelegate) =>
-      oldDelegate.session != session ||
-      oldDelegate.dateLabel != dateLabel ||
-      oldDelegate.autoCheckedIn != autoCheckedIn;
+      oldDelegate.session != session || oldDelegate.dateLabel != dateLabel;
 }
 
 /// 把记录卡渲染成 PNG 字节。750×1000 逻辑像素按 2 倍渲染为 1500×2000。
 Future<Uint8List> renderShareCardPng(WorkoutSession session,
-    {required String dateLabel, required bool autoCheckedIn}) async {
+    {required String dateLabel}) async {
   const double scale = 2;
   const size = Size(750, 1000);
   final recorder = ui.PictureRecorder();
   final canvas = Canvas(recorder);
   canvas.scale(scale);
-  _CardPainter(
-    session: session,
-    dateLabel: dateLabel,
-    autoCheckedIn: autoCheckedIn,
-  ).paint(canvas, size);
+  _CardPainter(session: session, dateLabel: dateLabel).paint(canvas, size);
   final picture = recorder.endRecording();
   final image = await picture.toImage(
       (size.width * scale).toInt(), (size.height * scale).toInt());

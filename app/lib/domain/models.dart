@@ -50,12 +50,14 @@ class Plan {
     String? calendarEventId,
     double? targetMeters,
     int? reminderOffsetMinutes,
+    int? startMinutes,
+    String? type,
   }) =>
       Plan(
         id: id,
         date: date,
-        startMinutes: startMinutes,
-        type: type,
+        startMinutes: startMinutes ?? this.startMinutes,
+        type: type ?? this.type,
         targetMeters: targetMeters ?? this.targetMeters,
         reminderOffsetMinutes:
             reminderOffsetMinutes ?? this.reminderOffsetMinutes,

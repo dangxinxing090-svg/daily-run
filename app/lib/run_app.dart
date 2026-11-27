@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 
 import 'data/backup_service.dart';
 import 'data/persistence_store.dart';
-import 'domain/checkin.dart';
 import 'domain/models.dart';
 import 'domain/repository.dart';
 import 'domain/tracking.dart';
@@ -13,8 +12,10 @@ import 'platform/gallery.dart';
 import 'platform/location_source.dart';
 import 'theme.dart';
 import 'widgets/run_share_card.dart';
+import 'widgets/runner_mark.dart';
 import 'ui/motion.dart';
 import 'widgets/terrain.dart';
+import 'widgets/track_path.dart';
 
 Color _c(int v) => Color(v);
 
@@ -73,7 +74,6 @@ class _AppShellState extends State<AppShell> {
       PersistentRepository(createPersistenceStore());
   final GallerySaver _gallery = createGallerySaver();
   late final DataBackupService _backup;
-  final CheckInService _checkIn = CheckInService();
   final LocationSource _location = createLocationSource();
   StreamSubscription<TrackFix>? _fixSub;
 
@@ -99,10 +99,8 @@ class _AppShellState extends State<AppShell> {
   int _tick = 0;
   DateTime _simulated = DateTime.now().subtract(const Duration(minutes: 31));
   WorkoutSession? _finished;
-  CheckIn? _todayCheckIn;
   bool _paused = false;
   int _tab = 0;
-  int _tabShift = 1;
   String? _deletingId;
 
   @override
@@ -129,10 +127,10 @@ class _AppShellState extends State<AppShell> {
         Plan(
           id: 'p-${_today.year}${_today.month}${_today.day}',
           date: _today,
-          startMinutes: 19 * 60 + 30,
-          type: '轻松跑',
+          startMinutes: 0,
+          type: '自由跑',
           targetMeters: 3000,
-          reminderOffsetMinutes: 15,
+          reminderOffsetMinutes: 0,
         );
     if (_repo.planFor(_today) == null) await _repo.savePlan(_plan);
     // 冷启动原本就是空库时不写备份：Android 11+ 可能读不到旧文件，
@@ -144,17 +142,23 @@ class _AppShellState extends State<AppShell> {
 
   Future<bool> _persistBackup() async => _backup.save();
 
-  /// 旧版本会写入两条示例跑步和几天打卡，这里只清一次；
-  /// 顺带把当时写死的 5 公里目标归一到 3 公里。存在真实跑步时整段跳过。
+  /// 旧版本会写入两条示例跑步、写死 5 公里目标与 19:30 的开跑时间。
+  /// 这里只收敛一次：示例数据清掉，计划里的时间字段归零，目标归一。
   Future<void> _migrateOnce() async {
     try {
-      if (await _repo.readMeta('data_version') == '2') return;
+      if (await _repo.readMeta('data_version') == '3') return;
       await _repo.purgeDemoData();
-      final plan = _repo.planFor(_today);
-      if (plan != null && (plan.targetMeters - 5000).abs() < 1) {
-        await _repo.savePlan(plan.copyWith(targetMeters: 3000));
+      for (final plan in List<Plan>.from(_repo.plans)) {
+        final target = (plan.targetMeters - 5000).abs() < 1
+            ? 3000.0
+            : plan.targetMeters;
+        await _repo.savePlan(plan.copyWith(
+          targetMeters: target,
+          startMinutes: 0,
+          type: '自由跑',
+        ));
       }
-      await _repo.writeMeta('data_version', '2');
+      await _repo.writeMeta('data_version', '3');
       await _persistBackup();
     } catch (_) {
       // 迁移失败不影响启动，下次再试。
@@ -176,7 +180,6 @@ class _AppShellState extends State<AppShell> {
     super.dispose();
   }
 
-  int get _streak => _checkIn.streak(_repo.checkIns, _today);
   double get _todayKm =>
       _repo.sessions
           .where((s) => dateOnly(s.startTime) == _today)
@@ -184,9 +187,22 @@ class _AppShellState extends State<AppShell> {
       1000;
 
   double get _monthKm =>
-      _checkIn.monthDistance(_repo.sessions, _today.year, _today.month) / 1000;
-  int get _monthCount =>
-      _checkIn.monthCheckInCount(_repo.checkIns, _today.year, _today.month);
+      _repo.sessions
+          .where((s) =>
+              s.startTime.year == _today.year &&
+              s.startTime.month == _today.month)
+          .fold<double>(0, (sum, s) => sum + s.distanceMeters) /
+      1000;
+
+  int get _monthRuns => _repo.sessions
+      .where((s) =>
+          s.startTime.year == _today.year &&
+          s.startTime.month == _today.month)
+      .length;
+
+  double get _totalKm =>
+      _repo.sessions.fold<double>(0, (sum, s) => sum + s.distanceMeters) /
+      1000;
 
   void _addSimulatedPoint() {
     _tick++;
@@ -315,7 +331,6 @@ class _AppShellState extends State<AppShell> {
     );
     _tracker!.start(_trackerNow);
     _finished = null;
-    _todayCheckIn = null;
     _paused = false;
     _heartRate = 0;
     _tick = 0;
@@ -335,7 +350,6 @@ class _AppShellState extends State<AppShell> {
     setState(() {
       _elapsed = Duration.zero;
       _pace = 0;
-      _tabShift = 1;
       _tab = 1;
     });
   }
@@ -376,10 +390,6 @@ class _AppShellState extends State<AppShell> {
     final end = _trackerNow;
     final session = _tracker!.finish(end);
     await _repo.saveSession(session);
-    if (_checkIn.shouldAutoCheckIn(session, _plan)) {
-      _todayCheckIn = _checkIn.auto(session, end);
-      await _repo.saveCheckIn(_todayCheckIn!);
-    }
     await _persistBackup();
     if (!mounted) return;
     Haptics.heavy();
@@ -474,7 +484,6 @@ class _AppShellState extends State<AppShell> {
       context,
       (dialogContext) => _ResultDialog(
         session: s,
-        autoCheckedIn: _todayCheckIn != null,
         onSave: () {
           Navigator.pop(dialogContext);
           _openCard(context, s);
@@ -488,7 +497,6 @@ class _AppShellState extends State<AppShell> {
       builder: (_) => _CardScreen(
         session: s,
         dateLabel: _dateCn(s.startTime),
-        autoCheckedIn: s.id == _finished?.id && _todayCheckIn != null,
         gallery: _gallery,
       ),
     ));
@@ -519,13 +527,11 @@ class _AppShellState extends State<AppShell> {
     final pages = <Widget>[
       _TodayPage(
         today: _today,
-        streak: _streak,
         monthKm: _monthKm,
-        monthCount: _monthCount,
+        monthRuns: _monthRuns,
+        totalKm: _totalKm,
         targetKm: _plan.targetMeters / 1000,
         todayKm: _todayKm,
-        planType: _plan.type,
-        planLabel: _plan.startLabel,
         onRun: _start,
         onEditTarget: () => _editTarget(context),
       ),
@@ -542,9 +548,7 @@ class _AppShellState extends State<AppShell> {
         heartRate: _heartRate > 0 ? _heartRate : null,
         kcal: ((_tracker?.distanceMeters ?? 0) / 1000 * 65).round(),
         paused: _paused,
-        autoCheckedIn: _todayCheckIn != null,
         today: _today,
-        planType: _plan.type,
         targetKm: _plan.targetMeters / 1000,
         onEditTarget: () => _editTarget(context),
         onStart: _start,
@@ -556,7 +560,6 @@ class _AppShellState extends State<AppShell> {
         repo: _repo,
         today: _today,
         monthKm: _monthKm,
-        monthCount: _monthCount,
         onSession: (s) => _showSession(context, s),
         onDelete: (s) => _deleteSession(context, s),
         deletingId: _deletingId,
@@ -585,30 +588,11 @@ class _AppShellState extends State<AppShell> {
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 620),
-              child: AnimatedSwitcher(
-                duration: AppMotion.base,
-                switchInCurve: AppMotion.emphasized,
-                switchOutCurve: AppMotion.standard,
-                transitionBuilder: (child, animation) {
-                  final curved = CurvedAnimation(
-                      parent: animation, curve: AppMotion.emphasized);
-                  // 往右边的标签走，新页从右侧 12 px 进来，旧页往右退，反之镜像。
-                  final dx = _tabShift * 0.03;
-                  return FadeTransition(
-                    opacity: curved,
-                    child: SlideTransition(
-                      position: Tween<Offset>(
-                        begin: Offset(dx, 0.012),
-                        end: Offset.zero,
-                      ).animate(curved),
-                      child: child,
-                    ),
-                  );
-                },
-                child: KeyedSubtree(
-                  key: ValueKey<int>(_tab),
-                  child: pages[_tab],
-                ),
+              // 标签切换不做整页过渡：点下去立刻换成目标页，
+              // 不让 200 ms 的淡入淡出把「页面已经在了」这件事拖慢。
+              child: KeyedSubtree(
+                key: ValueKey<int>(_tab),
+                child: pages[_tab],
               ),
             ),
           ),
@@ -616,7 +600,6 @@ class _AppShellState extends State<AppShell> {
         bottomNavigationBar: _TabBar(
           selected: _tab,
           onChanged: (i) => setState(() {
-            _tabShift = i > _tab ? 1 : -1;
             _tab = i;
           }),
         ),
@@ -880,8 +863,25 @@ class _Pill extends StatelessWidget {
   }
 }
 
-/// 粗笔跑者：44×44 骨架、4.8 笔重、圆头圆角，和设计板里第 6 个方案一致。
-/// 06 疾行跑者。舒展跑姿加两道速度线，按钮与桌面图标共用同一套几何。
+/// 跑者由母版 tool/assets/runner-master.png 抽出：身体与头各是一条闭合轮廓，
+/// 速度线同样是闭合轮廓。整条边缘光滑连续，没有笔画接头、端帽与折点。
+/// 图标、开跑按钮、空状态、启动页共用这一份路径。
+Path _contoursPath(List<List<double>> contours) {
+  final path = Path()..fillType = PathFillType.evenOdd;
+  for (final contour in contours) {
+    if (contour.length < 6) continue;
+    path.moveTo(contour[0], contour[1]);
+    for (int i = 2; i + 1 < contour.length; i += 2) {
+      path.lineTo(contour[i], contour[i + 1]);
+    }
+    path.close();
+  }
+  return path;
+}
+
+final Path _runnerPath = _contoursPath(runnerContours);
+final Path _dashPath = _contoursPath(runnerDashes);
+
 class _RunnerPainter extends CustomPainter {
   final int color;
 
@@ -890,53 +890,14 @@ class _RunnerPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final s = size.width / 48;
+    canvas.save();
     canvas.scale(s);
-    // 图形按 48×48 网格绘制，整体略偏左上，平移后视觉居中。
-    canvas.translate(3, 2.7);
     final ink = _c(color);
 
-    final dash = Paint()
-      ..color = ink.withValues(alpha: 0.65)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.2
-      ..strokeCap = StrokeCap.round;
-    canvas
-      ..drawLine(const Offset(5, 14), const Offset(13, 14), dash)
-      ..drawLine(const Offset(4, 20), const Offset(10, 20), dash);
-
-    canvas.drawCircle(const Offset(30, 9), 4.8, Paint()..color = ink);
-
-    final body = Paint()
-      ..color = ink
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4.2
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    final paths = <Path>[
-      Path()
-        ..moveTo(27, 14)
-        ..lineTo(19.5, 25),
-      Path()
-        ..moveTo(19.5, 25)
-        ..lineTo(28, 28)
-        ..lineTo(26, 38),
-      Path()
-        ..moveTo(19.5, 25)
-        ..lineTo(12, 31)
-        ..lineTo(6, 30),
-      Path()
-        ..moveTo(24.5, 17.5)
-        ..lineTo(33, 19)
-        ..lineTo(36, 14),
-      Path()
-        ..moveTo(23.5, 19)
-        ..lineTo(14.5, 18)
-        ..lineTo(10.5, 23.5),
-    ];
-    for (final path in paths) {
-      canvas.drawPath(path, body);
-    }
+    canvas.drawPath(
+        _dashPath, Paint()..color = ink.withValues(alpha: 0.55));
+    canvas.drawPath(_runnerPath, Paint()..color = ink);
+    canvas.restore();
   }
 
   @override
@@ -1046,8 +1007,8 @@ class _StartButtonState extends State<_StartButton>
                   ),
                   child: Center(
                     child: SizedBox(
-                      width: widget.size * 0.41,
-                      height: widget.size * 0.41,
+                      width: widget.size * 0.48,
+                      height: widget.size * 0.48,
                       child: const CustomPaint(
                         painter: _RunnerPainter(color: AppPalette.sand1),
                       ),
@@ -1399,25 +1360,21 @@ class _TabBar extends StatelessWidget {
 
 class _TodayPage extends StatelessWidget {
   final DateTime today;
-  final int streak;
   final double monthKm;
-  final int monthCount;
+  final int monthRuns;
+  final double totalKm;
   final double targetKm;
   final double todayKm;
-  final String planType;
-  final String planLabel;
   final VoidCallback onRun;
   final VoidCallback onEditTarget;
 
   const _TodayPage({
     required this.today,
-    required this.streak,
     required this.monthKm,
-    required this.monthCount,
+    required this.monthRuns,
+    required this.totalKm,
     required this.targetKm,
     required this.todayKm,
-    required this.planType,
-    required this.planLabel,
     required this.onRun,
     required this.onEditTarget,
   });
@@ -1425,12 +1382,13 @@ class _TodayPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, box) {
-          final btn = (box.maxHeight * 0.32).clamp(150.0, 224.0);
+          // 蓝色圆只占外框 0.69，外框按剩余高度放足，圆才有份量、页面不空。
+          final btn = (box.maxHeight * 0.46).clamp(206.0, 320.0);
           return _page([
             _header(
               _pageTitle('今日'),
               _pageMeta(
-                  '${today.month}月${today.day}日 周${_weekCn[today.weekday - 1]}  $planType $planLabel'),
+                  '${today.month}月${today.day}日 周${_weekCn[today.weekday - 1]}'),
             ),
             const SizedBox(height: _gap),
             _targetCard(targetKm, onEditTarget, todayKm: todayKm),
@@ -1441,28 +1399,28 @@ class _TodayPage extends StatelessWidget {
               height: 64,
               cells: [
                 _StatCell(
-                  icon: Icons.check_circle_outline,
-                  tint: AppPalette.accent,
-                  label: '连续',
-                  value: '$streak 天',
-                  number: streak.toDouble(),
-                  format: (v) => '${v.round()} 天',
-                ),
-                _StatCell(
                   icon: Icons.straighten,
                   tint: AppPalette.perform,
-                  label: '本月',
+                  label: '本月里程',
                   value: '${monthKm.toStringAsFixed(1)} km',
                   number: monthKm,
                   format: (v) => '${v.toStringAsFixed(1)} km',
                 ),
                 _StatCell(
-                  icon: Icons.calendar_month_outlined,
-                  tint: AppPalette.perform,
-                  label: '打卡',
-                  value: '$monthCount 次',
-                  number: monthCount.toDouble(),
+                  icon: Icons.directions_run,
+                  tint: AppPalette.accent,
+                  label: '本月次数',
+                  value: '$monthRuns 次',
+                  number: monthRuns.toDouble(),
                   format: (v) => '${v.round()} 次',
+                ),
+                _StatCell(
+                  icon: Icons.timeline_outlined,
+                  tint: AppPalette.perform,
+                  label: '累计里程',
+                  value: '${totalKm.toStringAsFixed(1)} km',
+                  number: totalKm,
+                  format: (v) => '${v.toStringAsFixed(1)} km',
                 ),
               ],
             ),
@@ -1556,9 +1514,7 @@ class _RunningPage extends StatelessWidget {
   final int? heartRate;
   final int kcal;
   final bool paused;
-  final bool autoCheckedIn;
   final DateTime today;
-  final String planType;
   final double targetKm;
   final VoidCallback onEditTarget;
   final VoidCallback onStart;
@@ -1579,9 +1535,7 @@ class _RunningPage extends StatelessWidget {
     required this.heartRate,
     required this.kcal,
     required this.paused,
-    required this.autoCheckedIn,
     required this.today,
-    required this.planType,
     required this.targetKm,
     required this.onEditTarget,
     required this.onStart,
@@ -1696,7 +1650,7 @@ class _RunningPage extends StatelessWidget {
             _pageTitle(paused ? '已暂停' : '运动中'),
           ],
         ),
-        _pageMeta('${_dateShort(today)}　$planType'),
+        _pageMeta(_dateShort(today)),
       ),
       const SizedBox(height: _gap),
       Column(
@@ -1798,10 +1752,7 @@ class _RunningPage extends StatelessWidget {
           return _page([
             _header(
               _pageTitle('完成'),
-              _Tag(
-                icon: Icons.check,
-                label: autoCheckedIn ? '已打卡' : '已记录',
-              ),
+              _Tag(icon: Icons.check, label: '已记录'),
             ),
             const SizedBox(height: _gap),
             Expanded(
@@ -1963,7 +1914,6 @@ class _HistoryPage extends StatelessWidget {
   final Repository repo;
   final DateTime today;
   final double monthKm;
-  final int monthCount;
   final ValueChanged<WorkoutSession> onSession;
   final ValueChanged<WorkoutSession> onDelete;
   final String? deletingId;
@@ -1973,7 +1923,6 @@ class _HistoryPage extends StatelessWidget {
     required this.repo,
     required this.today,
     required this.monthKm,
-    required this.monthCount,
     required this.onSession,
     required this.onDelete,
     required this.deletingId,
@@ -1984,105 +1933,127 @@ class _HistoryPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final sessions = List<WorkoutSession>.from(repo.sessions)
       ..sort((a, b) => b.startTime.compareTo(a.startTime));
+    final runDays = <int>{
+      for (final s in sessions)
+        if (s.startTime.year == today.year && s.startTime.month == today.month)
+          s.startTime.day,
+    };
     return Container(
       color: _c(AppPalette.sand2),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(_pagePad, _pagePad, _pagePad, 28),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _header(
-              _pageTitle('记录'),
-              Pressable(
-                onTap: onBackup,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                        width: AppRules.hairline, color: _c(AppPalette.sand6)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.backup_outlined,
-                          size: 14, color: _c(AppPalette.sand11)),
-                      const SizedBox(width: 5),
-                      Text('备份', style: _txt(12, 500, _c(AppPalette.sand11))),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            _StatBar(
-              cells: [
-                _StatCell(
-                  icon: Icons.straighten,
-                  tint: AppPalette.perform,
-                  label: '本月里程',
-                  value: '${monthKm.toStringAsFixed(1)} km',
-                  number: monthKm,
-                  format: (v) => '${v.toStringAsFixed(1)} km',
-                ),
-                _StatCell(
-                  icon: Icons.calendar_month_outlined,
-                  tint: AppPalette.perform,
-                  label: '打卡次数',
-                  value: '$monthCount 次',
-                  number: monthCount.toDouble(),
-                  format: (v) => '${v.round()} 次',
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            _card(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      // 记录多起来后不再一次建完所有行：头部固定，行交给 SliverList 按需构建，
+      // 切页时只画屏幕里那几条，不会因为历史记录多而卡一下。
+      child: CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(_pagePad, _pagePad, _pagePad, 0),
+            sliver: SliverToBoxAdapter(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    children: [
-                      _iconLabel(
-                          Icons.calendar_today_outlined, '${today.month} 月月历',
-                          color: AppPalette.sand12,
-                          size: 14,
-                          weight: 600,
-                          gap: 7),
-                      const Spacer(),
-                      Text('周一起', style: _txt(12, 500, _c(AppPalette.sand11))),
+                  _header(
+                    _pageTitle('记录'),
+                    Pressable(
+                      onTap: onBackup,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                              width: AppRules.hairline,
+                              color: _c(AppPalette.sand6)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.backup_outlined,
+                                size: 14, color: _c(AppPalette.sand11)),
+                            const SizedBox(width: 5),
+                            Text('备份',
+                                style: _txt(12, 500, _c(AppPalette.sand11))),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _StatBar(
+                    cells: [
+                      _StatCell(
+                        icon: Icons.straighten,
+                        tint: AppPalette.perform,
+                        label: '本月里程',
+                        value: '${monthKm.toStringAsFixed(1)} km',
+                        number: monthKm,
+                        format: (v) => '${v.toStringAsFixed(1)} km',
+                      ),
+                      _StatCell(
+                        icon: Icons.calendar_month_outlined,
+                        tint: AppPalette.accent,
+                        label: '跑步天数',
+                        value: '${runDays.length} 天',
+                        number: runDays.length.toDouble(),
+                        format: (v) => '${v.round()} 天',
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
-                  _MonthGrid(repo: repo, today: today),
+                  _card(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            _iconLabel(
+                                Icons.calendar_today_outlined,
+                                '${today.month} 月月历',
+                                color: AppPalette.sand12,
+                                size: 14,
+                                weight: 600,
+                                gap: 7),
+                            const Spacer(),
+                            Text('有跑步的日子',
+                                style: _txt(12, 500, _c(AppPalette.sand11))),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        _MonthGrid(runDays: runDays, today: today),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('历史记录', style: _txt(12, 500, _c(AppPalette.sand11))),
+                  const SizedBox(height: 2),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
-            Text('历史记录', style: _txt(12, 500, _c(AppPalette.sand11))),
-            const SizedBox(height: 2),
-            AnimatedSwitcher(
-              duration: AppMotion.quick,
-              switchInCurve: AppMotion.standard,
-              switchOutCurve: AppMotion.standard,
-              child: sessions.isEmpty
-                  ? _emptyState()
-                  : Column(
-                      key: const ValueKey<String>('rows'),
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        for (final s in sessions)
-                          _HistoryRow(
-                            session: s,
-                            removing: s.id == deletingId,
-                            onTap: () => onSession(s),
-                            onDelete: () => onDelete(s),
-                          ),
-                      ],
+          ),
+          if (sessions.isEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(_pagePad, 0, _pagePad, 28),
+              sliver: SliverToBoxAdapter(child: _emptyState()),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(_pagePad, 0, _pagePad, 28),
+              sliver: SliverList.builder(
+                itemCount: sessions.length,
+                itemBuilder: (context, i) {
+                  final s = sessions[i];
+                  return RepaintBoundary(
+                    child: _HistoryRow(
+                      session: s,
+                      removing: s.id == deletingId,
+                      onTap: () => onSession(s),
+                      onDelete: () => onDelete(s),
                     ),
+                  );
+                },
+              ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -2145,15 +2116,7 @@ class _HistoryRow extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 children: [
-                  SizedBox(
-                    width: 54,
-                    height: 46,
-                    child: TerrainMap(
-                      points: session.points,
-                      view: const Rect.fromLTWH(50, 96, 220, 220),
-                      radius: AppRules.thumbRadius,
-                    ),
-                  ),
+                  _TrackThumb(points: session.points),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
@@ -2199,11 +2162,74 @@ class _HistoryRow extends StatelessWidget {
   }
 }
 
+/// 记录行的小缩略图：只画底色与轨迹，不铺地形色块。
+/// 列表里有几十条记录时，这一层轻量绘制比整套地形图省一个数量级的开销。
+class _TrackThumb extends StatelessWidget {
+  final List<TrackPoint> points;
+
+  const _TrackThumb({required this.points});
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        width: 54,
+        height: 46,
+        child: DecoratedBox(
+          position: DecorationPosition.foreground,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRules.thumbRadius),
+            border:
+                Border.all(width: AppRules.hairline, color: _c(AppPalette.sand6)),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppRules.thumbRadius),
+            child: CustomPaint(
+              painter: _ThumbPainter(points),
+              child: const SizedBox.expand(),
+            ),
+          ),
+        ),
+      );
+}
+
+class _ThumbPainter extends CustomPainter {
+  final List<TrackPoint> points;
+
+  _ThumbPainter(this.points);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(
+        Offset.zero & size, Paint()..color = _c(AppPalette.sage3));
+    if (points.length < 2) return;
+    final proj = projectTrack(points, size, pad: 7);
+    final path = Path()..moveTo(proj.points.first.dx, proj.points.first.dy);
+    for (final p in proj.points.skip(1)) {
+      path.lineTo(p.dx, p.dy);
+    }
+    canvas.drawPath(
+      path,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.4
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..color = _c(AppPalette.accentStrong),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _ThumbPainter old) =>
+      old.points.length != points.length ||
+      (points.isNotEmpty &&
+          old.points.isNotEmpty &&
+          old.points.last.ts != points.last.ts);
+}
+
 class _MonthGrid extends StatelessWidget {
-  final Repository repo;
+  final Set<int> runDays;
   final DateTime today;
 
-  const _MonthGrid({required this.repo, required this.today});
+  const _MonthGrid({required this.runDays, required this.today});
 
   @override
   Widget build(BuildContext context) {
@@ -2261,37 +2287,37 @@ class _MonthGrid extends StatelessWidget {
 
   Widget _cell(int? day) {
     if (day == null) return const SizedBox(height: 26);
-    final date = DateTime(today.year, today.month, day);
-    final done = repo.hasCheckIn(date);
+    final done = runDays.contains(day);
     final isToday = day == today.day;
     final int bg;
     final int fg;
     final int edge;
     final int weight;
-    if (isToday) {
+    if (done) {
+      // 有跑步的日子始终填色，今天只多一圈主色描边，不会被「今天」的样式盖掉。
+      bg = AppPalette.teal9;
+      fg = AppPalette.sand12;
+      edge = isToday ? AppPalette.accent : AppPalette.teal9;
+      weight = 700;
+    } else if (isToday) {
       bg = AppPalette.sand1;
       fg = AppPalette.accent;
       edge = AppPalette.accent;
       weight = 700;
-    } else if (done) {
-      bg = AppPalette.teal9;
-      fg = AppPalette.sand12;
-      edge = AppPalette.teal9;
-      weight = 600;
     } else {
       bg = AppPalette.sand2;
       fg = AppPalette.sand11;
       edge = AppPalette.sand6;
       weight = 500;
     }
-    return AnimatedContainer(
+    // 42 个格子不再各带一个隐式动画控制器，切页时少一批对象要建。
+    return Container(
       height: 26,
-      duration: AppMotion.base,
-      curve: AppMotion.standard,
       decoration: BoxDecoration(
         color: _c(bg),
         borderRadius: BorderRadius.circular(AppRules.cellRadius),
-        border: Border.all(width: AppRules.hairline, color: _c(edge)),
+        border: Border.all(
+            width: isToday ? 1 : AppRules.hairline, color: _c(edge)),
       ),
       child: Center(
         child: Text('$day',
@@ -2301,7 +2327,7 @@ class _MonthGrid extends StatelessWidget {
               color: _c(fg),
               height: 1,
               fontFeatures: const [FontFeature.tabularFigures()],
-            )),
+                    )),
       ),
     );
   }
@@ -2563,7 +2589,7 @@ class _TargetDialogState extends State<_TargetDialog> {
                 children: [
                   Text('每日目标', style: _txt(18, 600, _c(AppPalette.sand12))),
                   const SizedBox(height: 4),
-                  Text('跑满目标的 80% 会自动打卡',
+                  Text('随时可以改，只用来对照今天的进度',
                       style: _txt(12, 500, _c(AppPalette.sand11))),
                   const SizedBox(height: 14),
                   TextField(
@@ -2661,14 +2687,9 @@ class _TargetDialogState extends State<_TargetDialog> {
 
 class _ResultDialog extends StatelessWidget {
   final WorkoutSession session;
-  final bool autoCheckedIn;
   final VoidCallback onSave;
 
-  const _ResultDialog({
-    required this.session,
-    required this.autoCheckedIn,
-    required this.onSave,
-  });
+  const _ResultDialog({required this.session, required this.onSave});
 
   @override
   Widget build(BuildContext context) => _dialogShell(
@@ -2811,12 +2832,10 @@ class _SessionDialog extends StatelessWidget {
 class _CardScreen extends StatefulWidget {
   final WorkoutSession session;
   final String dateLabel;
-  final bool autoCheckedIn;
   final GallerySaver gallery;
   const _CardScreen({
     required this.session,
     required this.dateLabel,
-    required this.autoCheckedIn,
     required this.gallery,
   });
 
@@ -2837,7 +2856,6 @@ class _CardScreenState extends State<_CardScreen> {
       final bytes = await renderShareCardPng(
         widget.session,
         dateLabel: widget.dateLabel,
-        autoCheckedIn: widget.autoCheckedIn,
       );
       final name =
           'daily-run-${widget.session.startTime.year}${widget.session.startTime.month.toString().padLeft(2, '0')}${widget.session.startTime.day.toString().padLeft(2, '0')}.png';
@@ -2872,7 +2890,6 @@ class _CardScreenState extends State<_CardScreen> {
                 child: RunShareCard(
                   session: widget.session,
                   dateLabel: widget.dateLabel,
-                  autoCheckedIn: widget.autoCheckedIn,
                 ),
               ),
               if (_message != null) ...[
