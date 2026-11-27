@@ -881,6 +881,7 @@ class _Pill extends StatelessWidget {
 }
 
 /// 粗笔跑者：44×44 骨架、4.8 笔重、圆头圆角，和设计板里第 6 个方案一致。
+/// 06 疾行跑者。舒展跑姿加两道速度线，按钮与桌面图标共用同一套几何。
 class _RunnerPainter extends CustomPainter {
   final int color;
 
@@ -888,40 +889,52 @@ class _RunnerPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final s = size.width / 44;
+    final s = size.width / 48;
     canvas.scale(s);
-    // 骨架本身略偏左，整体右移让它在圆里看起来居中。
-    canvas.translate(2.3, -0.6);
-    final body = Paint()
-      ..color = _c(color)
+    // 图形按 48×48 网格绘制，整体略偏左上，平移后视觉居中。
+    canvas.translate(3, 2.7);
+    final ink = _c(color);
+
+    final dash = Paint()
+      ..color = ink.withValues(alpha: 0.65)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 4.8
+      ..strokeWidth = 3.2
+      ..strokeCap = StrokeCap.round;
+    canvas
+      ..drawLine(const Offset(5, 14), const Offset(13, 14), dash)
+      ..drawLine(const Offset(4, 20), const Offset(10, 20), dash);
+
+    canvas.drawCircle(const Offset(30, 9), 4.8, Paint()..color = ink);
+
+    final body = Paint()
+      ..color = ink
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4.2
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
 
-    canvas.drawCircle(const Offset(28, 8.4), 4.4, Paint()..color = _c(color));
-
-    final torso = Path()
-      ..moveTo(25.4, 13.6)
-      ..lineTo(19, 26);
-    final frontLeg = Path()
-      ..moveTo(19, 26)
-      ..lineTo(27.6, 30.4)
-      ..lineTo(26.2, 39);
-    final backLeg = Path()
-      ..moveTo(19, 26)
-      ..lineTo(11.6, 29.8)
-      ..lineTo(5, 27.2);
-    final frontArm = Path()
-      ..moveTo(23.8, 16.4)
-      ..lineTo(31.4, 18.6)
-      ..lineTo(34.4, 12.6);
-    final backArm = Path()
-      ..moveTo(22.8, 17.4)
-      ..lineTo(14.6, 20.2)
-      ..lineTo(11.6, 26.6);
-
-    for (final path in [torso, frontLeg, backLeg, frontArm, backArm]) {
+    final paths = <Path>[
+      Path()
+        ..moveTo(27, 14)
+        ..lineTo(19.5, 25),
+      Path()
+        ..moveTo(19.5, 25)
+        ..lineTo(28, 28)
+        ..lineTo(26, 38),
+      Path()
+        ..moveTo(19.5, 25)
+        ..lineTo(12, 31)
+        ..lineTo(6, 30),
+      Path()
+        ..moveTo(24.5, 17.5)
+        ..lineTo(33, 19)
+        ..lineTo(36, 14),
+      Path()
+        ..moveTo(23.5, 19)
+        ..lineTo(14.5, 18)
+        ..lineTo(10.5, 23.5),
+    ];
+    for (final path in paths) {
       canvas.drawPath(path, body);
     }
   }
@@ -1420,10 +1433,10 @@ class _TodayPage extends StatelessWidget {
                   '${today.month}月${today.day}日 周${_weekCn[today.weekday - 1]}  $planType $planLabel'),
             ),
             const SizedBox(height: _gap),
+            _targetCard(targetKm, onEditTarget, todayKm: todayKm),
             Expanded(
               child: Center(child: _StartButton(onTap: onRun, size: btn)),
             ),
-            const SizedBox(height: _gap),
             _StatBar(
               height: 64,
               cells: [
@@ -1453,8 +1466,6 @@ class _TodayPage extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: _gap),
-            _targetCard(targetKm, onEditTarget, todayKm: todayKm),
           ]);
         },
       );
