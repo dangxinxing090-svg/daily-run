@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1600px; min-height: 1240px; padding: 42px 48px;
+    background: #f9f9f8; color: #1f211f;
+    font-family: -apple-system, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+  }
+  h1 { font-size: 28px; font-weight: 600; letter-spacing: -.4px; }
+  .sub { margin-top: 8px; font-size: 13px; color: #6f6a62; }
+  .board { margin-top: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .col { background: #fdfdfc; border: .5px solid #dbd8d5; border-radius: 28px; padding: 18px; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; }
+  .no { font-size: 12px; font-weight: 600; color: #0d74ce; }
+  .name { font-size: 20px; font-weight: 600; letter-spacing: -.3px; }
+  .note { margin-top: 7px; font-size: 12px; color: #6f6a62; line-height: 1.6; min-height: 38px; }
+
+  .phoneWrap { margin-top: 14px; display: flex; justify-content: center; }
+  .phone { width: 416px; height: 832px; border-radius: 34px; overflow: hidden; border: .5px solid #dbd8d5; background: #f9f9f8; position: relative; box-shadow: 0 18px 40px rgba(31,33,31,.08); }
+  .screen { width: 320px; height: 640px; transform: scale(1.3); transform-origin: top left; background: #f9f9f8; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .header { height: 28px; display: flex; align-items: baseline; justify-content: space-between; }
+  .title { font-size: 20px; font-weight: 600; }
+  .meta { font-size: 12px; color: #6f6a62; }
+  .card { background: #fdfdfc; border: .5px solid #dbd8d5; border-radius: 24px; }
+  .goal { padding: 12px 14px; }
+  .row { display: flex; align-items: baseline; justify-content: space-between; }
+  .label { font-size: 12px; color: #6f6a62; }
+  .value { font-size: 20px; font-weight: 600; }
+  .bar { height: 5px; margin-top: 10px; border-radius: 999px; background: #e9e8e6; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 40%; background: #0d74ce; }
+  .foot { display: flex; justify-content: space-between; margin-top: 6px; font-size: 12px; color: #6f6a62; }
+  .foot b { font-weight: 600; color: #1f211f; }
+
+  .hero { flex: 1; display: flex; align-items: center; justify-content: center; }
+  .btn { width: 168px; height: 168px; border-radius: 50%; background: #0d74ce; display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 30px rgba(13,116,206,.30), 0 0 0 22px rgba(13,116,206,.055); }
+
+  .statbar { display: flex; height: 64px; border-radius: 24px; overflow: hidden; }
+  .stat { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+  .stat + .stat { border-left: .5px solid #dbd8d5; }
+  .stat .lb { font-size: 12px; color: #6f6a62; display: flex; align-items: center; gap: 3px; }
+  .stat .vl { font-size: 20px; font-weight: 600; }
+  .tabs { height: 52px; display: flex; margin: auto -16px -16px; background: #fdfdfc; border-top: .5px solid #dbd8d5; }
+  .tab { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 12px; color: #6f6a62; }
+  .tab.on { color: #0d74ce; font-weight: 600; }
+  .tab.on::before { content: ''; position: absolute; width: 84px; height: 38px; left: 50%; top: 7px; transform: translateX(-50%); border-radius: 999px; background: #e6f4fe; z-index: -1; }
+
+  .icons { margin-top: 16px; padding-top: 16px; border-top: .5px solid #dbd8d5; display: flex; align-items: center; gap: 18px; }
+  .appIcon { width: 74px; height: 74px; border-radius: 20px; background: #0d74ce; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; box-shadow: 0 8px 18px rgba(13,116,206,.20); }
+  .smallBtn { width: 74px; height: 74px; border-radius: 50%; background: #0d74ce; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; box-shadow: 0 8px 18px rgba(13,116,206,.20); }
+  .iconLabels { font-size: 12px; color: #6f6a62; line-height: 1.7; }
+  .iconLabels b { color: #1f211f; font-weight: 600; }
+</style>
+</head>
+<body>
+<h1>跑者本体　线条与轮廓三套</h1>
+<p class="sub">当前先用 06 疾行跑者。下面三套继续改跑者本体：折线、空心、重线，每套都按开跑按钮与 App 图标两种尺寸展示。</p>
+<div class="board" id="board"></div>
+
+<script>
+const icons = {
+  j: `<svg viewBox="0 0 48 48" width="88" height="88" fill="none" stroke="#fdfdfc" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="31" cy="9" r="4.2" fill="#fdfdfc" stroke="none"/>
+    <path d="M28 14 L19 24"/>
+    <path d="M19 24 L27 29"/>
+    <path d="M27 29 L25 38"/>
+    <path d="M19 24 L10 29"/>
+    <path d="M10 29 L4 28"/>
+    <path d="M25 17 L33 17"/>
+    <path d="M33 17 L37 12"/>
+    <path d="M24 19 L15 17"/>
+    <path d="M15 17 L11 22"/>
+  </svg>`,
+  k: `<svg viewBox="0 0 48 48" width="88" height="88" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="30" cy="9" r="5.2" fill="#fdfdfc"/>
+    <circle cx="30" cy="9" r="2.2" fill="#0d74ce"/>
+    <g stroke="#fdfdfc" stroke-width="5.4">
+      <path d="M27 14 L19 25"/>
+      <path d="M19 25 L28 28 L26 38"/>
+      <path d="M19.5 25 L11.5 31.5 L5.5 30"/>
+      <path d="M24.5 17 L33 19 L36 14"/>
+      <path d="M24 19 L14 17.5 L10 23.5"/>
+    </g>
+    <g stroke="#0d74ce" stroke-width="2.2">
+      <path d="M27 14 L19 25"/>
+      <path d="M19 25 L28 28 L26 38"/>
+      <path d="M19 25 L12 31 L6 30"/>
+      <path d="M24.5 17 L33 19 L36 14"/>
+      <path d="M24 19 L14.5 18 L10.5 23.5"/>
+    </g>
+  </svg>`,
+  l: `<svg viewBox="0 0 48 48" width="88" height="88" fill="none" stroke="#fdfdfc" stroke-width="6.0" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="30" cy="9" r="5.0" fill="#fdfdfc" stroke="none"/>
+    <path d="M27 14.5 L19.5 25"/>
+    <path d="M19.5 25 L28.5 28.5 L26.5 38"/>
+    <path d="M19 25 L12 31 L6 30"/>
+    <path d="M24.5 17.5 L33 19 L36 13.5"/>
+    <path d="M24 19 L14.5 18 L10.5 23.5"/>
+  </svg>`
+};
+
+const tabs = `
+  <div class="tab on"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>今日</div>
+  <div class="tab"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="6" r="2.4"/><path d="M8 16.5c4-1 1-6 5-7s2.5 3 5-1"/></svg>跑中</div>
+  <div class="tab"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h10"/></svg>记录</div>`;
+
+const statbar = `
+  <div class="statbar card">
+    <div class="stat"><div class="lb"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0d74ce" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>连续</div><div class="vl">0 天</div></div>
+    <div class="stat"><div class="lb"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#008573" stroke-width="1.8"><path d="M4 8h16M4 12h16M4 16h10"/></svg>本月</div><div class="vl">0.0 km</div></div>
+    <div class="stat"><div class="lb"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#008573" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>打卡</div><div class="vl">0 次</div></div>
+  </div>`;
+
+const screen = (key) => `
+  <div class="screen">
+    <div class="header"><div class="title">今日</div><div class="meta">11月27日 周五</div></div>
+    <div class="goal card">
+      <div class="row"><div class="label">今日目标</div><div class="value">3.00 km ✎</div></div>
+      <div class="bar"><i></i></div>
+      <div class="foot"><span>今日已跑</span><b>1.20 km</b></div>
+    </div>
+    <div class="hero"><div class="btn">${icons[key]}</div></div>
+    ${statbar}
+    <div class="tabs">${tabs}</div>
+  </div>`;
+
+const items = [
+  { no:'10', key:'j', name:'折线跑者', note:'关节收成折角，身体像一条连续的折线。最现代，也最像运动品牌的几何符号。' },
+  { no:'11', key:'k', name:'空心跑者', note:'四肢做成空心双线，头部也是圆环。最轻、最有设计感，但小尺寸要认真看。' },
+  { no:'12', key:'l', name:'重线跑者', note:'笔画整体加粗，去掉速度线，只留最重的跑姿剪影。最醒目，桌面图标最稳。' },
+];
+
+document.getElementById('board').innerHTML = items.map(i => `
+  <div class="col">
+    <div class="head"><div class="no">${i.no}</div><div class="name">${i.name}</div></div>
+    <div class="note">${i.note}</div>
+    <div class="phoneWrap"><div class="phone">${screen(i.key)}</div></div>
+    <div class="icons">
+      <div class="appIcon">${icons[i.key]}</div>
+      <div class="smallBtn">${icons[i.key]}</div>
+      <div class="iconLabels"><b>同一枚图标</b><br>左：App 图标<br>右：开跑按钮</div>
+    </div>
+  </div>`).join('');
+</script>
+</body>
+</html>
