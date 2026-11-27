@@ -2,6 +2,7 @@
 // M1 业务内核验证，零外部依赖
 // 运行：cd app && dart run tool/verify.dart
 
+import 'package:daily_run/data/backup_codec.dart';
 import 'package:daily_run/data/session_codec.dart';
 import 'package:daily_run/data/persistence_web.dart';
 import 'package:daily_run/domain/checkin.dart';
@@ -122,6 +123,31 @@ Future<void> main() async {
   check('分段配速生成', s3.splits.length >= 5, '${s3.splits.length} 段');
   check('平均配速可计算', s3.averagePaceSecPerKm > 0,
       s3.averagePaceLabel);
+
+  final backupRaw = BackupEnvelope(
+    savedAt: t0,
+    sessions: [s3],
+    plans: [plan],
+    checkIns: [
+      CheckIn(
+        id: 'c-backup',
+        date: t0,
+        sessionId: s3.id,
+        source: CheckInSource.auto,
+        createdAt: t0,
+      )
+    ],
+    meta: const {'data_version': '2'},
+  ).encode();
+  final decoded = BackupEnvelope.decode(backupRaw);
+  check('备份往返：会话数保留', decoded.sessions.length == 1);
+  check('备份往返：轨迹点保留',
+      decoded.sessions.first.points.length == s3.points.length);
+  check('备份往返：计划与打卡保留',
+      decoded.plans.length == 1 &&
+          decoded.plans.first.targetMeters == 5000 &&
+          decoded.checkIns.length == 1);
+  check('备份往返：版本标记保留', decoded.meta['data_version'] == '2');
 
   final svc = CheckInService();
   final good = WorkoutSession(

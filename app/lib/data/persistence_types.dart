@@ -14,5 +14,6 @@ abstract class PersistenceStore {
 
   /// 存储标记，目前只用来记数据版本，保证示例数据只清理一次。
   Future<String?> readMeta(String key);
+  Future<Map<String, String>> readAllMeta();
   Future<void> writeMeta(String key, String value);
 }

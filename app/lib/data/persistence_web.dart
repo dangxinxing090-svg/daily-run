@@ -45,6 +45,9 @@ class MemoryPersistenceStore implements PersistenceStore {
   Future<String?> readMeta(String key) async => _meta[key];
 
   @override
+  Future<Map<String, String>> readAllMeta() async => Map<String, String>.from(_meta);
+
+  @override
   Future<void> writeMeta(String key, String value) async => _meta[key] = value;
 }
 

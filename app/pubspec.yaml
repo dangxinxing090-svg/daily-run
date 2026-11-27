@@ -16,7 +16,6 @@ dependencies:
   path: ^1.9.1
   gal: ^3.0.1
   audioplayers: ^6.1.0
-
 dev_dependencies:
   flutter_test:
     sdk: flutter

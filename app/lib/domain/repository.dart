@@ -18,6 +18,7 @@ abstract class Repository {
   Future<void> purgeDemoData();
 
   Future<String?> readMeta(String key);
+  Future<Map<String, String>> readAllMeta();
   Future<void> writeMeta(String key, String value);
 
   Plan? planFor(DateTime day);
@@ -114,6 +115,9 @@ class InMemoryRepository implements Repository {
 
   @override
   Future<String?> readMeta(String key) async => _meta[key];
+
+  @override
+  Future<Map<String, String>> readAllMeta() async => Map<String, String>.from(_meta);
 
   @override
   Future<void> writeMeta(String key, String value) async => _meta[key] = value;
@@ -214,6 +218,9 @@ class PersistentRepository implements Repository {
 
   @override
   Future<String?> readMeta(String key) => _store.readMeta(key);
+
+  @override
+  Future<Map<String, String>> readAllMeta() => _store.readAllMeta();
 
   @override
   Future<void> writeMeta(String key, String value) =>

@@ -84,6 +84,15 @@ class SqlitePersistenceStore implements PersistenceStore {
   }
 
   @override
+  Future<Map<String, String>> readAllMeta() async {
+    final rows = await (await db).query('meta');
+    return <String, String>{
+      for (final row in rows)
+        row['key'] as String: row['value'] as String,
+    };
+  }
+
+  @override
   Future<void> writeMeta(String key, String value) async {
     await (await db).insert('meta', {'key': key, 'value': value},
         conflictAlgorithm: ConflictAlgorithm.replace);

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'data/backup_service.dart';
 import 'data/persistence_store.dart';
 import 'domain/checkin.dart';
 import 'domain/models.dart';
@@ -71,6 +72,7 @@ class _AppShellState extends State<AppShell> {
   final PersistentRepository _repo =
       PersistentRepository(createPersistenceStore());
   final GallerySaver _gallery = createGallerySaver();
+  late final DataBackupService _backup;
   final CheckInService _checkIn = CheckInService();
   final LocationSource _location = createLocationSource();
   StreamSubscription<TrackFix>? _fixSub;
@@ -106,6 +108,7 @@ class _AppShellState extends State<AppShell> {
   @override
   void initState() {
     super.initState();
+    _backup = DataBackupService(_repo);
     _bootstrap();
   }
 
@@ -115,6 +118,11 @@ class _AppShellState extends State<AppShell> {
     } catch (_) {
       // 存储不可用时退回内存，界面仍可操作，只是不跨重启。
     }
+    // 系统备份先恢复内部库；这里再检查公共目录里的人工保险。
+    await _backup.initialize();
+    final hadDataAtLaunch = _repo.plans.isNotEmpty ||
+        _repo.sessions.isNotEmpty ||
+        _repo.checkIns.isNotEmpty;
     await SoundService.instance.init();
     await _migrateOnce();
     _plan = _repo.planFor(_today) ??
@@ -127,9 +135,14 @@ class _AppShellState extends State<AppShell> {
           reminderOffsetMinutes: 15,
         );
     if (_repo.planFor(_today) == null) await _repo.savePlan(_plan);
+    // 冷启动原本就是空库时不写备份：Android 11+ 可能读不到旧文件，
+    // 此刻哪怕只创建了默认计划，也不能覆盖掉用户真正需要的那一份。
+    if (hadDataAtLaunch) await _persistBackup();
     if (!mounted) return;
     setState(() => _ready = true);
   }
+
+  Future<bool> _persistBackup() async => _backup.save();
 
   /// 旧版本会写入两条示例跑步和几天打卡，这里只清一次；
   /// 顺带把当时写死的 5 公里目标归一到 3 公里。存在真实跑步时整段跳过。
@@ -142,6 +155,7 @@ class _AppShellState extends State<AppShell> {
         await _repo.savePlan(plan.copyWith(targetMeters: 3000));
       }
       await _repo.writeMeta('data_version', '2');
+      await _persistBackup();
     } catch (_) {
       // 迁移失败不影响启动，下次再试。
     }
@@ -366,6 +380,7 @@ class _AppShellState extends State<AppShell> {
       _todayCheckIn = _checkIn.auto(session, end);
       await _repo.saveCheckIn(_todayCheckIn!);
     }
+    await _persistBackup();
     if (!mounted) return;
     Haptics.heavy();
     SoundService.instance.play(AppSound.finish);
@@ -397,6 +412,7 @@ class _AppShellState extends State<AppShell> {
     setState(() => _deletingId = s.id);
     await Future<void>.delayed(AppMotion.base);
     await _repo.deleteSession(s.id);
+    await _persistBackup();
     if (!mounted) return;
     setState(() {
       _deletingId = null;
@@ -417,8 +433,38 @@ class _AppShellState extends State<AppShell> {
     Haptics.select();
     SoundService.instance.play(AppSound.tap, volume: 0.6);
     await _repo.savePlan(updated);
+    await _persistBackup();
     if (!mounted) return;
     setState(() => _plan = updated);
+  }
+
+  Future<void> _showBackupMenu(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final action = await showAppDialog<String>(
+      context,
+      (_) => _BackupMenu(lastSavedAt: _backup.lastSavedAt),
+    );
+    if (action == null || !mounted) return;
+    if (action == 'restore') {
+      final ok = await _backup.restorePicked();
+      if (!mounted) return;
+      if (ok) {
+        await _migrateOnce();
+        await _persistBackup();
+        setState(() {});
+      }
+      messenger.showSnackBar(SnackBar(
+        content: Text(ok ? '已从备份文件恢复数据' : '没有读到可用的备份文件',
+            style: const TextStyle(fontSize: 14)),
+      ));
+    } else if (action == 'save') {
+      final ok = await _persistBackup();
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(
+        content: Text(ok ? '备份已写入下载目录' : '备份写入失败',
+            style: const TextStyle(fontSize: 14)),
+      ));
+    }
   }
 
   void _showResult(BuildContext context) {
@@ -514,6 +560,7 @@ class _AppShellState extends State<AppShell> {
         onSession: (s) => _showSession(context, s),
         onDelete: (s) => _deleteSession(context, s),
         deletingId: _deletingId,
+        onBackup: () => _showBackupMenu(context),
       ),
     ];
 
@@ -583,20 +630,6 @@ class _AppShellState extends State<AppShell> {
 const double _gap = 15;
 const double _pagePad = 21;
 
-const List<String> _monthCn = [
-  '一月',
-  '二月',
-  '三月',
-  '四月',
-  '五月',
-  '六月',
-  '七月',
-  '八月',
-  '九月',
-  '十月',
-  '十一月',
-  '十二月',
-];
 
 /// 全 App 字号在这里统一放大，改一处即可整体调档。
 const double _typeScale = 1.08;
@@ -1870,6 +1903,49 @@ class _RunningPage extends StatelessWidget {
       );
 }
 
+/// 备份入口，明确告诉用户文件放在哪里，以及重装后的两种恢复方式。
+class _BackupMenu extends StatelessWidget {
+  final DateTime? lastSavedAt;
+
+  const _BackupMenu({required this.lastSavedAt});
+
+  @override
+  Widget build(BuildContext context) => _dialogShell(
+        context,
+        title: '跑步数据备份',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              '每次记录变化后，数据会写进 下载 / 每日跑步 / daily-run-backup.json。'
+              '卸载 App 不会删除这个文件。重装后自动读取；若系统拒绝读取，'
+              '点「从备份文件恢复」手动选中它即可。',
+              style: _txt(12, 400, _c(AppPalette.sand11)),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              lastSavedAt == null
+                  ? '尚未写入备份'
+                  : '上次备份 ${_dateCn(lastSavedAt!)} ${_clock(Duration(hours: lastSavedAt!.hour, minutes: lastSavedAt!.minute))}',
+              style: _txt(12, 500, _c(AppPalette.perform)),
+            ),
+            const SizedBox(height: 18),
+            _Pill(
+                label: '立即备份',
+                icon: Icons.save_outlined,
+                filled: true,
+                onTap: () => Navigator.pop(context, 'save')),
+            const SizedBox(height: 8),
+            _Pill(
+                label: '从备份文件恢复',
+                icon: Icons.restore_outlined,
+                filled: false,
+                onTap: () => Navigator.pop(context, 'restore')),
+          ],
+        ),
+      );
+}
+
 /* ---------------- 记录 ---------------- */
 
 class _HistoryPage extends StatelessWidget {
@@ -1880,6 +1956,7 @@ class _HistoryPage extends StatelessWidget {
   final ValueChanged<WorkoutSession> onSession;
   final ValueChanged<WorkoutSession> onDelete;
   final String? deletingId;
+  final VoidCallback onBackup;
 
   const _HistoryPage({
     required this.repo,
@@ -1889,6 +1966,7 @@ class _HistoryPage extends StatelessWidget {
     required this.onSession,
     required this.onDelete,
     required this.deletingId,
+    required this.onBackup,
   });
 
   @override
@@ -1902,7 +1980,29 @@ class _HistoryPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _header(_pageTitle('记录'), _pageMeta(_monthCn[today.month - 1])),
+            _header(
+              _pageTitle('记录'),
+              Pressable(
+                onTap: onBackup,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                        width: AppRules.hairline, color: _c(AppPalette.sand6)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.backup_outlined,
+                          size: 14, color: _c(AppPalette.sand11)),
+                      const SizedBox(width: 5),
+                      Text('备份', style: _txt(12, 500, _c(AppPalette.sand11))),
+                    ],
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(height: 8),
             _StatBar(
               cells: [

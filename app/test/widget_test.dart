@@ -1,9 +1,40 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:daily_run/data/backup_codec.dart';
+import 'package:daily_run/data/backup_service.dart';
 import 'package:daily_run/domain/checkin.dart';
 import 'package:daily_run/domain/models.dart';
 import 'package:daily_run/domain/plan_service.dart';
 import 'package:daily_run/domain/tracking.dart';
+import 'package:daily_run/platform/backup_types.dart';
+import 'package:daily_run/domain/repository.dart';
+
+
+class FakeBackupStore implements BackupStore {
+  String? raw;
+  bool wrote = false;
+
+  FakeBackupStore(this.raw);
+
+  @override
+  Future<bool> get available async => true;
+
+  @override
+  Future<bool> write(String json) async {
+    raw = json;
+    wrote = true;
+    return true;
+  }
+
+  @override
+  Future<bool> exists() async => raw != null;
+
+  @override
+  Future<String?> read() async => raw;
+
+  @override
+  Future<String?> pick() async => raw;
+}
 
 void main() {
   final t0 = DateTime(2026, 11, 6, 19, 30);
@@ -66,6 +97,53 @@ void main() {
       expect(svc.streak(list, DateTime(2026, 11, 7)), 6);
       final broken = [...list, svc.manual(DateTime(2026, 11, 8))];
       expect(svc.streak(broken, DateTime(2026, 11, 8)), 1);
+    });
+  });
+
+  group('跨安装备份', () {
+    test('空库启动时从备份恢复计划与打卡', () async {
+      final source = InMemoryRepository();
+      await source.savePlan(plan());
+      await source.saveCheckIn(CheckIn(
+        id: 'c1',
+        date: t0,
+        sessionId: 's1',
+        source: CheckInSource.auto,
+        createdAt: t0,
+      ));
+      final raw = BackupEnvelope(
+        savedAt: t0,
+        sessions: const [],
+        plans: source.plans,
+        checkIns: source.checkIns,
+        meta: const {'data_version': '2'},
+      ).encode();
+      final target = InMemoryRepository();
+      final store = FakeBackupStore(raw);
+      final service = DataBackupService(target, store);
+      await service.initialize();
+      expect(target.plans.length, 1);
+      expect(target.checkIns.length, 1);
+      expect(await target.readMeta('data_version'), '2');
+      expect(await service.save(), isTrue);
+      expect(store.wrote, isTrue);
+    });
+
+    test('本地已有数据时不覆盖', () async {
+      final source = InMemoryRepository();
+      await source.savePlan(plan());
+      final raw = BackupEnvelope(
+        savedAt: t0,
+        sessions: const [],
+        plans: source.plans,
+        checkIns: const [],
+        meta: const {},
+      ).encode();
+      final target = InMemoryRepository();
+      await target.savePlan(plan().copyWith(targetMeters: 10000));
+      final service = DataBackupService(target, FakeBackupStore(raw));
+      await service.initialize();
+      expect(target.plans.single.targetMeters, 10000);
     });
   });
 
