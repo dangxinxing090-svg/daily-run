@@ -128,7 +128,7 @@ class _CardPainter extends CustomPainter {
       textAlign: align,
       textDirection: TextDirection.ltr,
       maxLines: 1,
-    )..layout(maxWidth: width ?? double.infinity);
+    )..layout(minWidth: width ?? 0, maxWidth: width ?? double.infinity);
     tp.paint(canvas, offset);
   }
 

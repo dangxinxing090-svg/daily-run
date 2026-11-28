@@ -102,6 +102,8 @@ class _DailyIconPainter extends CustomPainter {
         p.close();
         line(14.85, 6.5, 18.15, 9.8);
       case DailyGlyph.pause:
+        line(9, 5, 9, 19);
+        line(15, 5, 15, 19);
       case DailyGlyph.finish:
         line(6, 21, 6, 3);
         p.moveTo(6, 4);

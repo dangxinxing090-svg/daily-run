@@ -1202,6 +1202,7 @@ class _TabBar extends StatelessWidget {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(minHeight: 58),
                 child: Center(
+                  heightFactor: 1,
                   child: FractionallySizedBox(
                     widthFactor: .70,
                     child: Container(
@@ -2208,7 +2209,7 @@ class _HistoryRow extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 6),
-                          Flexible(
+                          Expanded(
                             child: Text.rich(
                               TextSpan(
                                 text: km.toStringAsFixed(2),
