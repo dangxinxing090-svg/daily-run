@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../domain/models.dart';
@@ -9,71 +7,59 @@ import 'track_path.dart';
 
 Color _c(int v) => Color(v);
 
-/// 一块不规则柔和色块：11 个控制点带轻微起伏，过相邻中点连二次贝塞尔，
-/// 与设计稿里的 bandBlob 同一套几何。
-Path _blob(double cx, double cy, double rx, double ry, double seed) {
-  const n = 11;
-  final pts = <Offset>[];
-  for (int i = 0; i < n; i++) {
-    final a = i / n * math.pi * 2;
-    final wob = 1 +
-        0.13 * math.sin(3 * a + seed) +
-        0.07 * math.cos(5 * a - seed * 0.7) +
-        0.04 * math.sin(2 * a + seed * 0.45);
-    pts.add(Offset(cx + rx * wob * math.cos(a), cy + ry * wob * math.sin(a)));
-  }
-  final mids = <Offset>[
-    for (int i = 0; i < n; i++)
-      Offset(
-        (pts[i].dx + pts[(i + 1) % n].dx) / 2,
-        (pts[i].dy + pts[(i + 1) % n].dy) / 2,
-      ),
-  ];
-  final path = Path()..moveTo(mids[n - 1].dx, mids[n - 1].dy);
-  for (int i = 0; i < n; i++) {
-    path.quadraticBezierTo(pts[i].dx, pts[i].dy, mids[i].dx, mids[i].dy);
-  }
-  return path..close();
+/// 湖蓝留白地图底色、绿地与河面，和原型使用相同的比例。
+void _paintTerrain(Canvas canvas, Size size) {
+  final w = size.width;
+  final h = size.height;
+  canvas.drawRect(Offset.zero & size, Paint()..color = _c(AppPalette.sage3));
+
+  final green = Paint()..color = _c(AppPalette.sage5);
+  final park = Path()
+    ..moveTo(0, 0)
+    ..cubicTo(w * .35, h * .10, w * .28, h * .48, w * .12, h * .52)
+    ..lineTo(0, h * .61)
+    ..close();
+  canvas.drawPath(park, green);
+  canvas.save();
+  canvas.translate(w * .86, h * .90);
+  canvas.rotate(-.31);
+  canvas.drawOval(
+    Rect.fromCenter(center: Offset.zero, width: w * .58, height: h * .52),
+    green,
+  );
+  canvas.restore();
+
+  final river = Path()
+    ..moveTo(w * .18, h * 1.1)
+    ..cubicTo(w * .28, h * .82, w * .63, h * .72, w * 1.05, h * .85);
+  canvas.drawPath(
+    river,
+    Paint()
+      ..color = const Color(0xFFD5E7F1)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = h * .19,
+  );
+
+  final roads = Path()
+    ..moveTo(0, h * .61)
+    ..cubicTo(w * .19, h * .69, w * .35, h * .54, w * .39, h * .35)
+    ..cubicTo(w * .51, h * .2, w * .68, h * .5, w, h * .09)
+    ..moveTo(w * .18, 0)
+    ..cubicTo(w * .27, h * .4, w * .24, h * .46, w * .40, h * .59)
+    ..cubicTo(w * .54, h * .74, w * .54, h * .82, w * .48, h)
+    ..moveTo(w * .83, 0)
+    ..cubicTo(w * .65, h * .33, w * .73, h * .8, w * .98, h);
+  canvas.drawPath(
+    roads,
+    Paint()
+      ..color = const Color(0xFFFFFEFA)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2,
+  );
 }
 
-List<Path> _mainBands = [];
-List<Path> _sideBands = [];
-late Path _backdrop;
-late Path _backdropSide;
-bool _bandsBuilt = false;
-
-void _buildBands() {
-  if (_bandsBuilt) return;
-  const main = [
-    (0.0, 6.0, 166.0, 196.0),
-    (-6.0, 0.0, 126.0, 148.0),
-    (4.0, -8.0, 88.0, 104.0),
-    (-2.0, -4.0, 50.0, 60.0),
-  ];
-  const side = [
-    (0.0, 0.0, 118.0, 132.0),
-    (-4.0, -4.0, 78.0, 90.0),
-  ];
-  _mainBands = [
-    for (int i = 0; i < main.length; i++)
-      _blob(132 + main[i].$1, 166 + main[i].$2, main[i].$3, main[i].$4,
-          0.7 + i * 0.63),
-  ];
-  _sideBands = [
-    for (int i = 0; i < side.length; i++)
-      _blob(292 + side[i].$1, 300 + side[i].$2, side[i].$3, side[i].$4,
-          2.2 + i * 0.63),
-  ];
-  _backdrop = _blob(70, 80, 300, 250, 1.4);
-  _backdropSide = _blob(300, 330, 250, 240, 3.2);
-  _bandsBuilt = true;
-}
-
-/// 色块地形底图，画在 320×360 的视图坐标里，再按 [view] 等比铺满画布。
-/// 只用色差分界，不画任何闭合线条；轨迹在最上层，白描边压橙色线。
 class TerrainPainter extends CustomPainter {
   final List<TrackPoint> points;
-  final Rect view;
   final bool track;
   final bool live;
 
@@ -86,7 +72,6 @@ class TerrainPainter extends CustomPainter {
 
   TerrainPainter({
     required this.points,
-    required this.view,
     required this.track,
     this.live = false,
     this.progress = 1,
@@ -95,67 +80,22 @@ class TerrainPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    _buildBands();
-    // 只按宽度铺，横向不裁；容器比地形高时把色块纵向拉开填满，
-    // 而不是整体放大，否则中间那层会被撑成一整块灰斑。
-    final s = size.width / view.width;
-    final visibleH = size.height / s;
-    final sy =
-        math.min(visibleH > view.height ? visibleH / view.height : 1.0, 1.35);
-    final far = Rect.fromLTWH(view.left - 2000, view.top - 2000,
-        view.width + 4000, view.height + 4000);
-    canvas.drawRect(far, Paint()..color = _c(AppPalette.sand2));
-    // 先铺一层极淡的鼠尾草底色，主体色块之外不会露出突兀的白边；
-    // 再叠两层很淡的背衬做起伏，容器再高也不会显得空。
-    canvas.drawRect(
-        far, Paint()..color = _c(AppPalette.sage3).withValues(alpha: 0.34));
+    if (size.isEmpty) return;
     canvas.save();
-    canvas.scale(size.width / 320, size.height / 360);
-    canvas.drawPath(_backdrop,
-        Paint()..color = _c(AppPalette.sage4).withValues(alpha: 0.45));
-    canvas.drawPath(_backdropSide,
-        Paint()..color = _c(AppPalette.sand4).withValues(alpha: 0.22));
-    canvas.restore();
-    canvas.translate(
-      size.width / 2 - view.center.dx * s,
-      size.height / 2 - view.center.dy * s * sy,
-    );
-    canvas.scale(s, s * sy);
-    final inks = <int>[
-      AppPalette.sage3,
-      AppPalette.sage4,
-      AppPalette.sage5,
-      AppPalette.sand4,
-    ];
-    for (int i = 0; i < _mainBands.length; i++) {
-      canvas.drawPath(_mainBands[i], Paint()..color = _c(inks[i]));
+    canvas.clipRect(Offset.zero & size);
+    _paintTerrain(canvas, size);
+    if (!track) {
+      canvas.restore();
+      return;
     }
-    final sideInks = <int>[AppPalette.sage3, AppPalette.sage4];
-    for (int i = 0; i < _sideBands.length; i++) {
-      canvas.drawPath(_sideBands[i], Paint()..color = _c(sideInks[i]));
-    }
-    if (!track) return;
 
-    // 画布只按宽度铺，纵向可见范围随容器高度变化；
-    // 轨迹必须投影到这块真正可见的矩形里，否则窄高的地图会把首尾裁掉。
-    final visibleHeight = live ? size.height / (s * sy) : size.height / s;
-    final visible = Rect.fromLTWH(
-      view.left,
-      view.center.dy - visibleHeight / 2,
-      view.width,
-      visibleHeight,
-    );
-    final pad = math.min(16.0, visible.width * 0.08);
-    final projection = projectTrack(points, visible.size, pad: pad);
-    final origin0 = visible.topLeft;
-    final routeColor = _c(live ? AppPalette.accent : AppPalette.accentStrong);
+    final scale = (size.shortestSide / 220).clamp(.65, 2.5);
+    final projection = projectTrack(points, size, pad: 16 * scale);
+    final routeColor = _c(AppPalette.accent);
     Offset? currentPosition =
-        live && points.length == 1 ? visible.center : null;
+        live && points.length == 1 ? size.center(Offset.zero) : null;
     if (projection.isValid) {
-      final pts = <Offset>[
-        for (final p in projection.points)
-          Offset(p.dx + origin0.dx, p.dy + origin0.dy),
-      ];
+      final pts = projection.points;
       // 折线按段累加长度，画到预算长度为止：整条画入与最后一段生长用同一套算法。
       final segs = <double>[];
       double total = 0;
@@ -187,7 +127,7 @@ class TerrainPainter extends CustomPainter {
         }
       }
       if (live) currentPosition = tip;
-      final stroke = (3.6 * s).clamp(2.4, 4.6);
+      final stroke = 5 * scale;
       final cap = StrokeCap.round;
       canvas.drawPath(
         drawn,
@@ -209,23 +149,21 @@ class TerrainPainter extends CustomPainter {
       );
     }
 
-    final dot = (4.6 * s).clamp(2.6, 5.2);
+    final dot = 4.4 * scale;
     final origin = projection.isValid ? projection.points.first : null;
     final end = !live && projection.isValid && progress >= 1 && tail >= 1
         ? projection.points.last
         : null;
-    if (origin != null) {
-      final center = origin + origin0;
-      if (center != currentPosition) {
-        _paintMarker(canvas, center, dot, routeColor, solid: !live);
-      }
+    if (origin != null && origin != currentPosition) {
+      _paintMarker(canvas, origin, dot, routeColor, solid: false);
     }
     if (end != null && (end != origin)) {
-      _paintMarker(canvas, end + origin0, dot, routeColor, solid: false);
+      _paintMarker(canvas, end, dot, routeColor, solid: true);
     }
     if (currentPosition != null) {
       _paintMarker(canvas, currentPosition, dot, routeColor, solid: true);
     }
+    canvas.restore();
   }
 
   void _paintMarker(
@@ -253,7 +191,6 @@ class TerrainPainter extends CustomPainter {
       old.points.length != points.length ||
       old.track != track ||
       old.live != live ||
-      old.view != view ||
       (old.progress - progress).abs() > 0.001 ||
       (old.tail - tail).abs() > 0.001 ||
       (points.isNotEmpty &&
@@ -264,7 +201,6 @@ class TerrainPainter extends CustomPainter {
 /// 带圆角与细边的地形图容器。主图、缩略图共用。
 class TerrainMap extends StatelessWidget {
   final List<TrackPoint> points;
-  final Rect view;
   final bool track;
   final bool live;
   final double radius;
@@ -274,10 +210,9 @@ class TerrainMap extends StatelessWidget {
   const TerrainMap({
     super.key,
     this.points = const <TrackPoint>[],
-    this.view = const Rect.fromLTWH(0, 0, 320, 360),
     this.track = true,
     this.live = false,
-    this.radius = AppRules.mapRadius,
+    this.radius = 20,
     this.progress = 1,
     this.tail = 1,
   });
@@ -287,15 +222,13 @@ class TerrainMap extends StatelessWidget {
         position: DecorationPosition.foreground,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(radius),
-          border:
-              Border.all(width: AppRules.hairline, color: _c(AppPalette.sand6)),
+          border: Border.all(color: _c(AppPalette.sand6)),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(radius),
           child: CustomPaint(
             painter: TerrainPainter(
               points: points,
-              view: view,
               track: track,
               live: live,
               progress: progress,
@@ -330,115 +263,4 @@ List<double> paceBuckets(List<TrackPoint> pts, {double bucketMeters = 500}) {
     acc += d;
   }
   return out;
-}
-
-/// 配速曲线：面积填充加橙色折线，最快的那个点上标一个圆点。
-class PaceProfilePainter extends CustomPainter {
-  final List<double> values;
-
-  PaceProfilePainter({required this.values});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final grid = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.5
-      ..color = _c(AppPalette.sand5);
-    for (final f in const [0.25, 0.53, 0.81]) {
-      final y = size.height * f;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), grid);
-    }
-    if (values.isEmpty) {
-      final y = size.height * 0.78;
-      canvas.drawLine(
-        Offset(0, y),
-        Offset(size.width, y),
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.2
-          ..color = _c(AppPalette.performStrong).withValues(alpha: 0.35),
-      );
-      return;
-    }
-    // 单段数据只画一条平线，不能从一点拉出整块三角形。
-    if (values.length == 1) {
-      final y = size.height * 0.5;
-      canvas.drawLine(
-        Offset(0, y),
-        Offset(size.width, y),
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.7
-          ..strokeCap = StrokeCap.round
-          ..color = _c(AppPalette.performStrong),
-      );
-      canvas.drawCircle(Offset(size.width - 4, y), 3,
-          Paint()..color = _c(AppPalette.performStrong));
-      return;
-    }
-    final vs = values;
-    double sum = 0;
-    for (final v in vs) {
-      sum += v;
-    }
-    // 固定 ±15 秒窗口：配速平稳时曲线走中线，
-    // 不会因为几秒起伏被拉成斜坡，也不会糊成一块色块。
-    final mid = sum / vs.length;
-    final min = mid - 15;
-    final span = 30.0;
-    final pad = size.height * 0.14;
-    final step = size.width / (vs.length - 1);
-    final ys = <double>[
-      for (final v in vs) pad + (v - min) / span * (size.height - pad * 2),
-    ];
-    final line = Path()..moveTo(0, ys.first);
-    for (int i = 1; i < ys.length; i++) {
-      line.lineTo(i * step, ys[i]);
-    }
-    final area = Path.from(line)
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(
-        area, Paint()..color = _c(AppPalette.performSoft).withValues(alpha: 0.42));
-    canvas.drawPath(
-      line,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.7
-        ..strokeJoin = StrokeJoin.round
-        ..color = _c(AppPalette.performStrong),
-    );
-    int fastest = 0;
-    for (int i = 1; i < vs.length; i++) {
-      if (vs[i] < vs[fastest]) fastest = i;
-    }
-    final c = Offset(fastest * step, ys[fastest]);
-    canvas.drawCircle(c, 3.6, Paint()..color = _c(AppPalette.performStrong));
-    canvas.drawCircle(
-      c,
-      3.6,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5
-        ..color = _c(AppPalette.sand1),
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant PaceProfilePainter old) => old.values != values;
-}
-
-/// 配速曲线的固定高度占位。
-class PaceProfile extends StatelessWidget {
-  final List<double> values;
-  final double height;
-
-  const PaceProfile({super.key, required this.values, this.height = 46});
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-        height: height,
-        child: CustomPaint(painter: PaceProfilePainter(values: values)),
-      );
 }

@@ -1,43 +1,48 @@
 #!/usr/bin/env python3
-"""从母版出全套 launcher 图标。
+"""把 App 内的跑者轮廓输出为湖蓝留白桌面图标。
 
-母版 tool/assets/runner-master.png 是唯一的图形来源（1024×1024 平涂），
-App 内的按钮图标由 tool/make_mark.py 从同一张母版抽轮廓，
-两边不会走样。
+make_mark.py 从跑者母版提取闭合轮廓。桌面图标共用 App 内的轮廓数据，
+用湖蓝面和等白的跑者，比例与设计稿品牌图标一致。
 
 运行：cd app && python3 tool/make_icons.py
 """
 
 import os
+import re
 import sys
+from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BUILD = os.path.join(ROOT, "build", "icons")
-MASTER = os.path.join(ROOT, "tool", "assets", "runner-master.png")
+CONTOURS = Path(ROOT) / "lib" / "widgets" / "runner_mark.dart"
 
 BG = (13, 116, 206)
-# maskable 图标会被系统裁成圆形，图形要收进安全区
-MASKABLE_INSET = 0.80
+INK = (255, 255, 255)
+SIZE = 1024
 
 
-def load_master():
-    img = Image.open(MASTER).convert("RGB")
-    if img.size != (1024, 1024):
-        img = img.resize((1024, 1024), Image.LANCZOS)
-    return img
+def runner_layer(ratio):
+    # 高分辨率填充后再缩放，可以保持 48 网格轮廓在小图标中的圆边。
+    render_size = SIZE * 3
+    mask = Image.new("L", (render_size, render_size))
+    draw = ImageDraw.Draw(mask)
+    scale = render_size * ratio / 48
+    inset = render_size * (1 - ratio) / 2
+    for contour in re.findall(r"<double>\[([^\]]+)\]", CONTOURS.read_text()):
+        values = [float(value) * scale + inset for value in contour.split(",")
+                  if value.strip()]
+        draw.polygon(list(zip(values[::2], values[1::2])), fill=255)
+    mark = Image.new("RGBA", (SIZE, SIZE), (*INK, 0))
+    mark.putalpha(mask.resize((SIZE, SIZE), Image.Resampling.LANCZOS))
+    return mark
 
 
-def maskable(master):
-    """把图形缩进安全区，四周补底色。"""
-    size = master.size[0]
-    inner = int(size * MASKABLE_INSET)
-    small = master.resize((inner, inner), Image.LANCZOS)
-    canvas = Image.new("RGB", (size, size), BG)
-    off = (size - inner) // 2
-    canvas.paste(small, (off, off))
-    return canvas
+def badge(ratio):
+    canvas = Image.new("RGBA", (SIZE, SIZE), (*BG, 255))
+    canvas.alpha_composite(runner_layer(ratio))
+    return canvas.convert("RGB")
 
 
 def resize(master, size, path):
@@ -49,14 +54,17 @@ def resize(master, size, path):
 
 def main():
     os.makedirs(BUILD, exist_ok=True)
-    master = load_master()
+    master = badge(20 / 28)
+    foreground = runner_layer(0.50)
     master.save(os.path.join(BUILD, "icon-1024.png"))
 
-    for bucket, size in {"mdpi": 48, "hdpi": 72, "xhdpi": 96,
-                         "xxhdpi": 144, "xxxhdpi": 192}.items():
-        resize(master, size, os.path.join(
-            ROOT, "android", "app", "src", "main", "res",
-            f"mipmap-{bucket}", "ic_launcher.png"))
+    for bucket, scale in {"mdpi": 1, "hdpi": 1.5, "xhdpi": 2,
+                          "xxhdpi": 3, "xxxhdpi": 4}.items():
+        folder = os.path.join(ROOT, "android", "app", "src", "main", "res",
+                              f"mipmap-{bucket}")
+        resize(master, int(48 * scale), os.path.join(folder, "ic_launcher.png"))
+        resize(foreground, int(108 * scale),
+               os.path.join(folder, "ic_launcher_foreground.png"))
 
     ios = {
         "Icon-App-20x20@1x.png": 20,
@@ -80,7 +88,7 @@ def main():
     for name, size in ios.items():
         resize(master, size, os.path.join(ios_dir, name))
 
-    safe = maskable(master)
+    safe = badge(0.55)
     for name, size, src in [
         ("Icon-192.png", 192, master),
         ("Icon-512.png", 512, master),
@@ -88,8 +96,7 @@ def main():
         ("Icon-maskable-512.png", 512, safe),
     ]:
         resize(src, size, os.path.join(ROOT, "web", "icons", name))
-
-    print("master: tool/assets/runner-master.png")
+    resize(master, 48, os.path.join(ROOT, "web", "favicon.png"))
     return 0
 
 

@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="launch_bg">#fefcfb</color>
+    <color name="launch_bg">#F9F9F8</color>
+    <color name="lake_blue_launcher">#0D74CE</color>
 </resources>

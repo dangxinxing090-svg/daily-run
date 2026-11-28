@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -6,7 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../domain/models.dart';
 import '../theme.dart';
-import 'track_path.dart';
+import 'terrain.dart';
 
 Color _c(int v) => Color(v);
 
@@ -18,7 +17,7 @@ String _clockText(Duration d) {
 }
 
 String _paceText(double secPerKm) {
-  if (secPerKm <= 0) return '--\'--"';
+  if (!secPerKm.isFinite || secPerKm <= 0) return '—';
   final s = secPerKm.round();
   return '${s ~/ 60}\'${(s % 60).toString().padLeft(2, '0')}"';
 }
@@ -56,129 +55,54 @@ class _CardPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Offset.zero & size, Paint()..color = _c(AppPalette.sand1));
+    final frame =
+        RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(36));
+    canvas.drawRRect(frame, Paint()..color = _c(AppPalette.sand2));
+    final border = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..color = _c(AppPalette.sand6);
+    canvas.drawRRect(frame.deflate(1), border);
 
-    // 顶部斜切橙带
-    final band = Path()
-      ..moveTo(0, 0)
-      ..lineTo(size.width, 0)
-      ..lineTo(size.width, 250)
-      ..lineTo(0, 330)
-      ..close();
-    canvas.drawPath(band, Paint()..color = _c(AppPalette.accentStrong));
-
-    // 轨迹区
-    final mapTop = 380.0;
-    final mapRect = Rect.fromLTWH(48, mapTop, size.width - 96, 330);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(mapRect, const Radius.circular(18)),
-      Paint()..color = _c(AppPalette.sand2),
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(mapRect, const Radius.circular(18)),
-      Paint()
-        ..color = _c(AppPalette.slate6)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.5,
-    );
-
-    // 网格
-    final grid = Paint()
-      ..color = _c(AppPalette.slate6)
-      ..strokeWidth = 0.5;
-    for (int i = 1; i < 5; i++) {
-      final y = mapRect.top + mapRect.height * i / 5;
-      canvas.drawLine(Offset(mapRect.left, y), Offset(mapRect.right, y), grid);
-    }
-    for (int i = 1; i < 4; i++) {
-      final x = mapRect.left + mapRect.width * i / 4;
-      canvas.drawLine(Offset(x, mapRect.top), Offset(x, mapRect.bottom), grid);
-    }
-
-    if (session.points.length >= 2) {
-      canvas.save();
-      canvas.translate(mapRect.left, mapRect.top);
-      final proj = projectTrack(session.points, mapRect.size, pad: 34);
-      final path = Path()..moveTo(proj.points.first.dx, proj.points.first.dy);
-      for (final p in proj.points.skip(1)) {
-        path.lineTo(p.dx, p.dy);
-      }
-      canvas.drawPath(
-        path,
-        Paint()
-          ..color = _c(AppPalette.accentStrong)
-          ..strokeWidth = 9
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round
-          ..strokeJoin = StrokeJoin.round,
-      );
-      if (proj.end != null) {
-        canvas.drawCircle(proj.end!, 12, Paint()..color = _c(AppPalette.accentStrong));
-        canvas.drawCircle(proj.end!, 6, Paint()..color = _c(AppPalette.slate1));
-      }
-      canvas.restore();
-    } else {
-      _text(canvas, '本次无有效轨迹', Offset(mapRect.left + 24, mapRect.top + 40),
-          22, _c(AppPalette.slate11));
-    }
-
-    // 顶部文字
-    _text(canvas, '每日跑步', const Offset(48, 54), 26, _c(AppPalette.slate1),
+    _text(canvas, '每日跑步', const Offset(34, 36), 36, _c(AppPalette.sand12),
         weight: FontWeight.w600);
-    _text(canvas, dateLabel, const Offset(48, 100), 22, _c(AppPalette.slate1));
-    _text(canvas, (session.distanceMeters / 1000).toStringAsFixed(2),
-        const Offset(48, 150), 96, _c(AppPalette.slate1),
-        weight: FontWeight.w600);
-    _text(canvas, 'km', const Offset(330, 212), 32, _c(AppPalette.slate1));
+    _text(canvas, dateLabel, const Offset(302, 42), 28, _c(AppPalette.sand11),
+        width: 414, align: TextAlign.right);
 
-    // 数据行
-    final statY = 760.0;
-    _stat(canvas, 48, statY, '用时', _clockText(session.elapsed));
-    _stat(canvas, 285, statY, '配速', _paceText(session.averagePaceSecPerKm));
-    _stat(canvas, 522, statY, '消耗', '${session.calories} kcal');
+    final map = Rect.fromLTWH(34, 104, size.width - 68, 694);
+    final roundedMap = RRect.fromRectAndRadius(map, const Radius.circular(28));
+    canvas.save();
+    canvas.clipRRect(roundedMap);
+    canvas.translate(map.left, map.top);
+    TerrainPainter(points: session.points, track: true).paint(canvas, map.size);
+    canvas.restore();
+    canvas.drawRRect(roundedMap.deflate(1), border);
 
-    // 分段配速条
-    final splits = session.splits.take(4).toList();
-    if (splits.isNotEmpty) {
-      final max = splits.map((s) => s.seconds).reduce(math.max).toDouble();
-      final min = splits.map((s) => s.seconds).reduce(math.min).toDouble();
-      final span = (max - min).abs() < 1 ? 1.0 : max - min;
-      for (int i = 0; i < splits.length; i++) {
-        final s = splits[i];
-        final y = 826.0 + i * 20;
-        _text(canvas, '${s.kmIndex} km', Offset(48, y), 18, _c(AppPalette.slate11));
-        final barX = 120.0;
-        final barW = 500.0 * (1 - (s.seconds - min) / span * 0.55);
-        canvas.drawRRect(
-          RRect.fromRectAndRadius(
-              Rect.fromLTWH(barX, y + 3, barW, 10), const Radius.circular(5)),
-          Paint()..color = _c(AppPalette.accentEdge),
-        );
-        _text(canvas, s.paceLabel, Offset(640, y), 18, _c(AppPalette.slate12),
-            weight: FontWeight.w600);
+    final stats = Rect.fromLTWH(34, 830, size.width - 68, 136);
+    final roundedStats =
+        RRect.fromRectAndRadius(stats, const Radius.circular(28));
+    canvas.drawRRect(roundedStats, Paint()..color = _c(AppPalette.sand1));
+    canvas.drawRRect(roundedStats.deflate(1), border);
+    final statWidth = stats.width / 3;
+    final values = [
+      '${(session.distanceMeters / 1000).toStringAsFixed(2)} km',
+      _clockText(session.elapsed),
+      _paceText(session.averagePaceSecPerKm),
+    ];
+    const labels = ['距离', '用时', '配速'];
+    for (var index = 0; index < labels.length; index++) {
+      final x = stats.left + index * statWidth;
+      if (index > 0) {
+        canvas.drawLine(
+            Offset(x, stats.top + 26), Offset(x, stats.bottom - 26), border);
       }
+      _text(canvas, labels[index], Offset(x, stats.top + 20), 25,
+          _c(AppPalette.sand11),
+          width: statWidth, align: TextAlign.center);
+      _text(canvas, values[index], Offset(x, stats.top + 60), 39,
+          _c(index == 0 ? AppPalette.performText : AppPalette.sand12),
+          weight: FontWeight.w600, width: statWidth, align: TextAlign.center);
     }
-
-    // 记录状态
-    final pill = RRect.fromRectAndRadius(
-        const Rect.fromLTWH(48, 916, 654, 56), const Radius.circular(28));
-    canvas.drawRRect(pill, Paint()..color = _c(AppPalette.accent));
-    _text(
-      canvas,
-      '已记录本次跑步',
-      const Offset(375, 932),
-      24,
-      _c(AppPalette.slate1),
-      weight: FontWeight.w600,
-      align: TextAlign.center,
-      width: 654,
-    );
-  }
-
-  void _stat(Canvas canvas, double x, double y, String label, String value) {
-    _text(canvas, label, Offset(x, y), 20, _c(AppPalette.slate11));
-    _text(canvas, value, Offset(x, y + 30), 30, _c(AppPalette.accent),
-        weight: FontWeight.w600);
   }
 
   void _text(
@@ -225,8 +149,12 @@ Future<Uint8List> renderShareCardPng(WorkoutSession session,
   final picture = recorder.endRecording();
   final image = await picture.toImage(
       (size.width * scale).toInt(), (size.height * scale).toInt());
-  final byteData =
-      await image.toByteData(format: ui.ImageByteFormat.png);
-  if (byteData == null) throw StateError('记录图渲染失败');
-  return byteData.buffer.asUint8List();
+  picture.dispose();
+  try {
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    if (byteData == null) throw StateError('记录图渲染失败');
+    return byteData.buffer.asUint8List();
+  } finally {
+    image.dispose();
+  }
 }

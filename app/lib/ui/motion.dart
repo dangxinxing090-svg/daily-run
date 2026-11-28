@@ -24,7 +24,10 @@ class AppMotion {
 
   /// 标签切换：只做很短的淡入，不拖住点击后的第一眼反馈。
   static Duration get tab =>
-      reduce ? Duration.zero : const Duration(milliseconds: 140);
+      reduce ? Duration.zero : const Duration(milliseconds: 110);
+
+  static Duration get runTransition =>
+      reduce ? Duration.zero : const Duration(milliseconds: 160);
   static Duration get base =>
       reduce ? Duration.zero : const Duration(milliseconds: 240);
   static Duration get enter =>
