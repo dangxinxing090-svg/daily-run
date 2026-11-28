@@ -806,39 +806,25 @@ class _StatCell extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
-  final double? number;
-  final String Function(double value)? format;
-  final int? tint;
 
   const _StatCell({
     required this.icon,
     required this.label,
     required this.value,
-    this.number,
-    this.format,
-    this.tint,
   });
 
   @override
   Widget build(BuildContext context) {
-    final num = number;
-    final fmt = format;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _iconLabel(icon, label, color: tint ?? AppPalette.sand11),
+          _iconLabel(icon, label),
           const SizedBox(height: 4),
           FittedBox(
             fit: BoxFit.scaleDown,
-            child: num != null && fmt != null
-                ? RollingNumber(
-                    value: num,
-                    format: fmt,
-                    style: _num(20, 600, AppPalette.sand12),
-                  )
-                : Text(value, style: _num(20, 600, AppPalette.sand12)),
+            child: Text(value, style: _num(20, 600, AppPalette.sand12)),
           ),
         ],
       ),
@@ -1395,26 +1381,26 @@ class _TodayPage extends StatelessWidget {
                     ),
                     SizedBox(height: gap),
                     DecoratedBox(
-                      decoration: _todayCardDecoration(),
+                      decoration: _overviewCardDecoration(),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         child: IntrinsicHeight(
                           child: Row(
                             children: [
-                              _todayMetric(
-                                  '本月里程', _todayKmLabel(monthKm), 'km', narrow,
+                              _overviewMetric(
+                                  '本月里程', _overviewKmLabel(monthKm), 'km', narrow,
                                   emphasis: true),
                               const VerticalDivider(
                                   width: 1,
                                   thickness: 1,
                                   color: Color(AppPalette.sand6)),
-                              _todayMetric('本月次数', '$monthRuns', '次', narrow),
+                              _overviewMetric('本月次数', '$monthRuns', '次', narrow),
                               const VerticalDivider(
                                   width: 1,
                                   thickness: 1,
                                   color: Color(AppPalette.sand6)),
-                              _todayMetric(
-                                  '累计里程', _todayKmLabel(totalKm), 'km', narrow),
+                              _overviewMetric(
+                                  '累计里程', _overviewKmLabel(totalKm), 'km', narrow),
                             ],
                           ),
                         ),
@@ -1429,18 +1415,18 @@ class _TodayPage extends StatelessWidget {
       });
 }
 
-String _todayKmLabel(double value) => value.toStringAsFixed(1).replaceAllMapped(
+String _overviewKmLabel(double value) => value.toStringAsFixed(1).replaceAllMapped(
       RegExp(r'\B(?=(\d{3})+(?!\d))'),
       (_) => ',',
     );
 
-BoxDecoration _todayCardDecoration() => BoxDecoration(
+BoxDecoration _overviewCardDecoration() => BoxDecoration(
       color: _c(AppPalette.sand1),
       borderRadius: BorderRadius.circular(20),
       border: Border.all(color: _c(AppPalette.sand6)),
     );
 
-Widget _todayMetric(String label, String value, String unit, bool narrow,
+Widget _overviewMetric(String label, String value, String unit, bool narrow,
         {bool emphasis = false}) =>
     Expanded(
       child: Column(
@@ -1475,7 +1461,7 @@ Widget _targetCard(double targetKm, VoidCallback onEdit, {double? todayKm}) {
   final ratio = targetKm <= 0 ? 0.0 : (done / targetKm).clamp(0.0, 1.0);
   final reached = ratio >= 1;
   return DecoratedBox(
-    decoration: _todayCardDecoration(),
+    decoration: _overviewCardDecoration(),
     child: Material(
       type: MaterialType.transparency,
       child: InkWell(
@@ -2114,121 +2100,110 @@ class _HistoryPage extends StatelessWidget {
         if (s.startTime.year == today.year && s.startTime.month == today.month)
           s.startTime.day,
     };
-    return Container(
+    final narrow = MediaQuery.sizeOf(context).width <= 325;
+    final inset = narrow ? 16.0 : 20.0;
+    return ColoredBox(
       color: _c(AppPalette.sand2),
-      // 记录多起来后不再一次建完所有行：头部固定，行交给 SliverList 按需构建，
-      // 切页时只画屏幕里那几条，不会因为历史记录多而卡一下。
       child: CustomScrollView(
         slivers: [
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(_pagePad, _pagePad, _pagePad, 0),
+            padding: EdgeInsets.fromLTRB(inset, 14, inset, 7),
             sliver: SliverToBoxAdapter(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _header(
-                    _pageTitle('记录'),
-                    Pressable(
-                      onTap: onBackup,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(
-                              width: AppRules.hairline,
-                              color: _c(AppPalette.sand6)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('记录', style: _txt(26, 700, _c(AppPalette.sand12))),
+                      TextButton(
+                        onPressed: onBackup,
+                        style: TextButton.styleFrom(
+                          foregroundColor: _c(AppPalette.accentText),
+                          minimumSize: const Size(48, 48),
+                          visualDensity: VisualDensity.standard,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.backup_outlined,
-                                size: 14, color: _c(AppPalette.sand11)),
-                            const SizedBox(width: 5),
-                            Text('备份',
-                                style: _txt(12, 500, _c(AppPalette.sand11))),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  _StatBar(
-                    cells: [
-                      _StatCell(
-                        icon: Icons.straighten,
-                        tint: AppPalette.perform,
-                        label: '本月里程',
-                        value: '${monthKm.toStringAsFixed(1)} km',
-                        number: monthKm,
-                        format: (v) => '${v.toStringAsFixed(1)} km',
-                      ),
-                      _StatCell(
-                        icon: Icons.calendar_month_outlined,
-                        tint: AppPalette.accent,
-                        label: '跑步天数',
-                        value: '${runDays.length} 天',
-                        number: runDays.length.toDouble(),
-                        format: (v) => '${v.round()} 天',
+                        child: const Text('备份'),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  _card(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
+                  const SizedBox(height: 16),
+                  DecoratedBox(
+                    decoration: _overviewCardDecoration(),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: IntrinsicHeight(
+                        child: Row(
                           children: [
-                            _iconLabel(
-                                Icons.calendar_today_outlined,
-                                '${today.month} 月月历',
-                                color: AppPalette.sand12,
-                                size: 14,
-                                weight: 600,
-                                gap: 7),
-                            const Spacer(),
-                            Text('有跑步的日子',
-                                style: _txt(12, 500, _c(AppPalette.sand11))),
+                            _overviewMetric(
+                                '本月里程', _overviewKmLabel(monthKm), 'km', narrow,
+                                emphasis: true),
+                            const VerticalDivider(
+                              width: 1,
+                              thickness: 1,
+                              color: Color(AppPalette.sand6),
+                            ),
+                            _overviewMetric(
+                                '跑步天数', '${runDays.length}', '天', narrow,
+                                emphasis: true),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        _MonthGrid(runDays: runDays, today: today),
-                      ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Text('历史记录', style: _txt(12, 500, _c(AppPalette.sand11))),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 16),
+                  DecoratedBox(
+                    decoration: _overviewCardDecoration(),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(13, 12, 13, 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Wrap(
+                            alignment: WrapAlignment.spaceBetween,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: [
+                              Text('${today.month} 月月历',
+                                  style: _txt(14, 600, _c(AppPalette.sand12))),
+                              Text('圆点标记跑步日',
+                                  style: _txt(12, 500, _c(AppPalette.sand11))),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          _MonthGrid(runDays: runDays, today: today),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text('历史记录', style: _txt(14, 600, _c(AppPalette.sand12))),
                 ],
               ),
             ),
           ),
-          if (sessions.isEmpty)
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(_pagePad, 0, _pagePad, 28),
-              sliver: SliverToBoxAdapter(child: _emptyState()),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(_pagePad, 0, _pagePad, 28),
-              sliver: SliverList.builder(
-                itemCount: sessions.length,
-                itemBuilder: (context, i) {
-                  final s = sessions[i];
-                  return RepaintBoundary(
-                    child: _HistoryRow(
-                      session: s,
-                      removing: s.id == deletingId,
-                      onTap: () => onSession(s),
-                      onDelete: () => onDelete(s),
-                    ),
-                  );
-                },
-              ),
-            ),
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(inset, 0, inset, 28),
+            sliver: sessions.isEmpty
+                ? SliverToBoxAdapter(child: _emptyState())
+                : SliverList.builder(
+                    itemCount: sessions.length,
+                    itemBuilder: (_, i) {
+                      final session = sessions[i];
+                      return RepaintBoundary(
+                        key: ValueKey(session.id),
+                        child: _HistoryRow(
+                          session: session,
+                          removing: session.id == deletingId,
+                          onTap: () => onSession(session),
+                          onDelete: () => onDelete(session),
+                        ),
+                      );
+                    },
+                  ),
+          ),
         ],
       ),
     );
@@ -2283,52 +2258,61 @@ class _HistoryRow extends StatelessWidget {
           opacity: removing ? 0 : 1,
           duration: AppMotion.quick,
           curve: AppMotion.standard,
-          child: Pressable(
-            onTap: onTap,
-            haptic: false,
-            scale: 0.985,
-            child: _card(
-              margin: const EdgeInsets.only(top: 6),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                children: [
-                  _TrackThumb(points: session.points),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                          textBaseline: TextBaseline.alphabetic,
-                          children: [
-                            Expanded(
-                              child: Text(_dateCn(session.startTime),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: _txt(14, 600, _c(AppPalette.sand12))),
-                            ),
-                            Text('${km.toStringAsFixed(2)} km',
-                                style: _num(14, 600, AppPalette.accent)),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                            '${_clock(session.elapsed)}　${session.averagePaceLabel}',
-                            style: _num(12, 500, AppPalette.sand11)),
-                      ],
-                    ),
-                  ),
-                  // 44 宽的点击区，避免手指落在卡片空白处反而打开详情。
-                  Pressable(
-                    onTap: onDelete,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 7),
+            child: DecoratedBox(
+              decoration: _overviewCardDecoration(),
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  onTap: onTap,
+                  onLongPress: onDelete,
+                  borderRadius: BorderRadius.circular(20),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 55),
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-                      child: Icon(Icons.delete_outline,
-                          size: 16, color: _c(AppPalette.sand11)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 6),
+                      child: Row(
+                        children: [
+                          _TrackThumb(points: session.points),
+                          const SizedBox(width: 9),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${session.startTime.month}月${session.startTime.day}日',
+                                  style: _txt(13, 500, _c(AppPalette.sand12)),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${_clock(session.elapsed)} / ${session.averagePaceLabel}',
+                                  style: _num(12, 500, AppPalette.sand11),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text.rich(
+                              TextSpan(
+                                text: km.toStringAsFixed(2),
+                                style: _num(16, 600, AppPalette.sand12),
+                                children: const [
+                                  TextSpan(
+                                      text: ' km',
+                                      style: TextStyle(fontSize: 12)),
+                                ],
+                              ),
+                              textAlign: TextAlign.end,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -2347,21 +2331,19 @@ class _TrackThumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-        width: 54,
-        height: 46,
-        child: DecoratedBox(
-          position: DecorationPosition.foreground,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRules.thumbRadius),
-            border:
-                Border.all(width: AppRules.hairline, color: _c(AppPalette.sand6)),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppRules.thumbRadius),
-            child: CustomPaint(
-              painter: _ThumbPainter(points),
-              child: const SizedBox.expand(),
-            ),
+        width: 40,
+        height: 38,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: ColoredBox(
+            color: _c(AppPalette.sage3),
+            child: points.length < 2
+                ? const Icon(Icons.route_outlined,
+                    size: 20, color: Color(AppPalette.accent))
+                : CustomPaint(
+                    painter: _ThumbPainter(points),
+                    child: const SizedBox.expand(),
+                  ),
           ),
         ),
       );
@@ -2374,9 +2356,6 @@ class _ThumbPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawRect(
-        Offset.zero & size, Paint()..color = _c(AppPalette.sage3));
-    if (points.length < 2) return;
     final proj = projectTrack(points, size, pad: 7);
     final path = Path()..moveTo(proj.points.first.dx, proj.points.first.dy);
     for (final p in proj.points.skip(1)) {
@@ -2389,7 +2368,7 @@ class _ThumbPainter extends CustomPainter {
         ..strokeWidth = 2.4
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round
-        ..color = _c(AppPalette.accentStrong),
+        ..color = _c(AppPalette.accent),
     );
   }
 
@@ -2441,69 +2420,48 @@ class _MonthGrid extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 3),
         for (final wk in weeks)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Row(
-              children: [
-                for (final day in wk)
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 2),
-                      child: _cell(day),
-                    ),
-                  ),
-              ],
-            ),
+          Row(
+            children: [
+              for (final day in wk) Expanded(child: _cell(day)),
+            ],
           ),
       ],
     );
   }
 
   Widget _cell(int? day) {
-    if (day == null) return const SizedBox(height: 26);
+    if (day == null) return const SizedBox(height: 25);
     final done = runDays.contains(day);
     final isToday = day == today.day;
-    final int bg;
-    final int fg;
-    final int edge;
-    final int weight;
-    if (done) {
-      // 有跑步的日子始终填色，今天只多一圈主色描边，不会被「今天」的样式盖掉。
-      bg = AppPalette.teal9;
-      fg = AppPalette.sand12;
-      edge = isToday ? AppPalette.accent : AppPalette.teal9;
-      weight = 700;
-    } else if (isToday) {
-      bg = AppPalette.sand1;
-      fg = AppPalette.accent;
-      edge = AppPalette.accent;
-      weight = 700;
-    } else {
-      bg = AppPalette.sand2;
-      fg = AppPalette.sand11;
-      edge = AppPalette.sand6;
-      weight = 500;
-    }
-    // 42 个格子不再各带一个隐式动画控制器，切页时少一批对象要建。
-    return Container(
-      height: 26,
-      decoration: BoxDecoration(
-        color: _c(bg),
-        borderRadius: BorderRadius.circular(AppRules.cellRadius),
-        border: Border.all(
-            width: isToday ? 1 : AppRules.hairline, color: _c(edge)),
-      ),
-      child: Center(
-        child: Text('$day',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.values[weight ~/ 100],
-              color: _c(fg),
-              height: 1,
-              fontFeatures: const [FontFeature.tabularFigures()],
-                    )),
+    return Semantics(
+      label: '${today.month}月$day日${isToday ? '，今天' : ''}${done ? '，有跑步' : ''}',
+      excludeSemantics: true,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 25),
+        decoration: isToday
+            ? BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: _c(AppPalette.accent)),
+              )
+            : null,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 3),
+              child: Text('$day',
+                  style: _num(11, done ? 700 : 500,
+                      done ? AppPalette.performText : AppPalette.sand12)),
+            ),
+            if (done)
+              Positioned(
+                bottom: 2,
+                child: _liveDot(3, AppPalette.performText),
+              ),
+          ],
+        ),
       ),
     );
   }
