@@ -75,6 +75,7 @@ class TerrainPainter extends CustomPainter {
   final List<TrackPoint> points;
   final Rect view;
   final bool track;
+  final bool live;
 
   /// 整条轨迹画入进度，0 到 1。结果页用它做「一笔画出来」的入场。
   final double progress;
@@ -87,6 +88,7 @@ class TerrainPainter extends CustomPainter {
     required this.points,
     required this.view,
     required this.track,
+    this.live = false,
     this.progress = 1,
     this.tail = 1,
   });
@@ -136,15 +138,19 @@ class TerrainPainter extends CustomPainter {
 
     // 画布只按宽度铺，纵向可见范围随容器高度变化；
     // 轨迹必须投影到这块真正可见的矩形里，否则窄高的地图会把首尾裁掉。
+    final visibleHeight = live ? size.height / (s * sy) : size.height / s;
     final visible = Rect.fromLTWH(
       view.left,
-      view.center.dy - size.height / s / 2,
+      view.center.dy - visibleHeight / 2,
       view.width,
-      size.height / s,
+      visibleHeight,
     );
     final pad = math.min(16.0, visible.width * 0.08);
     final projection = projectTrack(points, visible.size, pad: pad);
     final origin0 = visible.topLeft;
+    final routeColor = _c(live ? AppPalette.accent : AppPalette.accentStrong);
+    Offset? currentPosition =
+        live && points.length == 1 ? visible.center : null;
     if (projection.isValid) {
       final pts = <Offset>[
         for (final p in projection.points)
@@ -163,21 +169,24 @@ class TerrainPainter extends CustomPainter {
         budget = total - segs.last * (1 - tail.clamp(0.0, 1.0));
       }
       final drawn = Path()..moveTo(pts.first.dx, pts.first.dy);
+      var tip = pts.first;
       double walked = 0;
       for (int i = 1; i < pts.length; i++) {
         final seg = segs[i - 1];
         if (walked + seg <= budget) {
-          drawn.lineTo(pts[i].dx, pts[i].dy);
+          tip = pts[i];
+          drawn.lineTo(tip.dx, tip.dy);
           walked += seg;
         } else {
           final rest = (budget - walked) / (seg <= 0 ? 1 : seg);
           if (rest > 0) {
-            final end = Offset.lerp(pts[i - 1], pts[i], rest)!;
-            drawn.lineTo(end.dx, end.dy);
+            tip = Offset.lerp(pts[i - 1], pts[i], rest)!;
+            drawn.lineTo(tip.dx, tip.dy);
           }
           break;
         }
       }
+      if (live) currentPosition = tip;
       final stroke = (3.6 * s).clamp(2.4, 4.6);
       final cap = StrokeCap.round;
       canvas.drawPath(
@@ -196,45 +205,54 @@ class TerrainPainter extends CustomPainter {
           ..strokeWidth = stroke
           ..strokeCap = cap
           ..strokeJoin = StrokeJoin.round
-          ..color = _c(AppPalette.accentStrong),
+          ..color = routeColor,
       );
     }
 
     final dot = (4.6 * s).clamp(2.6, 5.2);
     final origin = projection.isValid ? projection.points.first : null;
-    final end = projection.isValid && progress >= 1 && tail >= 1
+    final end = !live && projection.isValid && progress >= 1 && tail >= 1
         ? projection.points.last
         : null;
     if (origin != null) {
-      final c = Offset(origin.dx + origin0.dx, origin.dy + origin0.dy);
-      canvas.drawCircle(c, dot, Paint()..color = _c(AppPalette.accentStrong));
-      canvas.drawCircle(
-        c,
-        dot,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.6
-          ..color = _c(AppPalette.sand1),
-      );
+      final center = origin + origin0;
+      if (center != currentPosition) {
+        _paintMarker(canvas, center, dot, routeColor, solid: !live);
+      }
     }
     if (end != null && (end != origin)) {
-      final c = Offset(end.dx + origin0.dx, end.dy + origin0.dy);
-      canvas.drawCircle(c, dot, Paint()..color = _c(AppPalette.sand1));
-      canvas.drawCircle(
-        c,
-        dot,
-        Paint()
-          ..color = _c(AppPalette.accentStrong)
-          ..strokeWidth = 2
-          ..style = PaintingStyle.stroke,
-      );
+      _paintMarker(canvas, end + origin0, dot, routeColor, solid: false);
     }
+    if (currentPosition != null) {
+      _paintMarker(canvas, currentPosition, dot, routeColor, solid: true);
+    }
+  }
+
+  void _paintMarker(
+    Canvas canvas,
+    Offset center,
+    double radius,
+    Color routeColor, {
+    required bool solid,
+  }) {
+    final white = _c(AppPalette.sand1);
+    canvas.drawCircle(
+        center, radius, Paint()..color = solid ? routeColor : white);
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..color = solid ? white : routeColor
+        ..strokeWidth = solid ? 1.6 : 2
+        ..style = PaintingStyle.stroke,
+    );
   }
 
   @override
   bool shouldRepaint(covariant TerrainPainter old) =>
       old.points.length != points.length ||
       old.track != track ||
+      old.live != live ||
       old.view != view ||
       (old.progress - progress).abs() > 0.001 ||
       (old.tail - tail).abs() > 0.001 ||
@@ -248,6 +266,7 @@ class TerrainMap extends StatelessWidget {
   final List<TrackPoint> points;
   final Rect view;
   final bool track;
+  final bool live;
   final double radius;
   final double progress;
   final double tail;
@@ -257,6 +276,7 @@ class TerrainMap extends StatelessWidget {
     this.points = const <TrackPoint>[],
     this.view = const Rect.fromLTWH(0, 0, 320, 360),
     this.track = true,
+    this.live = false,
     this.radius = AppRules.mapRadius,
     this.progress = 1,
     this.tail = 1,
@@ -277,6 +297,7 @@ class TerrainMap extends StatelessWidget {
               points: points,
               view: view,
               track: track,
+              live: live,
               progress: progress,
               tail: tail,
             ),

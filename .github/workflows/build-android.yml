@@ -1,4 +1,4 @@
-name: 构建安卓安装包
+name: 构建 Android 和 iOS
 
 on:
   push:
@@ -47,11 +47,57 @@ jobs:
       - name: 归档安装包
         run: |
           mkdir -p ../dist
-          cp build/app/outputs/flutter-apk/app-release.apk ../dist/daily-run-v0.1.0.apk
+          version=$(awk '/^version:/ {print $2; exit}' pubspec.yaml)
+          cp build/app/outputs/flutter-apk/app-release.apk "../dist/daily-run-v${version%%+*}.apk"
 
       - name: 上传安装包
         uses: actions/upload-artifact@v4
         with:
           name: daily-run-apk
           path: dist/*.apk
+          if-no-files-found: error
+
+  ios:
+    name: 构建 iOS App
+    runs-on: macos-26
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - name: 取代码
+        uses: actions/checkout@v4
+
+      - name: 装 Flutter 3.47.4
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.4
+          cache: true
+
+      - name: 取依赖
+        run: flutter pub get
+
+      - name: 构建 iOS 模拟器 App
+        run: |
+          flutter build ios --simulator --debug
+          mkdir -p ../dist
+          ditto -c -k --sequesterRsrc --keepParent build/ios/iphonesimulator/Runner.app ../dist/daily-run-ios-simulator.app.zip
+
+      - name: 上传 iOS 模拟器 App
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-run-ios-simulator
+          path: dist/daily-run-ios-simulator.app.zip
+          if-no-files-found: error
+
+      - name: 构建 iOS 真机 App（未签名）
+        run: |
+          flutter build ios --release --no-codesign
+          ditto -c -k --sequesterRsrc --keepParent build/ios/iphoneos/Runner.app ../dist/daily-run-ios-unsigned.app.zip
+
+      - name: 上传 iOS 真机 App（未签名）
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-run-ios-unsigned
+          path: dist/daily-run-ios-unsigned.app.zip
           if-no-files-found: error

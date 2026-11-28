@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, TargetPlatform;
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -14,19 +15,29 @@ class DeviceLocationSource implements LocationSource {
   @override
   bool get isSimulated => false;
 
-  LocationSettings get _settings => AndroidSettings(
-        // 国内机型常没有可用的 Google Play 服务，直接走系统 LocationManager 更稳。
-        forceLocationManager: true,
+  LocationSettings get _settings {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      return AppleSettings(
         accuracy: LocationAccuracy.high,
+        activityType: ActivityType.fitness,
         distanceFilter: 3,
-        intervalDuration: Duration(seconds: 2),
-        foregroundNotificationConfig: ForegroundNotificationConfig(
-          notificationTitle: '正在记录运动',
-          notificationText: '每日跑步正在记录轨迹，暂停或结束后立即停止',
-          enableWakeLock: false,
-          setOngoing: true,
-        ),
+        allowBackgroundLocationUpdates: false,
       );
+    }
+    return AndroidSettings(
+      // 国内机型常没有可用的 Google Play 服务，直接走系统 LocationManager 更稳。
+      forceLocationManager: true,
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 3,
+      intervalDuration: Duration(seconds: 2),
+      foregroundNotificationConfig: ForegroundNotificationConfig(
+        notificationTitle: '正在记录运动',
+        notificationText: '每日跑步正在记录轨迹，暂停或结束后立即停止',
+        enableWakeLock: false,
+        setOngoing: true,
+      ),
+    );
+  }
 
   @override
   Future<bool> ensurePermission() async {

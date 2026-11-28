@@ -193,17 +193,36 @@ class _PressableState extends State<Pressable> {
 }
 
 /// 全 App 的浮层入口：淡入加 0.96 → 1 的轻微放大。
-Future<T?> showAppDialog<T>(BuildContext context, WidgetBuilder builder) {
+Future<T?> showAppDialog<T>(
+  BuildContext context,
+  WidgetBuilder builder, {
+  bool fromBottom = false,
+}) {
   return showGeneralDialog<T>(
     context: context,
     barrierDismissible: true,
     barrierLabel: '关闭',
     barrierColor: const Color(0x471F211F),
-    transitionDuration: AppMotion.base,
+    transitionDuration: fromBottom && !AppMotion.reduce
+        ? const Duration(milliseconds: 220)
+        : AppMotion.base,
     pageBuilder: (context, animation, secondary) => builder(context),
     transitionBuilder: (context, animation, secondary, child) {
       final curved =
           CurvedAnimation(parent: animation, curve: AppMotion.emphasized);
+      if (fromBottom) {
+        return FadeTransition(
+          opacity: curved,
+          child: AnimatedBuilder(
+            animation: curved,
+            builder: (_, child) => Transform.translate(
+              offset: Offset(0, 16 * (1 - curved.value)),
+              child: child,
+            ),
+            child: child,
+          ),
+        );
+      }
       return FadeTransition(
         opacity: curved,
         child: ScaleTransition(

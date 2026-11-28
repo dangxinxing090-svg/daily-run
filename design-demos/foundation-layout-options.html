@@ -1,0 +1,1084 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>每日跑步 · 基础样式与导航</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      background: #eeefed;
+      color: #202528;
+      --runner-mask: url("data:image/png;base64,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");
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; }
+    button, input { font: inherit; }
+    button { color: inherit; cursor: pointer; }
+    button:focus-visible, input:focus-visible, summary:focus-visible {
+      outline: 2px solid #1465b6;
+      outline-offset: 3px;
+    }
+    button:disabled { cursor: default; }
+    [hidden] { display: none !important; }
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden;
+      clip-path: inset(50%); white-space: nowrap;
+    }
+    .board { max-width: 1420px; margin: auto; padding: 48px 44px 54px; }
+    .board-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+    .product { display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 650; }
+    .product-mark { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: #0d74ce; color: white; }
+    .runner { display: inline-block; background: currentColor; mask: var(--runner-mask) center / contain no-repeat; width: 1em; height: 1em; flex: none; }
+    .product-mark .runner { font-size: 20px; }
+    h1 { font-size: clamp(1.9rem, 3.6vw, 3.2rem); line-height: 1.16; font-weight: 680; letter-spacing: -.075em; margin: 13px 0 0; }
+    .board-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+    .switcher { display: inline-flex; align-items: center; padding: 4px; background: #dfe2de; border: 1px solid #d7dad5; border-radius: 13px; }
+    .switcher button, .size-button, .review-link {
+      border: 0; background: transparent; min-height: 39px; padding: 0 15px;
+      border-radius: 9px; font-size: .8125rem; font-weight: 570; white-space: nowrap;
+    }
+    .switcher button[aria-pressed="true"] { background: #fff; box-shadow: 0 1px 3px #142b1d1c; }
+    .size-button { min-height: 49px; border: 1px solid #cdd1cb; }
+    .review-link { display: inline-flex; align-items: center; min-height: 49px; border: 1px solid #cdd1cb; color: inherit; text-decoration: none; }
+    .review-link:focus-visible { outline: 2px solid #1465b6; outline-offset: 3px; }
+    .size-button[aria-pressed="true"] { background: #f8f9f7; }
+    .intro { margin: 13px 0 26px; color: #535952; font-size: .875rem; line-height: 1.55; }
+    .options { border-top: 1px solid #cfd3ce; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px; padding-top: 23px; }
+    .option { min-width: 0; }
+    .option-head { display: grid; max-width: 390px; margin: 0 auto 14px; gap: 6px; }
+    .option-title { display: flex; align-items: baseline; gap: 9px; }
+    .option-id { font: 600 13px ui-monospace, monospace; color: #525b55; }
+    .option h2 { font-size: 1.3125rem; letter-spacing: -.045em; margin: 0; }
+    .option-head p { line-height: 1.5; color: #535952; margin: 0; font-size: .8125rem; }
+    .device {
+      margin: 0 auto; width: 100%; max-width: 390px; height: 714px; display: flex; flex-direction: column;
+      position: relative; overflow: hidden; border: 1px solid #20262a23; border-radius: 34px;
+      background: var(--bg); box-shadow: 0 13px 26px #26302a13, 0 1px 3px #25302812;
+      color: var(--text); font-size: var(--body);
+    }
+    .board[data-size="compact"] .device { max-width: 320px; height: 568px; }
+    .board[data-size="compact"] .option-head, .board[data-size="compact"] .tokens { max-width: 320px; }
+
+    .calm {
+      --bg: #f9f9f8; --surface: #fdfdfc; --text: #1f211f; --muted: #6f6a62; --line: #dbd8d5;
+      --action: #0d74ce; --action-text: #106bbb; --action-soft: #e6f4fe; --track: #0d74ce;
+      --result: #007c6d; --result-soft: #e0f8f3;
+      --danger: #ce2c31; --danger-soft: #feebec;
+      --body: 1rem; --title: 1.75rem; --caption: .8125rem; --display: 3.5rem;
+      --pad: 20px; --gap: 16px; --radius: 20px; --nav-height: 58px; --start-size: 154px;
+      --map-bg: #eef2ea; --map-green: #d9e4d1; --map-water: #d5e7f1; --map-line: #fffefa;
+    }
+    .track {
+      --bg: #f8fafc; --surface: #f1f7fe; --text: #111c2d; --muted: #4c5f74; --line: #cad8e7;
+      --action: #154fb3; --action-soft: #ddecfb; --track: #154fb3;
+      --result: #007668; --result-soft: #e0f8f3;
+      --danger: #ce2c31; --danger-soft: #feebec;
+      --body: 1rem; --title: 1.875rem; --caption: .8125rem; --display: 4.5rem;
+      --pad: 16px; --gap: 12px; --radius: 12px; --nav-height: 56px; --start-size: 108px;
+      --map-bg: #edf4fa; --map-green: #ddeaf6; --map-water: #d2e6f9; --map-line: #fff;
+    }
+    .journal {
+      --bg: #f7f5ee; --surface: #fffdf6; --text: #292e2b; --muted: #626456; --line: #dad8ca;
+      --action: #345e85; --action-soft: #e5edf1; --track: #345e85;
+      --result: #387059; --result-soft: #e7eddf;
+      --danger: #a63330; --danger-soft: #f9e9e3;
+      --body: 1rem; --title: 2rem; --caption: .875rem; --display: 3.75rem;
+      --pad: 24px; --gap: 16px; --radius: 16px; --nav-height: 54px; --start-size: 132px;
+      --map-bg: #efeee2; --map-green: #dfe5d6; --map-water: #dbe7e9; --map-line: #fffdf7;
+    }
+    .screen { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    .screen-scroll { flex: 1; min-height: 0; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+    .content {
+      min-height: 100%; display: flex; flex-direction: column; gap: var(--gap);
+      padding: 20px var(--pad) var(--gap);
+    }
+    .screen-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 40px; }
+    .screen-header h3 { margin: 0; font-size: var(--title); letter-spacing: -.065em; font-weight: 680; line-height: 1.12; overflow-wrap: anywhere; }
+    .meta, .label { color: var(--muted); font-size: var(--caption); line-height: 1.35; }
+    .meta { text-align: end; }
+    .number { font-variant-numeric: tabular-nums lining-nums; letter-spacing: -.045em; }
+    .icon { width: 1.15em; height: 1.15em; flex: none; display: inline-block; background: currentColor; mask: var(--icon) center / contain no-repeat; }
+    .card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+    .goal { display: block; padding: 14px 15px; width: 100%; text-align: start; }
+    .goal-line, .goal-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .goal-title, .goal-value { display: inline-flex; flex-wrap: wrap; gap: 5px; align-items: baseline; font-weight: 650; }
+    .goal-value .icon { align-self: center; color: var(--muted); font-size: 13px; }
+    .progress { display: block; height: 5px; margin: 10px 0 7px; background: var(--action-soft); border-radius: 6px; overflow: hidden; }
+    .progress span { display: block; border-radius: inherit; height: 100%; background: var(--action); }
+    .progress[data-met="true"] span { background: var(--result); }
+    .stats { display: grid; grid-template-columns: repeat(var(--columns, 3), minmax(0,1fr)); padding: 12px 3px; }
+    .metric { min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 0 6px; text-align: center; }
+    .metric + .metric { border-inline-start: 1px solid var(--line); }
+    .metric-value { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 4px; font-weight: 675; font-size: 1.125rem; line-height: 1.15; }
+    .metric-value small, .headline small { font-size: .75em; letter-spacing: -.02em; font-weight: 590; }
+    .metric-value small { font-size: .7rem; }
+    .stats[data-accent] .metric-value { color: var(--result); }
+    .start-stage { flex: 1; min-height: 196px; display: grid; place-items: center; position: relative; }
+    .start-button {
+      display: grid; place-items: center; width: var(--start-size); height: var(--start-size); z-index: 1;
+      border: 0; border-radius: 50%; color: white; background: var(--action);
+      box-shadow: 0 10px 25px color-mix(in srgb, var(--action) 23%, transparent);
+      transition: transform 120ms ease-out;
+    }
+    .start-button:active { transform: scale(.97); }
+    .start-button .runner { font-size: calc(var(--start-size) * .57); }
+    .calm .start-stage::before, .calm .start-stage::after, .journal .start-stage::before {
+      content: ""; position: absolute; border-radius: 50%; pointer-events: none;
+    }
+    .calm .start-stage::before { width: 202px; height: 202px; background: var(--action-soft); }
+    .calm .start-stage::after { width: 226px; height: 226px; border: 1px solid #c9dff0; }
+    .calm .start-button { background: linear-gradient(145deg, #0a6dca, #0d74ce 68%, #125eab); }
+    .track .start-stage {
+      flex: 1; background: var(--surface); border-radius: var(--radius);
+      border: 1px solid var(--line); overflow: hidden; min-height: 171px;
+    }
+    .track .start-stage::before {
+      content: ""; width: 270px; height: 126px; position: absolute; border: 1px solid #b8d0ef;
+      border-radius: 99px; transform: rotate(-23deg);
+      box-shadow: 0 0 0 10px var(--surface), 0 0 0 11px #c2d8f2, 0 0 0 21px var(--surface), 0 0 0 22px #cfdef1, 0 0 0 32px var(--surface), 0 0 0 33px #d9e4f3;
+    }
+    .track .start-button { border-radius: 25px; box-shadow: 0 7px 0 #112f6e, 0 12px 20px #1749a32b; }
+    .track .start-button:active { transform: translateY(3px); box-shadow: 0 4px 0 #112f6e; }
+    .track .goal { border-inline-start: 3px solid var(--action); }
+    .journal .screen-header h3 { font-family: "Songti SC", "Noto Serif SC", serif; font-weight: 800; letter-spacing: -.055em; }
+    .journal .goal {
+      border-width: 1px 0; border-radius: 0; padding: 12px 0 13px;
+      background: transparent;
+    }
+    .journal .progress { background: var(--line); height: 3px; }
+    .journal .start-stage::before {
+      background: repeating-radial-gradient(circle, transparent 0 13px, #d3dbd5 13px 14px, transparent 14px 19px);
+      width: 210px; height: 210px; mask: radial-gradient(circle,#000 54%,transparent 70%);
+    }
+    .journal .start-button { box-shadow: 0 5px 14px #284e762f; }
+    .journal .today-content .stats { grid-template-columns: 1fr; padding: 0; background: transparent; border: 0; border-radius: 0; border-top: 1px solid var(--line); }
+    .journal .today-content .metric {
+      flex-direction: row; justify-content: space-between; gap: 8px; padding: 8px 0;
+      text-align: start; border: 0; border-bottom: 1px solid var(--line);
+    }
+
+    .navigation {
+      flex: none; display: grid; grid-template-columns: repeat(3,minmax(0,1fr));
+      align-items: stretch; min-height: var(--nav-height); border-top: 1px solid var(--line);
+      background: var(--surface); padding: 0 11px 4px;
+    }
+    .navigation button {
+      position: relative; isolation: isolate; border: 0; background: transparent; min-width: 0; min-height: 48px;
+      display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 3px;
+      color: var(--muted); padding: 5px 2px; font-size: .8125rem; line-height: 1.15;
+    }
+    .navigation button[aria-current="page"] { color: var(--action-text, var(--action)); font-weight: 680; }
+    .navigation .icon { font-size: 18px; }
+    .calm .navigation button[aria-current="page"]::before {
+      content: ""; position: absolute; inset: 6px 15%; border-radius: 16px; background: var(--action-soft); z-index: -1;
+    }
+    .track .navigation { border-top: 1px solid var(--line); background: var(--bg); padding-inline: var(--pad); }
+    .track .navigation button[aria-current="page"]::before {
+      content: ""; position: absolute; top: -1px; height: 3px; width: 83%; border-radius: 0 0 3px 3px; background: var(--action);
+    }
+    .journal .navigation {
+      margin: 0 var(--pad) 12px; padding: 2px 4px;
+      background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+      box-shadow: 0 4px 12px #403f3010;
+    }
+    .journal .navigation button { flex-direction: row; gap: 4px; border-radius: 999px; padding-inline: 3px; }
+    .journal .navigation .icon { font-size: 15px; }
+    .journal .navigation button[aria-current="page"] { background: var(--action-soft); }
+    .nav-active { position: absolute; top: 8px; right: calc(50% - 19px); width: 6px; height: 6px; border-radius: 50%; background: var(--result); }
+    .journal .nav-active { right: 9px; top: 7px; }
+    .home-safe { height: 13px; flex: none; display: grid; place-items: start center; }
+    .home-safe::after { content: ""; width: 85px; height: 4px; border-radius: 6px; background: var(--text); opacity: .68; }
+    .track .running-active .home-safe { background: var(--surface); }
+
+    .run-content { gap: var(--gap); }
+    .run-header-label, .status { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+    .status { color: var(--result); font-size: var(--caption); font-weight: 650; line-height: 1.3; }
+    .status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .status[data-paused="true"] { color: var(--muted); }
+    .headline { font-size: var(--display); line-height: .97; font-weight: 730; margin-top: 4px; overflow-wrap: anywhere; }
+    .headline small { font-size: .28em; margin-inline-start: .35em; }
+    .head-metric { display: grid; gap: 7px; }
+    .track .head-metric { padding: 10px 0 6px; }
+    .track .headline { color: var(--action); }
+    .journal .headline { font-weight: 610; }
+    .map { min-height: 125px; position: relative; overflow: hidden; background: var(--map-bg); border-radius: var(--radius); border: 1px solid var(--line); }
+    .run-map { flex: 1; min-height: 150px; }
+    .track .run-map { min-height: 121px; }
+    .journal .run-map { border-radius: var(--radius) var(--radius) 5px 5px; }
+    .map canvas { width: 100%; height: 100%; position: absolute; inset: 0; }
+    .map-caption {
+      position: absolute; margin: 0; z-index: 1; bottom: 8px; left: 8px; border-radius: 6px;
+      padding: 4px 7px; background: var(--surface); color: var(--muted); font-size: .75rem;
+    }
+    .pace-chart { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 12px; }
+    .pace-bars { display: flex; align-items: flex-end; gap: 4px; height: 28px; }
+    .pace-bars span { flex: 1; border-radius: 3px 3px 0 0; background: var(--result); opacity: .67; }
+    .run-controls {
+      flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap);
+      padding: 0 var(--pad) 12px;
+    }
+    .track .run-controls { background: var(--surface); border-top: 1px solid var(--line); padding-top: 12px; grid-template-columns: 3fr 2fr; }
+    .journal .run-controls { padding-bottom: 10px; }
+    .action-button, .secondary-button, .end-button, .quiet-button {
+      min-height: 48px; padding: 7px 8px; border: 1px solid transparent; border-radius: min(var(--radius), 16px);
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      font-size: .9375rem; line-height: 1.2; font-weight: 650;
+    }
+    .action-button { color: #fff; background: var(--action); }
+    .secondary-button { background: var(--surface); border-color: var(--line); color: var(--text); }
+    .end-button { color: var(--danger); background: var(--danger-soft); }
+    .quiet-button { border: 0; background: transparent; color: var(--action); padding-inline: 5px; }
+    .tracking-link { margin-top: auto; width: 100%; }
+    .tracking-link span { font-variant-numeric: tabular-nums; }
+
+    .records h4, .calendar h4 { margin: 0; font-size: .9375rem; font-weight: 660; }
+    .calendar { padding: 12px 13px 10px; }
+    .calendar-head { display: flex; justify-content: space-between; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-bottom: 6px; }
+    .day-grid { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); text-align: center; }
+    .day-grid > span { min-height: 25px; display: grid; place-items: center; position: relative; font-size: .75rem; }
+    .day-grid .weekday { color: var(--muted); }
+    .day-grid .run-day { color: var(--result); font-weight: 710; }
+    .day-grid .run-day::after { content: ""; position: absolute; bottom: 2px; width: 3px; height: 3px; border-radius: 50%; background: currentColor; }
+    .day-grid .today-date { border: 1px solid var(--action); border-radius: 8px; }
+    .records { display: grid; gap: 7px; }
+    .record-row {
+      display: grid; grid-template-columns: 42px minmax(0,1fr) auto; gap: 8px;
+      min-height: 55px; width: 100%; align-items: center; padding: 6px 8px; text-align: start;
+    }
+    .record-route { display: grid; place-items: center; width: 40px; height: 38px; color: var(--track); border-radius: 8px; background: var(--map-bg); }
+    .record-route .icon { font-size: 21px; }
+    .record-date { align-self: center; font-size: .875rem; }
+    .record-date small { display: block; margin-top: 2px; }
+    .record-distance { font-size: 1.0625rem; font-weight: 670; }
+    .record-distance small { font-size: .7rem; }
+    .track .history-content .record-row { border-inline-start: 3px solid #b4cbe7; }
+    .journal .history-content .stats { padding-block: 12px 13px; border: 0; border-block: 1px solid var(--line); background: transparent; border-radius: 0; }
+    .journal .history-content .stats .metric-value { font-size: 1.45rem; }
+    .journal .calendar { padding: 2px 0; background: transparent; border-width: 0 0 1px; border-radius: 0; }
+    .journal .record-row { grid-template-columns: 42px minmax(0,1fr) auto; border-radius: 0; background: transparent; border-width: 0 0 1px; padding-inline: 0; }
+    .journal .record-route { position: relative; background: transparent; }
+    .journal .record-route::after { content: ""; position: absolute; top: 36px; bottom: -19px; left: 47%; width: 1px; background: var(--line); }
+    .journal .record-row:last-child .record-route::after { display: none; }
+
+    .sheet {
+      position: absolute; z-index: 3; inset: 0; display: flex; align-items: flex-end; padding: 8px;
+      background: #12223155;
+    }
+    .sheet-panel {
+      width: 100%; max-height: 97%; overflow: auto; display: grid; gap: 12px; padding: 16px;
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+      box-shadow: 0 10px 32px #12223132; line-height: 1.4;
+    }
+    .sheet-panel h4 { margin: 0; font-size: 1.125rem; }
+    .sheet-panel p { margin: 0; }
+    .sheet-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .sheet-field { width: 100%; min-height: 48px; padding: 8px; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 9px; }
+    .share-card {
+      width: min(100%, 236px); aspect-ratio: 3 / 4; justify-self: center; display: grid;
+      grid-template-rows: auto minmax(110px,1fr) auto; gap: 10px; padding: 10px;
+      background: var(--bg); border-radius: var(--radius); border: 1px solid var(--line);
+    }
+    .share-card .stats { padding-block: 7px; }
+    .share-card .metric-value { font-size: .9rem; }
+    .result-content .action-button { align-self: stretch; }
+    .result-content .map { flex: 1; }
+    .result-content .status { color: var(--result); }
+    .tokens { max-width: 390px; margin: 14px auto 0; border-top: 1px solid #cfd3ce; color: #48514a; }
+    .tokens summary { font-size: .875rem; font-weight: 650; cursor: pointer; padding: 10px 0; }
+    .tokens dl { margin: 0 0 8px; display: grid; grid-template-columns: max-content 1fr; gap: 7px 12px; font-size: .8125rem; line-height: 1.45; }
+    .tokens dt, .tokens dd { margin: 0; }
+    .tokens dt { color: #555d56; font-weight: 550; }
+    .tokens p { font-size: .8125rem; line-height: 1.55; margin: 9px 0 0; }
+    .palette { display: flex; gap: 5px; }
+    .palette span { width: 14px; height: 14px; border-radius: 50%; border: 1px solid #2638292c; }
+    .board-foot { border-top: 1px solid #cfd3ce; margin-top: 18px; padding-top: 10px; color: #535952; font-size: .8125rem; line-height: 1.6; }
+    .board-foot p { margin: 0; }
+
+    @media (max-width: 1080px) {
+      .board { padding-inline: 22px; }
+      .options { gap: 18px; }
+      .journal { --pad: 17px; }
+    }
+    @media (max-width: 900px) {
+      .board { padding-inline: 18px; }
+      .options { gap: 14px; grid-template-columns: repeat(3, minmax(270px, 1fr)); overflow-x: auto; padding-bottom: 14px; scroll-snap-type: inline proximity; }
+      .option { scroll-snap-align: start; }
+      .device { height: 658px; }
+    }
+    @media (max-width: 660px) {
+      .board { padding: 26px 12px 26px; }
+      .board-head { align-items: start; flex-direction: column; gap: 13px; }
+      .intro { margin-top: 11px; }
+      .options { grid-template-columns: repeat(3, minmax(264px, 86vw)); }
+      .size-button { min-height: 45px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .start-button { transition: none; } }
+    .device { container-type: size; }
+    @container (max-height: 600px) {
+      .content { padding-top: 13px; gap: min(var(--gap), 12px); }
+      .start-stage { min-height: 145px; }
+      .start-button { width: calc(var(--start-size) * .78); height: calc(var(--start-size) * .78); }
+      .start-button .runner { font-size: calc(var(--start-size) * .48); }
+      .calm .start-stage::before { width: 150px; height: 150px; }
+      .calm .start-stage::after { width: 168px; height: 168px; }
+      .journal .start-stage::before { width: 148px; height: 148px; }
+      .run-map { min-height: 103px; }
+      .track .run-map { min-height: 103px; }
+      .track .head-metric { padding-block: 2px; }
+    }
+    @container (max-width: 325px) {
+      .content { padding-inline: min(var(--pad), 16px); }
+      .headline { font-size: min(var(--display), 3.5rem); }
+      .metric-value { font-size: 1rem; }
+      .journal .navigation { margin-inline: 12px; }
+      .track .run-controls { gap: 8px; }
+    }
+
+    .board[data-view="review"] { max-width: 980px; }
+    .board[data-view="review"] .board-head { flex-wrap: wrap; }
+    .board[data-view="review"] .options { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 32px; }
+    @media (max-width: 660px) {
+      .board[data-view="review"] .options { grid-template-columns: repeat(2,minmax(264px,86vw)); gap: 14px; }
+      .board[data-view="review"] .switcher { flex-wrap: wrap; max-width: 100%; }
+    }
+
+    .refined .today-content .screen-header { align-items: baseline; }
+    .refined .goal-value { column-gap: 8px; }
+    .refined .goal-value .icon { width: 16px; height: 16px; }
+    .refined .goal-foot .number { margin-inline-end: 24px; margin-inline-start: auto; text-align: end; }
+    .refined .progress { background: #f1f0ef; }
+    .refined .goal-foot[data-met="true"] > :first-child { color: var(--result); font-weight: 650; }
+    .refined .today-content .metric .metric-value { color: var(--text); gap: 3px 4px; }
+    .refined .today-content .metric:first-child .metric-value { color: var(--result); }
+    .refined .today-content .metric-value small { font-size: .75rem; white-space: nowrap; }
+    .refined .metric-digits { overflow-wrap: anywhere; }
+    .refined .today-content :is(.goal, .stats) { border: 1px solid var(--line); box-shadow: none; }
+    .refined .goal { transition: background-color 120ms ease-out; }
+    .refined .goal:active { background: #f1f0ef; }
+    .refined .start-button, .button-options .start-button {
+      background: var(--button-face, var(--action));
+      box-shadow: 0 6px 18px color-mix(in srgb, var(--action) 14%, transparent),
+        var(--button-edge, inset 0 0 0 transparent);
+      transition: transform 150ms ease-out, box-shadow 150ms ease-out, filter 150ms ease-out;
+    }
+    .refined .start-button:active, .button-options .start-button:active {
+      box-shadow: 0 2px 8px color-mix(in srgb, var(--action) 10%, transparent),
+        var(--button-edge, inset 0 0 0 transparent);
+      filter: brightness(.95);
+      transition-duration: 90ms;
+    }
+    [data-button-design="gradient"] { --button-face: linear-gradient(145deg, #0a6dca, #0d74ce 68%, #125eab); }
+    [data-button-design="rim"] { --button-edge: inset 0 0 0 4px #125da4, inset 0 5px 10px #3a8ed8; }
+    .refined .today-content .start-stage { min-height: 280px; --status-offset: 121px; }
+    .refined .start-status {
+      position: absolute; top: calc(50% + var(--status-offset)); inset-inline: 0;
+      margin: 0; color: var(--muted); text-align: center; font-size: var(--caption); line-height: 1.3;
+    }
+    .refined .start-button[aria-disabled="true"] { cursor: wait; }
+    .refined .navigation .icon { width: 21px; height: 21px; }
+    .refined .navigation button[aria-current="page"]::before { inset-inline: max(0px, calc((100% - 64px) / 2)); }
+    .refined .run-content .screen-header { min-height: 1.35em; }
+    .refined .run-kpis { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+    .refined .run-kpis .metric { align-items: start; padding: 0; text-align: start; border: 0; }
+    .refined .run-kpis .metric-value { font-size: 1.75rem; gap: 4px; justify-content: start; }
+    .refined .run-kpis small { font-size: .8125rem; color: var(--muted); }
+    .refined .run-content .run-map { min-height: 125px; }
+    .refined .run-content .map-caption { position: absolute; clip-path: inset(50%); margin: -1px; }
+    .refined .run-content .headline { line-height: 1; }
+    .refined .run-controls { gap: 16px; }
+    .refined .run-controls button { min-height: 52px; }
+    .refined .run-secondary { display: grid; gap: 10px; }
+    .refined .run-secondary .pace-chart { min-height: 28px; }
+    .page-leaving {
+      position: absolute; z-index: 2; inset: 0 0 auto; pointer-events: none;
+      background: var(--bg); overflow: hidden;
+    }
+    .refined .sheet { animation: reveal-scrim 220ms ease-out; }
+    .refined .sheet-panel { animation: reveal-panel 220ms cubic-bezier(.2,.7,.25,1); }
+    @keyframes reveal-scrim { from { background-color: transparent; } }
+    @keyframes reveal-panel { from { opacity: 0; transform: translateY(16px); } }
+    @media (prefers-reduced-motion: reduce) {
+      .refined .goal, .refined .start-button, .button-options .start-button { transition: none; }
+      .refined .start-button:active, .button-options .start-button:active { transform: none; }
+      .refined .sheet, .refined .sheet-panel { animation: none; }
+    }
+    @container (max-height: 600px) {
+      .refined .today-content .start-stage { min-height: 216px; --status-offset: 87px; }
+      .refined .run-content .run-map { min-height: 104px; }
+    }
+    .button-options {
+      display: grid; gap: 12px; margin: 24px 0; padding: 20px 18px 16px;
+      background: #f6f7f4; border: 1px solid #dbded8; border-radius: 18px;
+    }
+    .button-options h2 { font-size: 1.2rem; letter-spacing: -.04em; margin: 0; }
+    .button-options p { color: #535952; font-size: .8125rem; line-height: 1.45; margin: 0; }
+    .button-examples { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
+    .button-example {
+      --start-size: 112px;
+      min-width: 0; display: grid; padding: 8px 7px 11px; text-align: center;
+      border: 1px solid #d6d9d3; background: var(--bg); border-radius: 14px;
+    }
+    .button-example[data-selected="true"] { border-color: var(--action-text); background: #f4f9fd; }
+    .button-example .start-stage { min-height: 170px; }
+    .button-example .start-stage::before { width: 144px; height: 144px; }
+    .button-example .start-stage::after { width: 158px; height: 158px; }
+    .button-example .start-button { padding: 0; }
+    .button-example h3 { margin: 0 0 4px; font-size: .9375rem; }
+    .button-options .selection-note { min-height: 1.45em; }
+    @media (max-width: 620px) {
+      .button-examples { grid-template-columns: repeat(3, minmax(158px, 1fr)); overflow: auto; padding: 3px; }
+      .button-options { padding-inline: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="board" data-size="regular">
+    <header class="board-head">
+      <div>
+        <div class="product"><span class="product-mark" aria-hidden="true"><span class="runner"></span></span>每日跑步</div>
+        <h1>基础样式与导航</h1>
+      </div>
+      <div class="board-actions">
+        <div class="switcher" role="group" aria-label="三案同步切换页面">
+          <button data-board-page="today" aria-pressed="true">今日</button>
+          <button data-board-page="running" aria-pressed="false">跑中</button>
+          <button data-board-page="history" aria-pressed="false">记录</button>
+        </div>
+        <button class="size-button" aria-pressed="false">320 窄屏</button>
+        <a class="review-link" data-review-link="today" href="?view=today">今日页精修</a>
+        <a class="review-link" data-review-link="run" href="?view=run">跑中页精修</a>
+      </div>
+    </header>
+    <p class="intro">用上方切换对照三案，也可在任一方案里试跑、暂停和结束。预览使用模拟数据。</p>
+    <section class="button-options calm" id="button-options" aria-labelledby="button-options-title" hidden>
+      <h2 id="button-options-title">开跑按钮对比</h2>
+      <p>按住看按钮下沉，松开后应用到右侧今日页。</p>
+      <div class="button-examples"></div>
+      <p class="selection-note" role="status"></p>
+    </section>
+    <div class="options" id="options"></div>
+    <footer class="board-foot">
+      <p>三案共用当前跑者母版。规格以 Flutter 逻辑像素计，字号随系统设置缩放，底栏与跑中操作区另计系统安全区。</p>
+    </footer>
+  </main>
+  <script>
+    const iconAssets = {"calendar": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMxYzIwMjQiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogIDxyZWN0IHg9IjMuNSIgeT0iNSIgd2lkdGg9IjE3IiBoZWlnaHQ9IjE1LjUiIHJ4PSIyLjUiIC8+CiAgPHBhdGggZD0iTTMuNSAxMCBIMjAuNSIgLz4KICA8cGF0aCBkPSJNOCAzIFY2LjUgTTE2IDMgVjYuNSIgLz4KPC9zdmc+Cg==", "calendarPen": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMxYzIwMjQiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogIDxyZWN0IHg9IjMuNSIgeT0iNC41IiB3aWR0aD0iMTciIGhlaWdodD0iMTIiIHJ4PSIyLjUiIC8+CiAgPHBhdGggZD0iTTMuNSA5IEgyMC41IiAvPgogIDxwYXRoIGQ9Ik04IDIuNSBWNiIgLz4KICA8cGF0aCBkPSJNMTIuNSAyMSBsMC45IC0zIDUuMSAtNS4xIDIuMSAyLjEgLTUuMSA1LjEgeiIgLz4KICA8cGF0aCBkPSJNMTcuOCAxMy4yIGwyLjEgMi4xIiAvPgo8L3N2Zz4K", "route": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMxYzIwMjQiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogIDxjaXJjbGUgY3g9IjUuNSIgY3k9IjE4LjUiIHI9IjIuMiIgLz4KICA8cGF0aCBkPSJNMTguNSAyLjUgYTQgNCAwIDAgMSA0IDQgYzAgMy41IC00IDggLTQgOCBzLTQgLTQuNSAtNCAtOCBhNCA0IDAgMCAxIDQgLTQgeiIgLz4KICA8Y2lyY2xlIGN4PSIxOC41IiBjeT0iNi41IiByPSIxLjIiIC8+CiAgPHBhdGggZD0iTTcuMyAxNy4zIEM5IDEzIDEyIDE1IDE1IDEyLjUiIC8+Cjwvc3ZnPgo=", "list": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMxYzIwMjQiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogIDxwYXRoIGQ9Ik04LjUgNi41IEgyMCBNOC41IDEyIEgyMCBNOC41IDE3LjUgSDIwIiAvPgogIDxwYXRoIGQ9Ik0zLjUgNi41IEg1LjUgTTMuNSAxMiBINS41IE0zLjUgMTcuNSBINS41IiAvPgo8L3N2Zz4K", "pause": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMxYzIwMjQiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogIDxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjguNSIgLz4KICA8cGF0aCBkPSJNMTAgOSBWMTUgTTE0IDkgVjE1IiAvPgo8L3N2Zz4K", "finish": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMxYzIwMjQiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogIDxwYXRoIGQ9Ik02IDIxIFYzIiAvPgogIDxwYXRoIGQ9Ik02IDQgSDE4IEwxNS41IDggTDE4IDEyIEg2IiAvPgo8L3N2Zz4K", "share": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMxYzIwMjQiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogIDxwYXRoIGQ9Ik0xMiAzIFYxNSIgLz4KICA8cGF0aCBkPSJNOC41IDYuNSBMMTIgMyBMMTUuNSA2LjUiIC8+CiAgPHBhdGggZD0iTTYgMTEgSDUgYTEuNSAxLjUgMCAwIDAgLTEuNSAxLjUgVjE5IEExLjUgMS41IDAgMCAwIDUgMjAuNSBIMTkgQTEuNSAxLjUgMCAwIDAgMjAuNSAxOSBWMTIuNSBBMS41IDEuNSAwIDAgMCAxOSAxMSBIMTgiIC8+Cjwvc3ZnPgo="};
+    const icon = name => `<span class="icon" aria-hidden="true" style="--icon:url('${iconAssets[name]}')"></span>`;
+    iconAssets.edit = 'data:image/svg+xml,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="#1f211f" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.2 10.9 3.3a1.35 1.35 0 0 1 1.9 0l.3.3a1.35 1.35 0 0 1 0 1.9l-7.9 7.9-2.9.7.7-2.9zM9.9 4.3l2.2 2.2"/></svg>'
+    );
+
+    const foundationOptions = [
+      {
+        key: 'calm', id: 'A', name: '湖蓝留白', pitch: '沿用居中开跑，通栏导航与浅底卡片。',
+        type: '13 / 16 / 28 / 56', spacing: '20 边距 / 16 区块 / 20 圆角',
+        nav: '58 高，图标在上，选中项有浅蓝底。',
+        layout: '今日保留目标、开跑和底部三格。跑中先读用时，再看轨迹和指标。',
+        choice: '保留最熟悉的页面位置。适合先把颜色、字阶和尺寸收进主题。',
+      },
+      {
+        key: 'track', id: 'B', name: '跑道仪表', pitch: '距离占首屏，跑中底栏让位给操控。',
+        type: '13 / 16 / 30 / 72', spacing: '16 边距 / 12 区块 / 12 圆角',
+        nav: '56 高，顶线标示选中项。跑中「收起」可回今日，从导航返回。',
+        layout: '今日统计排在跑道开跑区上方。跑中先读距离，底部固定暂停和结束。记录页先列最近几次。',
+        choice: '短时间内更容易扫到距离。收起和返回跑中的路径需要真机验证。',
+      },
+      {
+        key: 'journal', id: 'C', name: '跑步手账', pitch: '暖纸底、标题宋体、记录按日期展开。',
+        type: '14 / 16 / 32 / 60', spacing: '24 边距 / 16 区块 / 16 圆角',
+        nav: '54 高，图标与文字横排，胶囊置于底部。',
+        layout: '今日用横线分组，跑中先读用时，记录先看月历，再沿日期查看轨迹。',
+        choice: '三套里变化最集中在品牌与记录。宋体只用在页标题，Flutter 需验证双端字形。',
+      },
+    ];
+
+    const reviewPage = new URLSearchParams(location.search).get('view');
+    const runReview = reviewPage === 'run';
+    const review = runReview || reviewPage === 'today';
+    const buttonDesigns = [
+      { key: 'solid', name: 'A 平面湖蓝', description: '实色圆面，边缘清楚。' },
+      { key: 'gradient', name: 'B 微渐变湖蓝', description: '圆面由明到暗，延续现版。' },
+      { key: 'rim', name: 'C 内缘按键', description: '深蓝内缘勾出按键边界。' },
+    ];
+    const options = review ? [
+      { ...foundationOptions[0], id: '', name: 'v0.1 参考', pitch: '选定的湖蓝留白。' },
+      {
+        ...foundationOptions[0], key: 'refined', theme: 'calm', refined: true, id: '',
+        name: runReview ? '跑中页精修' : '今日页精修',
+        pitch: runReview ? '核心读数集中在轨迹上方。' : '细化目标状态、开跑反馈和统计层级。',
+        layout: runReview ? '用时、距离、当前配速、轨迹、速度和每 500 米配速。底部固定暂停／继续和结束。' : foundationOptions[0].layout,
+      },
+    ] : foundationOptions;
+    const pageLabels = { today: ['今日','calendar'], running: ['跑中','route'], history: ['记录','list'] };
+    const example = { km: '4.82', elapsed: '28:46', pace: '5′48″', speed: '10.3', energy: '313' };
+    const finished = { date: '11 月 27 日', km: '5.21', elapsed: '31:24', pace: '6′02″', speed: '10.0', energy: '339' };
+    const sessions = [
+      { date: '11 月 25 日', km: '6.30', elapsed: '37:12', pace: '5′54″'},
+      { date: '11 月 22 日', km: '5.02', elapsed: '30:08', pace: '6′00″'},
+      { date: '11 月 20 日', km: '4.25', elapsed: '25:46', pace: '6′04″'},
+    ];
+
+    const board = document.querySelector('.board');
+    const state = new Map(options.map(option => [option.key, {
+      page: runReview ? 'running' : 'today', run: runReview ? 'live' : 'idle',
+      target: 5, dialog: null, added: false, sampleActive: false, returnAction: '',
+      authorization: null, authorized: false, longNumbers: false,
+      location: 'ready', longRun: false,
+    }]));
+    const values = new Map();
+
+    function stat(label, value, unit = '') {
+      return `<div class="metric"><span class="label">${label}</span><span class="number metric-value"><span class="metric-digits">${value}</span>${unit ? `<small>${unit}</small>` : ''}</span></div>`;
+    }
+    function stats(cells, accent = false) {
+      return `<div class="stats card" style="--columns:${cells.length}" ${accent ? 'data-accent' : ''}>${cells.join('')}</div>`;
+    }
+    function btn(action, text, cls, mark = '') {
+      return `<button class="${cls}" data-action="${action}">${mark ? icon(mark) : ''}${text}</button>`;
+    }
+    function start() {
+      return `<div class="start-stage"><button class="start-button" data-action="start" aria-label="开始跑步"><span class="runner" aria-hidden="true"></span></button></div>`;
+    }
+    function refinedStart(s) {
+      const active = s.run === 'live' || s.run === 'paused';
+      const action = active ? 'open-running' : 'start';
+      const status = s.authorization ? '等待定位授权'
+        : s.run === 'paused' ? '已暂停，返回跑中'
+        : active ? '返回跑中' : '';
+      return `<div class="start-stage">
+        <button class="start-button" data-action="${action}" aria-label="${status || '开始跑步'}" ${s.authorization ? 'aria-disabled="true"' : ''}>
+          <span class="runner" aria-hidden="true"></span>
+        </button>
+        <p class="start-status" role="status">${status}</p>
+      </div>`;
+    }
+    function todayPanel(s, option) {
+      const km = s.added ? Number(finished.km) : 0;
+      const progress = Math.min(100, (km / s.target) * 100);
+      const reached = progress >= 100;
+      const total = s.longNumbers ? '1,284.5' : s.added ? '133.6' : '128.4';
+      const summary = stats([stat('本月里程',s.added ? '47.8' : '42.6','km'),stat('本月次数',s.added ? '9' : '8','次'),stat('累计里程',total,'km')], true);
+      let startControl = start();
+      if (option.refined) {
+        startControl = refinedStart(s);
+      } else if (s.run === 'live' || s.run === 'paused') {
+        startControl = `<div class="start-stage">${btn('open-running', s.run === 'paused' ? '返回已暂停的跑步' : '返回跑中', 'action-button', 'route')}</div>`;
+      }
+      const todayDistance = option.refined && !km ? '0 km' : `${km.toFixed(2)} km`;
+      const indicator = option.refined && reached ? '已达目标' : '今日已跑';
+      return `<div class="screen-scroll" data-scroll><div class="content today-content">
+        <header class="screen-header"><h3>今日</h3><span class="meta">${option.refined ? '11月27日 周五' : '11 月 27 日 周五'}</span></header>
+        <button class="goal card" data-action="target" aria-label="编辑今日目标，目标 ${s.target.toFixed(2)} 公里，今日跑了 ${km.toFixed(2)} 公里${option.refined && reached ? '，已达目标' : ''}">
+          <span class="goal-line"><span class="goal-title">今日目标</span><span class="goal-value"><span class="number">${s.target.toFixed(2)} km</span>${icon(option.refined ? 'edit' : 'calendarPen')}</span></span>
+          <span class="progress" aria-hidden="true" data-met="${reached}"><span style="width:${progress}%"></span></span>
+          <span class="goal-foot label" data-met="${reached}"><span>${indicator}</span><span class="number">${todayDistance}</span></span>
+        </button>
+        ${option.key === 'track' ? summary + startControl : startControl + summary}
+      </div></div>`;
+    }
+    function map(caption = '跑步轨迹', cls = '', hasRoute = true) {
+      return `<figure class="map ${cls}" style="margin:0"><canvas data-route="${hasRoute}" aria-hidden="true"></canvas><figcaption class="map-caption">${caption}</figcaption></figure>`;
+    }
+    function runControls(paused, focus = false) {
+      return `<div class="run-controls">
+        ${btn('pause', paused ? '继续' : '暂停', focus || paused ? 'action-button' : 'secondary-button', paused ? 'route' : 'pause')}
+        ${btn('finish', '结束', 'end-button', 'finish')}
+      </div>`;
+    }
+    function refinedRunPanel(s) {
+      const paused = s.run === 'paused';
+      const locating = s.location === 'acquiring';
+      const weak = s.location === 'weak';
+      const location = paused ? '' : locating ? '正在定位' : weak ? '定位信号弱' : '';
+      const elapsed = s.longRun ? '1:28:46' : locating ? '00:08' : example.elapsed;
+      const distance = s.longRun ? '14.82' : locating ? '0.00' : example.km;
+      const showPace = !locating && !weak;
+      return `<div class="screen-scroll" data-scroll><div class="content run-content">
+        <header class="screen-header">
+          <span class="status" data-paused="${paused}" role="status">${paused ? '已暂停' : '正在记录'}</span>
+          <span class="meta" role="status">${location}</span>
+        </header>
+        <div class="head-metric">
+          <span class="label">已用时间</span><div class="headline number">${elapsed}</div>
+        </div>
+        <div class="run-kpis">
+          ${stat('距离',distance,'km')}${stat('当前配速',showPace ? example.pace : '—',showPace ? '/km' : '')}
+        </div>
+        ${map('跑步轨迹','run-map',!locating)}
+        <div class="run-secondary">
+          <span class="label">速度 <span class="number">${showPace ? example.speed + ' km/h' : '—'}</span></span>
+          ${locating ? '' : `<div class="pace-chart"><span class="label">每 500 米配速</span>
+            <div class="pace-bars" role="img" aria-label="最近八段配速变化">${[43,62,53,68,82,62,74,68].map(v => `<span style="height:${v}%"></span>`).join('')}</div>
+          </div>`}
+        </div>
+      </div></div>${runControls(paused)}`;
+    }
+    function runPanel(s, option) {
+      if (s.run === 'idle') {
+        return `<div class="screen-scroll" data-scroll><div class="content">
+          <header class="screen-header"><h3>跑中</h3><span class="meta">等待开跑</span></header>
+          ${start()}${stats([stat('距离','0.00','km'),stat('用时','00:00'),stat('配速','—','/km')])}
+        </div></div>`;
+      }
+      if (s.run === 'result') {
+        return `<div class="screen-scroll" data-scroll><div class="content result-content">
+          <header class="screen-header"><h3>跑步完成</h3><span class="status">已保存</span></header>
+          <div class="head-metric"><div class="headline number">${finished.km}<small>km</small></div><span class="label">距离</span></div>
+          ${map()}${stats([stat('用时',finished.elapsed),stat('平均配速',finished.pace,'/km'),stat('估算消耗',finished.energy,'kcal')], true)}
+          ${btn('share', '预览记录图', 'action-button', 'share')}
+        </div></div>`;
+      }
+      if (option.refined) return refinedRunPanel(s);
+      const paused = s.run === 'paused';
+      const focus = option.key === 'track';
+      const secondary = focus ? stat('用时',example.elapsed) : stat('距离',example.km,'km');
+      const cells = [secondary,stat('配速',example.pace,'/km'),stat('速度',example.speed,'km/h'),stat('估算消耗',example.energy,'kcal')];
+      return `<div class="screen-scroll" data-scroll><div class="content run-content">
+        <header class="screen-header"><span class="status" data-paused="${paused}" role="status">${paused ? '已暂停' : '正在记录'}</span>
+          ${focus ? btn('collapse', '收起', 'quiet-button') : '<span class="meta">11 月 27 日</span>'}
+        </header>
+        <div class="head-metric"><div class="headline number">${focus ? `${example.km}<small>km</small>` : example.elapsed}</div>
+          <span class="label">${focus ? '已跑距离' : '已用时间'}</span>
+        </div>
+        ${focus ? stats(cells) : ''}
+        ${map('跑步轨迹','run-map')}
+        <div class="pace-chart"><span class="label">配速曲线 <span class="number">/ 500 m</span></span>
+          <div class="pace-bars" role="img" aria-label="最近八段配速变化">${[43,62,53,68,82,62,74,68].map(v => `<span style="height:${v}%"></span>`).join('')}</div>
+        </div>
+        ${focus ? '' : stats(cells)}
+      </div></div>${runControls(paused, focus)}`;
+    }
+    function calendar(s) {
+      const days = new Set([2,5,8,12,16,20,22,25]);
+      if (s.added) days.add(27);
+      const labels = ['一','二','三','四','五','六','日'];
+      return `<section class="calendar card" aria-label="11 月跑步月历">
+        <div class="calendar-head"><h4>11 月月历</h4><span class="label">圆点标记跑步日</span></div>
+        <div class="day-grid">
+          ${labels.map(label => `<span class="weekday">${label}</span>`).join('')}
+          ${'<span aria-hidden="true"></span>'.repeat(6)}
+          ${Array.from({length:30}, (_,i) => i + 1).map(day =>
+            `<span class="${days.has(day) ? 'run-day' : ''} ${day === 27 ? 'today-date' : ''}" ${day === 27 ? 'aria-current="date"' : ''}>${day}${days.has(day) ? '<span class="sr-only">，跑步日</span>' : ''}</span>`
+          ).join('')}
+        </div>
+      </section>`;
+    }
+    function recordItems(s) { return s.added ? [finished,...sessions] : sessions; }
+    function historyPanel(s, option) {
+      const records = `<section class="records"><h4>${option.key === 'track' ? '最近跑步' : '历史记录'}</h4>
+        ${recordItems(s).map((run,i) => `<button class="record-row card" data-action="record-${i}">
+          <span class="record-route">${icon('route')}</span>
+          <span class="record-date">${run.date}<small class="label number">${run.elapsed} / ${run.pace}</small></span>
+          <span class="record-distance number">${run.km} <small>km</small></span>
+        </button>`).join('')}
+      </section>`;
+      return `<div class="screen-scroll" data-scroll><div class="content history-content">
+        <header class="screen-header"><h3>记录</h3>${btn('backup', '备份', 'quiet-button')}</header>
+        ${stats([stat('本月里程',s.added ? '47.8' : '42.6','km'),stat('跑步天数',s.added ? '9' : '8','天')],true)}
+        ${option.key === 'track' ? records + calendar(s) : calendar(s) + records}
+      </div></div>`;
+    }
+
+    function navigation(s) {
+      return `<nav class="navigation" aria-label="App 主导航">${Object.entries(pageLabels).map(([page,[label,mark]]) => `
+        <button data-action="nav-${page}" ${s.page === page ? 'aria-current="page"' : ''} ${page === 'running' && (s.run === 'live' || s.run === 'paused') ? `aria-label="跑中，${s.run === 'live' ? '正在记录' : '已暂停'}"` : ''}>
+          ${icon(mark)}<span>${label}</span>
+          ${page === 'running' && (s.run === 'live' || s.run === 'paused') ? '<span class="nav-active" aria-hidden="true"></span>' : ''}
+        </button>`).join('')}</nav>`;
+    }
+
+    function modal(s, option) {
+      if (!s.dialog) return '';
+      let label, contents;
+      if (s.dialog === 'target') {
+        label = '编辑今日目标';
+        contents = `<form class="sheet-panel" data-target-form>
+          <h4 id="dialog-${option.key}">${label}</h4>
+          <label>距离（km）<input class="sheet-field" name="target" type="number" min=".1" max="100" step=".01" required value="${s.target.toFixed(2)}"></label>
+          <div class="sheet-actions">${btn('close', '取消', 'secondary-button')}<button type="submit" class="action-button">完成</button></div>
+        </form>`;
+      } else {
+        if (s.dialog === 'share') {
+          label = '记录图预览';
+          contents = `<div class="share-card"><p class="label">每日跑步 <span class="number">/ 11 月 27 日</span></p>${map()}${stats([stat('距离',finished.km,'km'),stat('用时',finished.elapsed),stat('配速',finished.pace,'/km')],true)}</div>${btn('close','关闭','secondary-button')}`;
+        } else if (s.dialog === 'backup') {
+          label = '备份与恢复';
+          contents = `<p class="label">正式 App 使用系统文件选择器保存或读取备份。</p>${btn('close','关闭','secondary-button')}`;
+        } else {
+          const run = recordItems(s)[Number(s.dialog.split('-')[1])];
+          label = run.date + ' 跑步';
+          contents = `${map()} ${stats([stat('距离',run.km,'km'),stat('用时',run.elapsed),stat('配速',run.pace,'/km')],true)}${btn('close','关闭','secondary-button')}`;
+        }
+        contents = `<div class="sheet-panel"><h4 id="dialog-${option.key}">${label}</h4>${contents}</div>`;
+      }
+      return `<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="dialog-${option.key}">${contents}</div>`;
+    }
+
+    function colorValue(element, key) {
+      return getComputedStyle(element).getPropertyValue(key).trim();
+    }
+
+    function setup() {
+      if (review) {
+        board.dataset.view = 'review';
+        const title = runReview ? '跑中页精修' : '今日页精修';
+        document.title = '每日跑步 · ' + title;
+        board.querySelector('h1').textContent = title;
+        board.querySelector('.intro').textContent = runReview
+          ? '用右侧示例检查读数、定位和暂停状态，左侧是 v0.1。'
+          : '切换今日页状态，并排比较三款开跑按钮。';
+        board.querySelector('.switcher').innerHTML = runReview ? `
+          <button data-scenario="live" aria-pressed="true">记录中</button>
+          <button data-scenario="paused" aria-pressed="false">已暂停</button>
+          <button data-scenario="acquiring" aria-pressed="false">定位中</button>
+          <button data-scenario="weak" aria-pressed="false">信号弱</button>
+          <button data-scenario="long-run" aria-pressed="false">长计时</button>` : `
+          <button data-scenario="empty" aria-pressed="true">未开跑</button>
+          <button data-scenario="reached" aria-pressed="false">已达目标</button>
+          <button data-scenario="long" aria-pressed="false">长数字</button>`;
+        board.querySelector('.switcher').setAttribute('aria-label', '切换' + title + '示例');
+        const link = board.querySelector(`[data-review-link="${reviewPage}"]`);
+        link.href = 'foundation-layout-options.html';
+        link.textContent = '返回三案';
+        board.querySelector('.board-foot p').textContent = '按「320 窄屏」检查排版。开跑和定位授权均使用模拟状态。';
+        const examples = board.querySelector('.button-options');
+        examples.hidden = runReview;
+        examples.querySelector('.button-examples').innerHTML = buttonDesigns.map(design => `
+          <article class="button-example" data-button-design="${design.key}">
+            <div class="start-stage">
+              <button class="start-button" data-choose-button="${design.key}" aria-label="应用${design.name}" aria-pressed="false">
+                <span class="runner" aria-hidden="true"></span>
+              </button>
+            </div>
+            <h3>${design.name}</h3><p>${design.description}</p>
+          </article>`).join('');
+      }
+      document.querySelector('#options').innerHTML = options.map(option => `
+        <article class="option ${option.theme || option.key}${option.refined ? ' refined' : ''}" data-key="${option.key}" ${option.refined ? 'data-button-design="gradient"' : ''} aria-labelledby="option-${option.key}">
+          <div class="option-head">
+            <div class="option-title"><span class="option-id">${option.id}</span><h2 id="option-${option.key}">${option.name}</h2></div>
+            <p>${option.pitch}</p>
+          </div>
+          <div class="device"></div>
+          <details class="tokens">
+            <summary>设计变量与布局</summary>
+            <dl>
+              <dt>配色</dt><dd class="colors"></dd>
+              <dt>字阶</dt><dd>${option.type}（辅助 / 正文 / 标题 / 跑中数字）</dd>
+              <dt>尺寸</dt><dd>${option.spacing}</dd>
+              <dt>边界</dt><dd>1 边框，48 最小操作区，数字等宽。</dd>
+              <dt>导航</dt><dd>${option.nav}</dd>
+              <dt>布局</dt><dd>${option.layout}</dd>
+            </dl>
+            <p>${option.choice}</p>
+          </details>
+        </article>`).join('');
+      if (review && !runReview) selectButtonDesign('gradient');
+      for (const option of options) {
+        const el = document.querySelector(`[data-key="${option.key}"]`);
+        const theme = Object.fromEntries(
+          ['bg','surface','text','muted','action','action-text','track','result','line','map-bg','map-green','map-line','map-water']
+            .map(key => [key,colorValue(el,'--' + key)]));
+        values.set(option.key,theme);
+        const swatches = [['底色',theme.bg],['组件底',theme.surface],['主操作与轨迹',theme.action],['成绩',theme.result],['正文',theme.text],['辅助文字',theme.muted],['边框',theme.line]];
+        if (theme['action-text']) swatches.push(['选中文字',theme['action-text']]);
+        const flat = swatches.map(([role,color]) => `${role} ${color.toUpperCase()}`).join(' / ');
+        el.querySelector('.colors').innerHTML = `<div class="palette" aria-hidden="true">${swatches.map(([_,color]) => `<span style="background:${color}"></span>`).join('')}</div>${flat}`;
+        render(option);
+      }
+    }
+
+    function selectButtonDesign(key) {
+      board.querySelector('.option.refined').dataset.buttonDesign = key;
+      for (const button of board.querySelectorAll('[data-choose-button]')) {
+        const selected = key === button.dataset.chooseButton;
+        button.setAttribute('aria-pressed', selected);
+        button.closest('.button-example').dataset.selected = selected;
+      }
+      const design = buttonDesigns.find(item => item.key === key);
+      board.querySelector('.selection-note').textContent = `${design.name}已应用。点右侧今日页的跑者可试开跑。`;
+    }
+
+    const route = [[.17,.72],[.22,.64],[.25,.58],[.30,.55],[.34,.54],[.37,.48],[.40,.42],[.41,.33],[.45,.28],[.50,.28],[.55,.32],[.58,.35],[.62,.32],[.64,.24],[.69,.20],[.75,.23],[.77,.31],[.74,.38],[.70,.43],[.67,.47],[.69,.55],[.74,.59],[.81,.57],[.85,.49]];
+    const mapObservers = new WeakMap();
+    function drawRoute(canvas, key) {
+      const rect = canvas.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const {width:w,height:h} = rect;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      const c = canvas.getContext('2d');
+      c.scale(dpr, dpr);
+      const t = values.get(key);
+
+      c.fillStyle = t['map-bg'];
+      c.fillRect(0,0,w,h);
+      c.fillStyle = t['map-green'];
+      if (key === 'track') {
+        c.lineWidth = 1;
+        c.strokeStyle = '#c8dcee';
+        c.beginPath();
+        for (let x = 12; x < w; x += 22) { c.moveTo(x,0); c.lineTo(x,h); }
+        for (let y = 12; y < h; y += 22) { c.moveTo(0,y); c.lineTo(w,y); }
+        c.stroke();
+      } else {
+        c.beginPath();
+        c.moveTo(0,0);
+        c.bezierCurveTo(w*.35,h*.10,w*.28,h*.48,w*.12,h*.52);
+        c.lineTo(0,h*.61);
+        c.closePath();
+        c.fill();
+        c.beginPath();
+        c.ellipse(w*.86,h*.90,w*.29,h*.26,-.31,0,Math.PI*2);
+        c.fill();
+        c.beginPath();
+        c.moveTo(w*.18,h*1.1);
+        c.bezierCurveTo(w*.28,h*.82,w*.63,h*.72,w*1.05,h*.85);
+        c.lineWidth = h*.19;
+        c.strokeStyle = t['map-water'];
+        c.stroke();
+        c.strokeStyle = t['map-line'];
+        c.lineWidth = key === 'journal' ? 1.35 : 2;
+        c.beginPath();
+        c.moveTo(0,h*.61);
+        c.bezierCurveTo(w*.19,h*.69,w*.35,h*.54,w*.39,h*.35);
+        c.bezierCurveTo(w*.51,h*.2,w*.68,h*.5,w,h*.09);
+        c.moveTo(w*.18,0);
+        c.bezierCurveTo(w*.27,h*.4,w*.24,h*.46,w*.40,h*.59);
+        c.bezierCurveTo(w*.54,h*.74,w*.54,h*.82,w*.48,h);
+        c.moveTo(w*.83,0);
+        c.bezierCurveTo(w*.65,h*.33,w*.73,h*.8,w*.98,h);
+        c.stroke();
+      }
+
+      if (canvas.dataset.route === 'false') return;
+      c.lineCap = 'round';
+      c.lineJoin = 'round';
+      c.beginPath();
+      c.moveTo(route[0][0]*w,route[0][1]*h);
+      for (let i = 1; i < route.length - 1; i++) {
+        const [x,y] = route[i];
+        c.quadraticCurveTo(x*w,y*h,(x+route[i+1][0])/2*w,(y+route[i+1][1])/2*h);
+      }
+      const end = route.at(-1);
+      c.lineTo(end[0]*w,end[1]*h);
+      c.lineWidth = key === 'track' ? 8 : 9;
+      c.strokeStyle = '#fff';
+      c.stroke();
+      c.lineWidth = key === 'track' ? 4 : 5;
+      c.strokeStyle = t.track;
+      c.stroke();
+      for (const [i,point] of [route[0],end].entries()) {
+        c.beginPath();
+        c.arc(point[0]*w,point[1]*h,4.4,0,Math.PI*2);
+        c.fillStyle = i ? t.track : '#fff';
+        c.fill();
+        c.strokeStyle = i ? '#fff' : t.track;
+        c.lineWidth = 1.8;
+        c.stroke();
+      }
+    }
+
+    function updateBoardSelection() {
+      const pages = options.map(option => state.get(option.key).page);
+      for (const control of document.querySelectorAll('[data-board-page]')) {
+        control.setAttribute('aria-pressed',pages.every(page => page === control.dataset.boardPage));
+      }
+    }
+
+    function render(option, focusSelector = '', transition = '') {
+      const s = state.get(option.key);
+      const device = document.querySelector(`[data-key="${option.key}"] .device`);
+      const samePage = device.dataset.page === s.page;
+      const previous = device.querySelector('.screen [data-scroll]');
+      const scroll = samePage ? previous?.scrollTop : 0;
+      device.dataset.page = s.page;
+      for (const canvas of device.querySelectorAll('canvas')) mapObservers.get(canvas)?.disconnect();
+      const active = s.page === 'running' && ['live','paused'].includes(s.run);
+      const focusRun = option.key === 'track' && active;
+      device.innerHTML = `<div class="screen ${active ? 'running-active' : ''}" ${s.dialog ? 'inert' : ''}>
+        ${s.page === 'today' ? todayPanel(s,option) : s.page === 'running' ? runPanel(s,option) : historyPanel(s,option)}
+        ${focusRun ? '' : navigation(s)}<div class="home-safe" aria-hidden="true"></div>
+      </div>${modal(s,option)}`;
+      if (scroll) device.querySelector('[data-scroll]').scrollTop = scroll;
+      if (option.refined && !samePage && transition && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        animatePage(device, previous, transition);
+      }
+      for (const canvas of device.querySelectorAll('canvas')) {
+        const refresh = () => drawRoute(canvas,option.key);
+        const observer = new ResizeObserver(refresh);
+        observer.observe(canvas);
+        mapObservers.set(canvas,observer);
+        refresh();
+      }
+      if (s.dialog) device.querySelector('.sheet input, .sheet button').focus({preventScroll:true});
+      else if (focusSelector) device.querySelector(focusSelector)?.focus({preventScroll:true});
+      updateBoardSelection();
+    }
+
+    function animatePage(device, previous, transition) {
+      const incoming = device.querySelector('.screen [data-scroll]');
+      if (transition !== 'start' || !previous) {
+        incoming.animate([{ opacity: .45 }, { opacity: 1 }], { duration: 110, easing: 'ease-out' });
+        return;
+      }
+      previous.inert = true;
+      previous.setAttribute('aria-hidden', 'true');
+      previous.classList.add('page-leaving');
+      previous.style.height = `${incoming.clientHeight}px`;
+      device.append(previous);
+      const animation = previous.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: 'ease-out' });
+      animation.onfinish = () => previous.remove();
+    }
+
+    function openPage(s, page) {
+      s.page = page;
+      s.dialog = null;
+      s.authorization = null;
+    }
+
+    function beginRun(s, option) {
+      s.run = 'live';
+      s.sampleActive = false;
+      s.location = 'ready';
+      s.longRun = false;
+      openPage(s,'running');
+      render(option,'[data-action="pause"]','start');
+    }
+
+    document.addEventListener('click', event => {
+      const button = event.target.closest('button');
+      if (!button) return;
+      if (button.dataset.chooseButton) {
+        selectButtonDesign(button.dataset.chooseButton);
+        return;
+      }
+      if (button.dataset.scenario) {
+        const scenario = button.dataset.scenario;
+        for (const control of board.querySelectorAll('[data-scenario]')) {
+          control.setAttribute('aria-pressed', control === button);
+        }
+        for (const option of options) {
+          const s = state.get(option.key);
+          if (runReview) {
+            s.run = scenario === 'paused' ? 'paused' : 'live';
+            s.location = scenario === 'acquiring' || scenario === 'weak' ? scenario : 'ready';
+            s.longRun = scenario === 'long-run';
+            s.added = false;
+          } else {
+            Object.assign(s, { run: 'idle', target: 5, added: scenario === 'reached', longNumbers: scenario === 'long', authorized: false });
+          }
+          openPage(s,runReview ? 'running' : 'today');
+          render(option);
+        }
+        return;
+      }
+      if (button.dataset.boardPage) {
+        const page = button.dataset.boardPage;
+        for (const option of options) {
+          const s = state.get(option.key);
+          openPage(s,page);
+          if (page === 'running' && ['idle','result'].includes(s.run)) {
+            s.run = 'live';
+            s.sampleActive = true;
+          } else if (page !== 'running' && s.sampleActive) {
+            s.run = s.added ? 'result' : 'idle';
+            s.sampleActive = false;
+          }
+          render(option);
+        }
+        return;
+      }
+      if (button.matches('.size-button')) {
+        board.dataset.size = board.dataset.size === 'compact' ? 'regular' : 'compact';
+        button.setAttribute('aria-pressed',board.dataset.size === 'compact');
+        return;
+      }
+      const action = button.dataset.action;
+      if (!action) return;
+      const key = button.closest('[data-key]').dataset.key;
+      const option = options.find(item => item.key === key);
+      const s = state.get(key);
+      let focus = '';
+      let transition = '';
+      if (action.startsWith('nav-')) {
+        openPage(s,action.slice(4));
+        focus = `[data-action="${action}"]`;
+        transition = 'tab';
+      } else if (action === 'start') {
+        if (s.authorization) return;
+        if (option.refined && s.page === 'today' && !s.authorized) {
+          const request = {};
+          s.authorization = request;
+          render(option,'[data-action="start"]');
+          setTimeout(() => {
+            if (s.authorization !== request) return;
+            s.authorized = true;
+            beginRun(s,option);
+          }, 1400);
+          return;
+        }
+        beginRun(s,option);
+        return;
+      } else if (action === 'pause') {
+        s.run = s.run === 'paused' ? 'live' : 'paused';
+        focus = '[data-action="pause"]';
+      } else if (action === 'finish') {
+        s.run = 'result';
+        s.added = true;
+        s.sampleActive = false;
+        s.dialog = null;
+        focus = '[data-action="share"]';
+      } else if (action === 'collapse' || action === 'open-running') {
+        openPage(s,action === 'collapse' ? 'today' : 'running');
+        focus = action === 'collapse' ? '[data-action="open-running"]' : '[data-action="pause"]';
+        transition = 'tab';
+      } else if (action === 'close') {
+        event.preventDefault();
+        s.dialog = null;
+        focus = `[data-action="${s.returnAction}"]`;
+      } else {
+        s.authorization = null;
+        s.dialog = action;
+        s.returnAction = action;
+      }
+      render(option,focus,transition);
+    });
+
+    document.addEventListener('submit', event => {
+      if (!event.target.matches('[data-target-form]')) return;
+      event.preventDefault();
+      const key = event.target.closest('[data-key]').dataset.key;
+      const s = state.get(key);
+      s.target = Number(new FormData(event.target).get('target'));
+      s.dialog = null;
+      render(options.find(option => option.key === key),'[data-action="target"]');
+    });
+
+    document.addEventListener('keydown', event => {
+      const sheet = event.target.closest('.sheet');
+      if (!sheet) return;
+      const key = sheet.closest('[data-key]').dataset.key;
+      const s = state.get(key);
+      if (event.key === 'Escape') {
+        s.dialog = null;
+        render(options.find(option => option.key === key),`[data-action="${s.returnAction}"]`);
+      }
+      if (event.key === 'Tab') {
+        const controls = [...sheet.querySelectorAll('input, button:not(:disabled)')];
+        const first = controls[0];
+        const last = controls.at(-1);
+        if (event.shiftKey && event.target === first || !event.shiftKey && event.target === last) {
+          event.preventDefault();
+          (event.shiftKey ? last : first).focus();
+        }
+      }
+    });
+
+    setup();
+  </script>
+</body>
+</html>
